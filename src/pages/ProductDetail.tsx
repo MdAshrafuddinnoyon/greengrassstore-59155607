@@ -172,7 +172,7 @@ const ProductDetail = () => {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
       
-      <main className="flex-1">
+      <main className="flex-1 pb-24 lg:pb-0">
         {/* Breadcrumb */}
         <div className="bg-gray-50 border-b">
           <div className="container mx-auto px-4 py-3">
