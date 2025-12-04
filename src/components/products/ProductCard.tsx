@@ -22,7 +22,7 @@ interface ProductCardProps {
 export const ProductCard = ({ product }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -63,8 +63,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             className={cn(
               "absolute top-2 left-2 px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium",
               product.badge === "sale" && "bg-red-500 text-white",
-              product.badge === "new" && "bg-foreground text-background",
-              product.badge === "soldOut" && "bg-muted text-muted-foreground"
+              product.badge === "new" && "bg-gray-900 text-white",
+              product.badge === "soldOut" && "bg-gray-400 text-white"
             )}
           >
             {product.badge === "sale" && `-${discount}%`}
@@ -97,7 +97,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         >
           <button
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-foreground text-background text-[10px] uppercase tracking-wider font-medium hover:bg-foreground/90 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gray-900 text-white text-[10px] uppercase tracking-wider font-medium hover:bg-gray-800 transition-colors"
             disabled={product.badge === "soldOut"}
           >
             <ShoppingBag className="w-3 h-3" />
@@ -111,18 +111,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
       {/* Product Info */}
       <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
           {product.category}
         </p>
-        <h3 className="text-sm font-normal text-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="text-sm font-normal text-gray-900 mb-1 line-clamp-2 group-hover:text-green-700 transition-colors">
           {displayName}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm">
+          <span className="text-sm text-gray-900">
             AED {product.price}
           </span>
           {product.originalPrice && (
-            <span className="text-xs text-muted-foreground line-through">
+            <span className="text-xs text-gray-400 line-through">
               AED {product.originalPrice}
             </span>
           )}
