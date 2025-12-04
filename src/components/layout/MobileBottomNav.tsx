@@ -2,23 +2,25 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Search, ShoppingBag, User, Grid3X3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
-
-const navItems = [
-  { icon: Home, label: "Home", href: "/" },
-  { icon: Grid3X3, label: "Categories", href: "/shop" },
-  { icon: Search, label: "Search", href: "/shop?search=true" },
-  { icon: ShoppingBag, label: "Cart", href: "/cart", isCart: true },
-  { icon: User, label: "Account", href: "/account" },
-];
 
 export const MobileBottomNav = () => {
   const location = useLocation();
+  const { t } = useLanguage();
   const items = useCartStore((state) => state.items);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
+  const navItems = [
+    { icon: Home, label: t("common.home"), href: "/" },
+    { icon: Grid3X3, label: t("common.categories"), href: "/shop" },
+    { icon: Search, label: t("common.search"), href: "/shop?search=true" },
+    { icon: ShoppingBag, label: t("common.cart"), href: "/cart", isCart: true },
+    { icon: User, label: t("common.account"), href: "/account" },
+  ];
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-background border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)] safe-area-bottom">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 
@@ -30,7 +32,7 @@ export const MobileBottomNav = () => {
               to={item.href}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full relative transition-colors",
-                isActive ? "text-primary" : "text-gray-500"
+                isActive ? "text-primary" : "text-muted-foreground"
               )}
             >
               <div className="relative">
@@ -42,7 +44,7 @@ export const MobileBottomNav = () => {
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                    className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
                   >
                     {totalItems}
                   </motion.span>
