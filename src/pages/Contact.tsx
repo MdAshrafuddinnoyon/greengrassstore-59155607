@@ -45,12 +45,12 @@ const Contact = () => {
     {
       icon: Phone,
       title: "Call Us",
-      details: ["+971 50 123 4567", "+971 4 123 4567"],
+      details: ["+971 54 775 1901"],
     },
     {
       icon: Mail,
       title: "Email Us",
-      details: ["info@greengrassstore.com", "support@greengrassstore.com"],
+      details: ["info@greengrassstore.com"],
     },
     {
       icon: Clock,
@@ -223,7 +223,7 @@ const Contact = () => {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <a
-                      href="https://wa.me/971501234567"
+                      href="https://wa.me/971547751901"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-4 bg-[#25D366] text-white rounded-xl hover:opacity-90 transition-opacity"
@@ -232,14 +232,14 @@ const Contact = () => {
                       <span className="font-semibold">WhatsApp</span>
                     </a>
                     <a
-                      href="tel:+971501234567"
+                      href="tel:+971547751901"
                       className="flex items-center gap-3 p-4 bg-[#2d5a3d] text-white rounded-xl hover:opacity-90 transition-opacity"
                     >
                       <Phone className="w-6 h-6" />
                       <span className="font-semibold">Call Us</span>
                     </a>
                     <a
-                      href="https://instagram.com"
+                      href="https://www.instagram.com/greengrass_decor"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition-opacity"
@@ -248,7 +248,7 @@ const Contact = () => {
                       <span className="font-semibold">Instagram</span>
                     </a>
                     <a
-                      href="https://facebook.com"
+                      href="https://www.facebook.com/greengrassstore"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-4 bg-[#1877F2] text-white rounded-xl hover:opacity-90 transition-opacity"

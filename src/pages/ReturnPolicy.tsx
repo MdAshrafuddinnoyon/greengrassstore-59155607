@@ -234,12 +234,12 @@ const ReturnPolicy = () => {
                     Email: returns@greengrassstore.com
                   </a>
                   <a
-                    href="https://wa.me/971501234567"
+                    href="https://wa.me/971547751901"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-3 bg-[#25D366] text-white font-semibold rounded-xl hover:bg-[#20BD5A] transition-colors"
                   >
-                    WhatsApp: +971 50 123 4567
+                    WhatsApp: +971 54 775 1901
                   </a>
                 </div>
               </motion.div>
