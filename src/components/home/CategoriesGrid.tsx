@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Flower2, Package, Shrub, Sparkles, Gift, Tag, Loader2 } from "lucide-react";
+import { Leaf, Flower2, Package, Shrub, Sparkles, Gift, Tag, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchCollections, ShopifyCollection } from "@/lib/shopify";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 // Fallback images
 import ficusPlant from "@/assets/ficus-plant.jpg";
@@ -52,6 +54,18 @@ export const CategoriesGrid = () => {
   const [collections, setCollections] = useState<ShopifyCollection[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { 
+      loop: true, 
+      align: "start",
+      slidesToScroll: 1,
+    },
+    [Autoplay({ delay: 3000, stopOnInteraction: true })]
+  );
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
   useEffect(() => {
     const loadCollections = async () => {
       try {
@@ -98,7 +112,7 @@ export const CategoriesGrid = () => {
   }
 
   return (
-    <section className="py-8 md:py-16 bg-white">
+    <section className="py-8 md:py-16 bg-white overflow-hidden">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -115,77 +129,63 @@ export const CategoriesGrid = () => {
           </h2>
         </motion.div>
 
-        {/* Mobile Categories - App Style Scrollable */}
-        <div className="md:hidden -mx-4 px-4">
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-            {categories.map((category, index) => (
-              <motion.div
-                key={category.handle}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                viewport={{ once: true }}
-                className="snap-start"
-              >
-                <Link
-                  to={category.href}
-                  className="group flex flex-col items-center w-20"
+        {/* Carousel with Navigation */}
+        <div className="relative group">
+          {/* Previous Button */}
+          <button
+            onClick={scrollPrev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 md:p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0 hidden md:flex items-center justify-center"
+          >
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </button>
+
+          {/* Next Button */}
+          <button
+            onClick={scrollNext}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 md:p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 hidden md:flex items-center justify-center"
+          >
+            <ChevronRight className="w-5 h-5 text-foreground" />
+          </button>
+
+          {/* Embla Carousel */}
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex gap-4">
+              {categories.map((category, index) => (
+                <motion.div
+                  key={category.handle}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  viewport={{ once: true }}
+                  className="flex-none w-[140px] md:w-[200px] lg:w-[220px]"
                 >
-                  <div className={`relative w-16 h-16 rounded-2xl overflow-hidden mb-2 shadow-lg ${category.isSale ? 'ring-2 ring-red-500' : ''}`}>
+                  <Link
+                    to={category.href}
+                    className="group block relative aspect-[3/4] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  >
                     <img
                       src={category.image}
                       alt={category.name}
-                      className="w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-50`} />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <category.icon className="w-6 h-6 text-white drop-shadow-lg" />
+                    <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-60 group-hover:opacity-70 transition-opacity`} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
+                      <category.icon className="w-8 h-8 md:w-10 md:h-10 mb-2 drop-shadow-lg" />
+                      <h3 className="font-semibold text-sm md:text-base text-center drop-shadow-lg">{category.name}</h3>
+                      {category.description && (
+                        <p className="text-[10px] md:text-xs text-white/80 text-center mt-1 line-clamp-2 hidden md:block">{category.description}</p>
+                      )}
                     </div>
-                  </div>
-                  <span className={`text-xs font-medium text-center ${category.isSale ? 'text-red-500' : 'text-foreground'}`}>
-                    {category.name}
-                  </span>
-                </Link>
-              </motion.div>
-            ))}
+                    {category.isSale && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
+                        {t("product.sale").toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Desktop Grid - Dynamic columns based on count */}
-        <div className={`hidden md:grid gap-4 ${categories.length <= 4 ? 'grid-cols-4' : categories.length <= 6 ? 'grid-cols-6' : 'grid-cols-7'}`}>
-          {categories.map((category, index) => (
-            <motion.div
-              key={category.handle}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
-              viewport={{ once: true }}
-            >
-              <Link
-                to={category.href}
-                className="group block relative aspect-[3/4] rounded-2xl overflow-hidden"
-              >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-60 group-hover:opacity-70 transition-opacity`} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
-                  <category.icon className="w-8 h-8 mb-2 drop-shadow-lg" />
-                  <h3 className="font-semibold text-sm text-center drop-shadow-lg">{category.name}</h3>
-                  {category.description && (
-                    <p className="text-[10px] text-white/80 text-center mt-1 line-clamp-2">{category.description}</p>
-                  )}
-                </div>
-                {category.isSale && (
-                  <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
-                    {t("product.sale").toUpperCase()}
-                  </div>
-                )}
-              </Link>
-            </motion.div>
-          ))}
         </div>
 
         {/* Mobile Quick Actions */}
