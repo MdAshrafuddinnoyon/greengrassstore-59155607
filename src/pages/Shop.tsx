@@ -11,12 +11,30 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 
 const categories = [
   { key: "all", label: "All Products" },
-  { key: "Plants", label: "Plants" },
-  { key: "Trees", label: "Trees" },
-  { key: "Flowers", label: "Flowers" },
-  { key: "Pots", label: "Pots" },
-  { key: "Vases", label: "Vases" },
-  { key: "Grass", label: "Grass" },
+  // Plants Category
+  { key: "plants", label: "Plants", isParent: true },
+  { key: "mixed-plant", label: "Mixed Plant" },
+  { key: "palm-tree", label: "Palm Tree" },
+  { key: "ficus-tree", label: "Ficus Tree" },
+  { key: "olive-tree", label: "Olive Tree" },
+  { key: "paradise-plant", label: "Paradise Plant" },
+  { key: "bamboo-tree", label: "Bamboo Tree" },
+  // Flowers Category
+  { key: "flowers", label: "Flowers", isParent: true },
+  { key: "flower", label: "Flower" },
+  // Pots Category
+  { key: "pots", label: "Pots", isParent: true },
+  { key: "fiber-pot", label: "Fiber Pot" },
+  { key: "plastic-pot", label: "Plastic Pot" },
+  { key: "ceramic-pot", label: "Ceramic Pot" },
+  // Greenery Category
+  { key: "greenery", label: "Greenery", isParent: true },
+  { key: "green-wall", label: "Green Wall" },
+  { key: "greenery-bunch", label: "Greenery Bunch" },
+  { key: "moss", label: "Moss" },
+  // Other
+  { key: "hanging", label: "Hanging" },
+  { key: "sale", label: "Sale" },
 ];
 
 const sortOptions = [
