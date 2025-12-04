@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Instagram, Facebook, Truck, RefreshCw, CreditCard, MapPin, Send, FileText } from "lucide-react";
+import { Instagram, Facebook, Truck, RefreshCw, CreditCard, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
 import { CustomRequestModal } from "@/components/custom-request/CustomRequestModal";
+import { FloatingRequestButton } from "@/components/custom-request/FloatingRequestButton";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useEffect } from "react";
@@ -219,16 +220,8 @@ export const Footer = () => {
       </div>
     </footer>
 
-      {/* Custom Request Button - Fixed */}
-      <button
-        onClick={handleCustomRequest}
-        className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-40 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
-      >
-        <FileText className="w-5 h-5" />
-        <span className="hidden sm:inline text-sm font-medium">
-          {isArabic ? "طلب مخصص" : "Custom Request"}
-        </span>
-      </button>
+      {/* Floating Custom Request Button */}
+      <FloatingRequestButton onClick={handleCustomRequest} />
 
       {/* Custom Request Modal */}
       <CustomRequestModal
