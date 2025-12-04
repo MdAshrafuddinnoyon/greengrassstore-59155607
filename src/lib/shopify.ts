@@ -197,6 +197,45 @@ export const PRODUCT_BY_HANDLE_QUERY = `
   }
 `;
 
+// Collections Query
+export const COLLECTIONS_QUERY = `
+  query GetCollections($first: Int!) {
+    collections(first: $first) {
+      edges {
+        node {
+          id
+          title
+          handle
+          description
+          image {
+            url
+            altText
+          }
+        }
+      }
+    }
+  }
+`;
+
+export interface ShopifyCollection {
+  node: {
+    id: string;
+    title: string;
+    handle: string;
+    description: string;
+    image: {
+      url: string;
+      altText: string | null;
+    } | null;
+  };
+}
+
+export async function fetchCollections(first: number = 20): Promise<ShopifyCollection[]> {
+  const data = await storefrontApiRequest(COLLECTIONS_QUERY, { first });
+  if (!data) return [];
+  return data.data.collections.edges as ShopifyCollection[];
+}
+
 // Category mappings for filtering - maps URL category to Shopify search terms
 export const CATEGORY_SEARCH_MAPPINGS: Record<string, string[]> = {
   // Plants

@@ -4,46 +4,10 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ShopifyProductCard } from "@/components/products/ShopifyProductCard";
 import { ProductFilters } from "@/components/products/ProductFilters";
-import { fetchProducts, ShopifyProduct, filterProductsByCategory, isProductOnSale } from "@/lib/shopify";
+import { fetchProducts, fetchCollections, ShopifyProduct, ShopifyCollection, filterProductsByCategory, isProductOnSale } from "@/lib/shopify";
 import { Search, SlidersHorizontal, Grid3X3, LayoutGrid, ChevronDown, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-
-const categories = [
-  { key: "all", label: "All Products" },
-  // Plants Category
-  { key: "plants", label: "🌿 Plants", isParent: true },
-  { key: "mixed-plant", label: "Mixed Plant" },
-  { key: "palm-tree", label: "Palm Tree" },
-  { key: "ficus-tree", label: "Ficus Tree" },
-  { key: "olive-tree", label: "Olive Tree" },
-  { key: "paradise-plant", label: "Paradise Plant" },
-  { key: "bamboo-tree", label: "Bamboo Tree" },
-  // Flowers Category
-  { key: "flowers", label: "🌸 Flowers", isParent: true },
-  { key: "fresh-flowers", label: "Fresh Flowers" },
-  { key: "artificial-flowers", label: "Artificial Flowers" },
-  { key: "flower-bouquets", label: "Flower Bouquets" },
-  // Pots Category
-  { key: "pots", label: "🪴 Pots", isParent: true },
-  { key: "fiber-pot", label: "Fiber Pot" },
-  { key: "plastic-pot", label: "Plastic Pot" },
-  { key: "ceramic-pot", label: "Ceramic Pot" },
-  { key: "terracotta-pot", label: "Terracotta Pot" },
-  // Greenery Category
-  { key: "greenery", label: "🌱 Greenery", isParent: true },
-  { key: "green-wall", label: "Green Wall" },
-  { key: "greenery-bunch", label: "Greenery Bunch" },
-  { key: "moss", label: "Moss" },
-  { key: "grass", label: "Grass" },
-  // Vases
-  { key: "vases", label: "🏺 Vases", isParent: true },
-  // Other
-  { key: "hanging", label: "🌿 Hanging" },
-  { key: "gifts", label: "🎁 Gifts" },
-  { key: "new-arrivals", label: "✨ New Arrivals" },
-  { key: "sale", label: "🏷️ Sale", isSale: true },
-];
 
 const sortOptions = [
   { value: "featured", label: "Featured" },
@@ -58,6 +22,7 @@ const ITEMS_PER_PAGE = 12;
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
+  const [collections, setCollections] = useState<ShopifyCollection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
@@ -70,6 +35,16 @@ export default function Shop() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Build categories from collections
+  const categories = useMemo(() => {
+    const dynamicCategories = collections.map((c) => ({
+      key: c.node.handle,
+      label: c.node.title,
+      isParent: true,
+    }));
+    return [{ key: "all", label: "All Products" }, ...dynamicCategories];
+  }, [collections]);
 
   // Extract unique tags from products
   const allTags = useMemo(() => {
@@ -111,22 +86,27 @@ export default function Shop() {
   }, [products]);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
         const query = searchParams.get("q") || undefined;
         
-        // Fetch all products, we'll filter client-side for better UX
-        const data = await fetchProducts(100, query);
-        setProducts(data);
+        // Fetch products and collections in parallel
+        const [productsData, collectionsData] = await Promise.all([
+          fetchProducts(100, query),
+          fetchCollections(20)
+        ]);
+        
+        setProducts(productsData);
+        setCollections(collectionsData);
       } catch (error) {
-        console.error("Error loading products:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProducts();
+    loadData();
   }, [searchParams]);
 
   // Sync selected category with URL params
