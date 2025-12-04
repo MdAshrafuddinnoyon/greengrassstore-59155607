@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
-import { Leaf, Heart, Globe2, Award, Users, Code, ExternalLink } from "lucide-react";
+import { Leaf, Heart, Globe2, Award } from "lucide-react";
 import heroChair from "@/assets/hero-chair.jpg";
 import womanPlant from "@/assets/woman-plant.jpg";
 
@@ -115,58 +115,6 @@ const About = () => {
                   <p className="text-gray-600">{value.desc}</p>
                 </motion.div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Developer Section */}
-        <section className="py-20 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] text-white">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <span className="text-blue-400 font-semibold text-sm uppercase tracking-wider">Development Partner</span>
-              <h2 className="text-4xl font-serif font-bold mt-3">Built by Web Search BD</h2>
-            </motion.div>
-
-            <div className="max-w-4xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 md:p-12"
-              >
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Code className="w-16 h-16 text-white" />
-                  </div>
-                  <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl font-bold mb-2">Web Search BD</h3>
-                    <p className="text-blue-300 mb-4">www.websearchbd.com</p>
-                    <p className="text-white/80 leading-relaxed mb-6">
-                      Web Search BD is a leading web development and digital marketing agency specializing in e-commerce solutions, custom web applications, and cutting-edge digital experiences. Our team of expert developers and designers are dedicated to creating innovative solutions that drive business growth.
-                    </p>
-                    <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                      <span className="px-3 py-1 bg-white/20 rounded-full text-sm">E-commerce</span>
-                      <span className="px-3 py-1 bg-white/20 rounded-full text-sm">Web Development</span>
-                      <span className="px-3 py-1 bg-white/20 rounded-full text-sm">UI/UX Design</span>
-                      <span className="px-3 py-1 bg-white/20 rounded-full text-sm">SEO</span>
-                    </div>
-                    <a
-                      href="https://www.websearchbd.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full font-semibold hover:opacity-90 transition-opacity"
-                    >
-                      Visit Website
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-              </motion.div>
             </div>
           </div>
         </section>

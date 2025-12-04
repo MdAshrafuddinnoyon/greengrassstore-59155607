@@ -175,6 +175,20 @@ export const Footer = () => {
               <span>www.greengrassstore.com</span>
             </div>
           </div>
+          {/* Developer Credit */}
+          <div className="mt-4 pt-4 border-t border-white/10 text-center">
+            <p className="text-xs text-gray-500">
+              Developed by{" "}
+              <a
+                href="https://www.websearchbd.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-500 hover:text-amber-400 font-medium transition-colors"
+              >
+                Web Search BD
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

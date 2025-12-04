@@ -255,6 +255,18 @@ export const SalesAgent = () => {
                   )}
                 </Button>
               </form>
+              {/* Powered by */}
+              <p className="text-center text-xs text-gray-400 mt-3">
+                Powered by{" "}
+                <a
+                  href="https://www.websearchbd.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#2d5a3d] hover:underline font-medium"
+                >
+                  Web Search BD
+                </a>
+              </p>
             </div>
           </motion.div>
         )}
