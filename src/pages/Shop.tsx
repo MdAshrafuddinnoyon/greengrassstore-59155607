@@ -45,6 +45,8 @@ const sortOptions = [
   { value: "name-desc", label: "Name: Z to A" },
 ];
 
+const ITEMS_PER_PAGE = 12;
+
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
@@ -59,6 +61,7 @@ export default function Shop() {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Extract unique tags from products
   const allTags = useMemo(() => {
@@ -211,6 +214,18 @@ export default function Shop() {
 
     return result;
   }, [products, priceRange, sortBy, selectedColors, selectedSizes]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAndSortedProducts, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, priceRange, selectedColors, selectedSizes, searchParams]);
 
   const activeFiltersCount = 
     (selectedCategory !== "all" ? 1 : 0) + 
@@ -430,15 +445,78 @@ export default function Shop() {
                   ))}
                 </div>
               ) : filteredAndSortedProducts.length > 0 ? (
-                <div className={`grid gap-6 ${
-                  gridView === "large" 
-                    ? "grid-cols-2 md:grid-cols-3" 
-                    : "grid-cols-3 md:grid-cols-4"
-                }`}>
-                  {filteredAndSortedProducts.map((product) => (
-                    <ShopifyProductCard key={product.node.id} product={product} />
-                  ))}
-                </div>
+                <>
+                  <div className={`grid gap-6 ${
+                    gridView === "large" 
+                      ? "grid-cols-2 md:grid-cols-3" 
+                      : "grid-cols-3 md:grid-cols-4"
+                  }`}>
+                    {paginatedProducts.map((product) => (
+                      <ShopifyProductCard key={product.node.id} product={product} />
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex flex-col items-center gap-4 mt-10">
+                      <p className="text-sm text-gray-500">
+                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProducts.length)} of {filteredAndSortedProducts.length} products
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Previous
+                        </button>
+                        
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                            // Show first, last, current, and adjacent pages
+                            const showPage = page === 1 || 
+                              page === totalPages || 
+                              Math.abs(page - currentPage) <= 1;
+                            const showEllipsis = page === 2 && currentPage > 3 || 
+                              page === totalPages - 1 && currentPage < totalPages - 2;
+                            
+                            if (!showPage && !showEllipsis) return null;
+                            
+                            if (showEllipsis && !showPage) {
+                              return (
+                                <span key={page} className="px-2 text-gray-400">
+                                  ...
+                                </span>
+                              );
+                            }
+                            
+                            return (
+                              <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${
+                                  currentPage === page
+                                    ? "bg-[#2d5a3d] text-white"
+                                    : "bg-white border border-gray-200 hover:bg-gray-50"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-16 bg-white rounded-xl">
                   <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
