@@ -371,7 +371,7 @@ const ProductDetail = () => {
                   <button
                     onClick={() => {
                       const message = `Hi! I want to order:\n\n🛒 Product: ${product.title}\n${selectedVariant?.title !== "Default Title" ? `📦 Variant: ${selectedVariant?.title}\n` : ''}💰 Price: ${selectedVariant?.price.currencyCode} ${parseFloat(selectedVariant?.price.amount || "0").toFixed(2)}\n📊 Quantity: ${quantity}\n\nPlease confirm availability.`;
-                      const whatsappUrl = `https://wa.me/971547751901?text=${encodeURIComponent(message)}`;
+                      const whatsappUrl = `https://wa.me/+971547751901?text=${encodeURIComponent(message)}`;
                       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
                     }}
                     className="h-14 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors"
