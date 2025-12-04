@@ -27,7 +27,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block px-3 py-1 bg-[#2d5a3d] text-white text-xs font-medium rounded-full mb-4">
-              New Collection 2024
+              New Collection 2025
             </span>
             <h1 className="text-4xl font-bold text-white mb-3 leading-tight">
               Beautiful Plants
@@ -103,7 +103,7 @@ export const HeroSection = () => {
                 transition={{ delay: 0.2 }}
                 className="inline-block px-4 py-2 bg-[#2d5a3d] text-white text-xs font-medium rounded-full mb-6"
               >
-                ✨ New Collection 2024
+                ✨ New Collection 2025
               </motion.span>
               
               <p className="text-base lg:text-lg text-[#c9a87c] italic mb-4">
