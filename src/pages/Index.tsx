@@ -17,11 +17,11 @@ import {
 } from "@/data/products";
 
 // Import category banner images
-import heroChair from "@/assets/hero-chair.jpg";
 import hangingPlants from "@/assets/hanging-plants.jpg";
 import womanPlant from "@/assets/woman-plant.jpg";
 import bluePot from "@/assets/blue-pot.jpg";
 import ikebana from "@/assets/ikebana.jpg";
+import plantPot from "@/assets/plant-pot.jpg";
 
 const Index = () => {
   return (
@@ -47,7 +47,7 @@ const Index = () => {
           title="POTS"
           subtitle="Collection"
           description="Beautiful containers in terracotta, ceramic, and modern designs"
-          image={heroChair}
+          image={plantPot}
           href="/pots"
           layout="left"
           bgColor="bg-[#f8f8f5]"
