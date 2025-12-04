@@ -14,7 +14,7 @@ export const FloatingRequestButton = ({ onClick }: FloatingRequestButtonProps) =
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="fixed bottom-24 md:bottom-8 left-4 md:left-8 z-40">
+    <div className="fixed bottom-20 sm:bottom-24 md:bottom-8 left-3 sm:left-4 md:left-8 z-40">
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -117,10 +117,10 @@ export const FloatingRequestButton = ({ onClick }: FloatingRequestButtonProps) =
         {/* Button body */}
         <motion.div
           animate={{
-            width: isHovered ? "auto" : "56px",
+            width: isHovered ? "auto" : "48px",
           }}
           transition={{ type: "spring", damping: 20, stiffness: 300 }}
-          className="relative flex items-center gap-3 h-14 px-4 bg-gradient-to-r from-primary via-primary to-primary/80 text-primary-foreground rounded-full shadow-lg overflow-hidden"
+          className="relative flex items-center gap-2 h-12 sm:h-14 px-3 sm:px-4 bg-gradient-to-r from-primary via-primary to-primary/80 text-primary-foreground rounded-full shadow-lg overflow-hidden"
           style={{
             boxShadow: "0 10px 40px -10px hsl(var(--primary) / 0.5)",
           }}
@@ -132,9 +132,9 @@ export const FloatingRequestButton = ({ onClick }: FloatingRequestButtonProps) =
             className="flex-shrink-0"
           >
             {isExpanded ? (
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <FileText className="w-6 h-6" />
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
             )}
           </motion.div>
           

@@ -151,7 +151,7 @@ Please confirm my order. Thank you!`;
     <div className="min-h-screen flex flex-col bg-gray-50" dir={isArabic ? "rtl" : "ltr"}>
       <Header />
       
-      <main className="flex-1">
+      <main className="flex-1 pb-24 lg:pb-0">
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">

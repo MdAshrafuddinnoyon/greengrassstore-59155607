@@ -276,7 +276,7 @@ export default function Shop() {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 bg-gray-50 pb-24 lg:pb-0">
         {/* Hero Banner */}
         <div className="bg-gradient-to-br from-[#2d5a3d] to-[#1a3d28] text-white py-12 md:py-16">
           <div className="container mx-auto px-4 text-center">

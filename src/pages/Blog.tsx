@@ -83,7 +83,7 @@ export default function Blog() {
     <div className="min-h-screen flex flex-col bg-gray-50" dir={isArabic ? "rtl" : "ltr"}>
       <Header />
       
-      <main className="flex-1">
+      <main className="flex-1 pb-24 lg:pb-0">
         {/* Hero */}
         <div className="bg-gradient-to-br from-[#2d5a3d] via-[#234830] to-[#1a3d28] text-white py-16 md:py-24 relative overflow-hidden">
           {/* Background Pattern */}
