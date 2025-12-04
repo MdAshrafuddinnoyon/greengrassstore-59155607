@@ -1,72 +1,88 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
-import { CategorySection } from "@/components/home/CategorySection";
-import { ProductGrid } from "@/components/products/ProductGrid";
-import { FeaturedSection } from "@/components/home/FeaturedSection";
+import { ProductSection } from "@/components/products/ProductSection";
+import { CategoryBanner } from "@/components/home/CategoryBanner";
 import { PromoSection } from "@/components/home/PromoSection";
 import { GiftSection } from "@/components/home/GiftSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
-import { plantsProducts, potsProducts, vasesProducts } from "@/data/products";
-import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  plantsProducts,
+  potsProducts,
+  plantersProducts,
+  vasesProducts,
+  homecareProducts,
+} from "@/data/products";
 
 const Index = () => {
-  const { t } = useLanguage();
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
+        {/* Hero Section */}
         <HeroSection />
-        
-        <CategorySection />
-        
-        <ProductGrid
-          title={t("section.plants")}
-          subtitle="Best Sellers"
+
+        {/* PLANTS Section */}
+        <ProductSection
+          title="PLANTS"
+          subtitle="Indoor & Outdoor"
           products={plantsProducts}
           viewAllLink="/plants"
         />
 
-        <FeaturedSection
+        {/* POTS Banner */}
+        <CategoryBanner
+          title="POTS"
+          subtitle="Collection"
+          description="Beautiful containers in terracotta, ceramic, and modern designs for every plant"
+          image="https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=1200&q=80"
+          href="/pots"
           layout="left"
-          image="https://images.unsplash.com/photo-1463936575829-25148e1db1b8?w=1200&q=80"
-          title="Bring Nature Indoors"
-          subtitle="Indoor Plants"
-          description="Transform your living space with our curated collection of indoor plants. Perfect for apartments, offices, and homes in Dubai's climate."
-          ctaText="Shop Plants"
-          ctaLink="/plants"
+          bgColor="bg-secondary"
         />
 
-        <ProductGrid
-          title={t("section.pots")}
-          subtitle="New Arrivals"
+        {/* POTS Products */}
+        <ProductSection
+          title="POTS"
+          subtitle="Shop by Style"
           products={potsProducts}
           viewAllLink="/pots"
         />
 
-        <PromoSection />
+        {/* PLANTERS Banner */}
+        <CategoryBanner
+          title="PLANTERS"
+          subtitle="Elegant Displays"
+          description="From hanging planters to floor stands, find the perfect display for your greenery"
+          image="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=1200&q=80"
+          href="/planters"
+          layout="right"
+          bgColor="bg-muted"
+        />
 
-        <ProductGrid
-          title={t("section.vases")}
-          subtitle="Trending"
+        {/* VASES Section */}
+        <ProductSection
+          title="VASES"
+          subtitle="Decorative"
           products={vasesProducts}
           viewAllLink="/vases"
         />
 
-        <FeaturedSection
-          layout="right"
-          image="https://images.unsplash.com/photo-1509423350716-97f9360b4e09?w=1200&q=80"
-          title="Elegant Plant Displays"
-          subtitle="Planters Collection"
-          description="Discover our range of premium planters designed to complement any interior style, from modern minimalist to classic elegance."
-          ctaText="Shop Planters"
-          ctaLink="/planters"
-          bgColor="bg-muted"
+        {/* HOMECARE Section */}
+        <ProductSection
+          title="HOMECARE"
+          subtitle="Plant Care Essentials"
+          products={homecareProducts}
+          viewAllLink="/homecare"
         />
 
+        {/* November Sale Banner */}
+        <PromoSection />
+
+        {/* Gift Garden Section */}
         <GiftSection />
 
+        {/* Instagram Feed */}
         <InstagramSection />
       </main>
       <Footer />

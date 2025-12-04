@@ -32,12 +32,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div
-      className="product-card group"
+      className="group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      <div className="relative aspect-square overflow-hidden bg-[#f5f5f5] mb-3">
         <img
           src={product.image}
           alt={displayName}
@@ -61,15 +61,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         {product.badge && (
           <span
             className={cn(
-              "absolute top-3 left-3 px-2 py-1 text-[10px] uppercase tracking-wider font-medium",
+              "absolute top-2 left-2 px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium",
               product.badge === "sale" && "bg-red-500 text-white",
               product.badge === "new" && "bg-foreground text-background",
               product.badge === "soldOut" && "bg-muted text-muted-foreground"
             )}
           >
             {product.badge === "sale" && `-${discount}%`}
-            {product.badge === "new" && t("product.new")}
-            {product.badge === "soldOut" && t("product.soldOut")}
+            {product.badge === "new" && "NEW"}
+            {product.badge === "soldOut" && "SOLD OUT"}
           </span>
         )}
 
@@ -80,10 +80,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             setIsWishlisted(!isWishlisted);
           }}
           className={cn(
-            "absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
+            "absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
             isWishlisted
               ? "bg-red-500 text-white"
-              : "bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100"
+              : "bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100"
           )}
         >
           <Heart className={cn("w-4 h-4", isWishlisted && "fill-current")} />
@@ -92,38 +92,38 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         {/* Quick Actions */}
         <div
           className={cn(
-            "absolute bottom-0 left-0 right-0 p-3 flex gap-2 transition-all duration-300",
+            "absolute bottom-0 left-0 right-0 p-2 flex gap-2 transition-all duration-300",
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}
         >
           <button
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-foreground text-background text-xs uppercase tracking-wider font-medium hover:bg-foreground/90 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-foreground text-background text-[10px] uppercase tracking-wider font-medium hover:bg-foreground/90 transition-colors"
             disabled={product.badge === "soldOut"}
           >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            {t("product.addToCart")}
+            <ShoppingBag className="w-3 h-3" />
+            Add to Cart
           </button>
-          <button className="w-10 h-10 flex items-center justify-center bg-background hover:bg-muted transition-colors">
-            <Eye className="w-4 h-4" />
+          <button className="w-8 h-8 flex items-center justify-center bg-white hover:bg-gray-100 transition-colors">
+            <Eye className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {/* Product Info */}
-      <div className="p-4">
+      <div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
           {product.category}
         </p>
-        <h3 className="text-sm font-medium text-foreground mb-2 line-clamp-2">
+        <h3 className="text-sm font-normal text-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
           {displayName}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">
-            {t("common.currency")} {product.price.toLocaleString()}
+          <span className="text-sm">
+            AED {product.price}
           </span>
           {product.originalPrice && (
             <span className="text-xs text-muted-foreground line-through">
-              {t("common.currency")} {product.originalPrice.toLocaleString()}
+              AED {product.originalPrice}
             </span>
           )}
         </div>

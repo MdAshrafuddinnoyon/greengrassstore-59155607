@@ -34,7 +34,7 @@ export const Header = () => {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-foreground text-background text-xs py-2">
+      <div className="bg-foreground text-background text-[11px] py-2">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <span>Free delivery on orders over AED 200</span>
           <div className="flex items-center gap-4">
@@ -51,37 +51,37 @@ export const Header = () => {
 
       <header
         className={cn(
-          "sticky top-0 z-50 transition-all duration-300 bg-background",
+          "sticky top-0 z-50 transition-all duration-300 bg-background border-b border-border",
           isScrolled && "shadow-sm"
         )}
       >
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-16">
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 hover:bg-muted rounded transition-colors"
+              className="lg:hidden p-2 -ml-2 hover:bg-muted rounded transition-colors"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Logo */}
-            <a href="/" className="flex items-center gap-2">
-              <Leaf className="w-6 h-6 text-primary" />
+            <a href="/" className="flex items-center gap-1.5">
+              <Leaf className="w-5 h-5 text-primary" />
               <div className="flex flex-col leading-none">
-                <span className="font-display text-lg font-semibold tracking-wide">GREEN</span>
-                <span className="font-display text-lg font-semibold tracking-wide">GRASS</span>
+                <span className="text-xs font-semibold tracking-wider">GREEN</span>
+                <span className="text-xs font-semibold tracking-wider">GRASS</span>
               </div>
             </a>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-8">
+            <nav className="hidden lg:flex items-center gap-6">
               {navLinks.map((link) => (
                 <a
                   key={link.key}
                   href={link.href}
-                  className="nav-link"
+                  className="text-[11px] uppercase tracking-widest font-medium text-foreground/70 hover:text-foreground transition-colors"
                 >
                   {t(link.key)}
                 </a>
@@ -89,32 +89,32 @@ export const Header = () => {
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-1 md:gap-3">
+            <div className="flex items-center gap-1">
               <button
                 className="p-2 hover:bg-muted rounded transition-colors"
-                aria-label={t("common.search")}
+                aria-label="Search"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4" />
               </button>
               <button
                 className="hidden sm:flex p-2 hover:bg-muted rounded transition-colors"
                 aria-label="Wishlist"
               >
-                <Heart className="w-5 h-5" />
+                <Heart className="w-4 h-4" />
               </button>
               <button
                 className="hidden sm:flex p-2 hover:bg-muted rounded transition-colors"
-                aria-label={t("common.account")}
+                aria-label="Account"
               >
-                <User className="w-5 h-5" />
+                <User className="w-4 h-4" />
               </button>
               <button
                 className="relative p-2 hover:bg-muted rounded transition-colors"
-                aria-label={t("common.cart")}
+                aria-label="Cart"
               >
-                <ShoppingBag className="w-5 h-5" />
+                <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center">
                     {cartCount}
                   </span>
                 )}
@@ -141,21 +141,21 @@ export const Header = () => {
               exit={{ x: language === "ar" ? "100%" : "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className={cn(
-                "fixed top-0 bottom-0 w-[300px] bg-background z-50 lg:hidden shadow-xl",
+                "fixed top-0 bottom-0 w-[280px] bg-background z-50 lg:hidden shadow-xl",
                 language === "ar" ? "right-0" : "left-0"
               )}
             >
-              <div className="p-6">
+              <div className="p-5">
                 <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-2">
-                    <Leaf className="w-5 h-5 text-primary" />
-                    <span className="font-display text-lg font-semibold">GREEN GRASS</span>
+                  <div className="flex items-center gap-1.5">
+                    <Leaf className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-semibold tracking-wider">GREEN GRASS</span>
                   </div>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2 hover:bg-muted rounded"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
                 <nav className="space-y-1">
@@ -166,7 +166,7 @@ export const Header = () => {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="block py-3 px-4 text-sm uppercase tracking-widest font-medium hover:bg-muted rounded transition-colors"
+                      className="block py-3 px-3 text-sm uppercase tracking-widest font-medium hover:bg-muted rounded transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {t(link.key)}
