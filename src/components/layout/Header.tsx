@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Search, User, Globe, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,14 +9,14 @@ import { useCartStore } from "@/stores/cartStore";
 import logo from "@/assets/logo.jpg";
 
 const navLinks = [
-  { key: "nav.plants", href: "/plants", hasDropdown: true },
-  { key: "nav.trees", href: "/trees", hasDropdown: true, label: "Trees" },
-  { key: "nav.flowers", href: "/flowers", hasDropdown: false, label: "Flowers" },
-  { key: "nav.pots", href: "/pots", hasDropdown: true },
-  { key: "nav.greeneryBunch", href: "/greenary-bunch", hasDropdown: true, label: "Greenary Bunch" },
-  { key: "nav.hanging", href: "/hanging", hasDropdown: false, label: "Hanging" },
-  { key: "nav.grass", href: "/grass", hasDropdown: false, label: "Grass" },
-  { key: "nav.sale", href: "/sale", hasDropdown: false },
+  { key: "nav.plants", href: "/shop?category=plants", hasDropdown: true },
+  { key: "nav.trees", href: "/shop?category=trees", hasDropdown: true, label: "Trees" },
+  { key: "nav.flowers", href: "/shop?category=flowers", hasDropdown: false, label: "Flowers" },
+  { key: "nav.pots", href: "/shop?category=pots", hasDropdown: true },
+  { key: "nav.greeneryBunch", href: "/shop?category=greenary", hasDropdown: true, label: "Greenary Bunch" },
+  { key: "nav.hanging", href: "/shop?category=hanging", hasDropdown: false, label: "Hanging" },
+  { key: "nav.grass", href: "/shop?category=grass", hasDropdown: false, label: "Grass" },
+  { key: "nav.sale", href: "/shop?category=sale", hasDropdown: false },
 ];
 
 const announcements = [
@@ -25,6 +26,7 @@ const announcements = [
 ];
 
 export const Header = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,6 +58,15 @@ export const Header = () => {
 
   const prevAnnouncement = () => {
     setCurrentAnnouncement((prev) => (prev - 1 + announcements.length) % announcements.length);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+      setIsMobileMenuOpen(false);
+    }
   };
 
   return (
@@ -102,7 +113,7 @@ export const Header = () => {
             </button>
 
             {/* Search Bar - Left */}
-            <div className="hidden md:flex items-center flex-1 max-w-xs">
+            <form onSubmit={handleSearch} className="hidden md:flex items-center flex-1 max-w-xs">
               <div className="relative w-full">
                 <input
                   type="text"
@@ -111,11 +122,11 @@ export const Header = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-4 pr-10 py-2.5 bg-gray-100 border-0 rounded-md text-sm text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#2d5a3d]/20"
                 />
-                <button className="absolute right-0 top-0 h-full px-3 bg-gray-200 rounded-r-md hover:bg-gray-300 transition-colors">
+                <button type="submit" className="absolute right-0 top-0 h-full px-3 bg-gray-200 rounded-r-md hover:bg-gray-300 transition-colors">
                   <Search className="w-4 h-4 text-gray-600" />
                 </button>
               </div>
-            </div>
+            </form>
 
             {/* Logo - Center */}
             <a href="/" className="flex items-center justify-center flex-shrink-0 mx-4 lg:mx-8">
@@ -212,7 +223,7 @@ export const Header = () => {
                 </div>
 
                 {/* Mobile Search */}
-                <div className="relative mb-6">
+                <form onSubmit={handleSearch} className="relative mb-6">
                   <input
                     type="text"
                     placeholder="What are you looking for?"
@@ -220,10 +231,10 @@ export const Header = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-4 pr-10 py-2.5 bg-gray-100 border-0 rounded-md text-sm text-gray-700 placeholder:text-gray-500 focus:outline-none"
                   />
-                  <button className="absolute right-0 top-0 h-full px-3 bg-gray-200 rounded-r-md">
+                  <button type="submit" className="absolute right-0 top-0 h-full px-3 bg-gray-200 rounded-r-md">
                     <Search className="w-4 h-4 text-gray-600" />
                   </button>
-                </div>
+                </form>
 
                 <nav className="space-y-1">
                   {navLinks.map((link, index) => (
