@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author_name: string
+          category: string
+          content: string
+          content_ar: string | null
+          created_at: string
+          excerpt: string
+          excerpt_ar: string | null
+          featured_image: string | null
+          id: string
+          is_featured: boolean
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          reading_time: number
+          slug: string
+          status: string
+          tags: string[] | null
+          title: string
+          title_ar: string | null
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          author_name?: string
+          category?: string
+          content: string
+          content_ar?: string | null
+          created_at?: string
+          excerpt: string
+          excerpt_ar?: string | null
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          reading_time?: number
+          slug: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          title_ar?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          author_name?: string
+          category?: string
+          content?: string
+          content_ar?: string | null
+          created_at?: string
+          excerpt?: string
+          excerpt_ar?: string | null
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          reading_time?: number
+          slug?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          title_ar?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       custom_requirements: {
         Row: {
           admin_notes: string | null
