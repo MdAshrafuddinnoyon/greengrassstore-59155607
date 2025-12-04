@@ -2,9 +2,16 @@ import { useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+
+interface Category {
+  key: string;
+  label: string;
+  isParent?: boolean;
+}
 
 interface FilterProps {
-  categories: { key: string; label: string }[];
+  categories: Category[];
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
   priceRange: [number, number];
@@ -127,15 +134,26 @@ export const ProductFilters = ({
           <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${openSections.category ? "rotate-180" : ""}`} />
         </button>
         {openSections.category && (
-          <div className="px-4 pb-4 space-y-2">
+          <div className="px-4 pb-4 space-y-1">
             {categories.map((cat) => (
-              <label key={cat.key} className="flex items-center gap-3 cursor-pointer group">
+              <label 
+                key={cat.key} 
+                className={cn(
+                  "flex items-center gap-3 cursor-pointer group py-1.5",
+                  cat.isParent && "font-medium text-gray-900 mt-2 first:mt-0"
+                )}
+              >
                 <Checkbox
                   checked={selectedCategory === cat.key}
                   onCheckedChange={() => onCategoryChange(cat.key)}
                   className="border-gray-300 data-[state=checked]:bg-[#2d5a3d] data-[state=checked]:border-[#2d5a3d]"
                 />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">{cat.label}</span>
+                <span className={cn(
+                  "text-sm group-hover:text-gray-900",
+                  cat.isParent ? "text-gray-900 font-medium" : "text-gray-600 pl-2"
+                )}>
+                  {cat.label}
+                </span>
               </label>
             ))}
           </div>
