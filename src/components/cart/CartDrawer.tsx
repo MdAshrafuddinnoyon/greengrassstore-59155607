@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,7 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 
 const WHATSAPP_NUMBER = "971547751901"; // Green Grass Store WhatsApp
@@ -142,7 +143,7 @@ export const CartDrawer = () => {
                 </div>
               </div>
               
-              <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background">
+              <div className="flex-shrink-0 space-y-3 pt-4 border-t bg-background">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Total</span>
                   <span className="text-xl font-bold">
@@ -150,9 +151,21 @@ export const CartDrawer = () => {
                   </span>
                 </div>
                 
+                {/* View Full Cart */}
+                <Link to="/checkout" onClick={() => setIsOpen(false)}>
+                  <Button 
+                    variant="outline"
+                    className="w-full" 
+                    size="lg"
+                  >
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    View Full Cart
+                  </Button>
+                </Link>
+                
                 <Button 
                   onClick={handleCheckout}
-                  className="w-full" 
+                  className="w-full bg-[#2d5a3d] hover:bg-[#234830]" 
                   size="lg"
                   disabled={items.length === 0 || isLoading}
                 >
