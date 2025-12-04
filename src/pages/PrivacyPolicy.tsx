@@ -160,7 +160,7 @@ const PrivacyPolicy = () => {
               >
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Questions About Privacy?</h3>
                 <p className="text-gray-600 mb-4">
-                  Contact our privacy team at privacy@greengrassstore.com or call +971 50 123 4567
+                  Contact our privacy team at privacy@greengrassstore.com or call +971 54 775 1901
                 </p>
                 <a
                   href="/contact"

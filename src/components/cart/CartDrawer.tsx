@@ -12,7 +12,7 @@ import {
 import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 
-const WHATSAPP_NUMBER = "971501234567"; // Replace with actual WhatsApp number
+const WHATSAPP_NUMBER = "971547751901"; // Green Grass Store WhatsApp
 
 export const CartDrawer = () => {
   const [isOpen, setIsOpen] = useState(false);

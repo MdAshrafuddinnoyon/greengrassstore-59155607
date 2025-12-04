@@ -369,7 +369,7 @@ const ProductDetail = () => {
                   </Button>
 
                   <a
-                    href={`https://wa.me/971501234567?text=${encodeURIComponent(
+                    href={`https://wa.me/971547751901?text=${encodeURIComponent(
                       `Hi! I want to order:\n\n🛒 Product: ${product.title}\n${selectedVariant?.title !== "Default Title" ? `📦 Variant: ${selectedVariant?.title}\n` : ''}💰 Price: ${selectedVariant?.price.currencyCode} ${parseFloat(selectedVariant?.price.amount || "0").toFixed(2)}\n📊 Quantity: ${quantity}\n\nPlease confirm availability.`
                     )}`}
                     target="_blank"
