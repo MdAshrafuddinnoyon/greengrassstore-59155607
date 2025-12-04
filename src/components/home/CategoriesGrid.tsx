@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Flower2, Package, Shrub, Sparkles, Gift, Tag } from "lucide-react";
+import { Leaf, Flower2, Package, Shrub, Sparkles, Gift, Tag, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { fetchCollections, ShopifyCollection } from "@/lib/shopify";
 
-// Import images
+// Fallback images
 import ficusPlant from "@/assets/ficus-plant.jpg";
 import flowerPot from "@/assets/flower-pot.jpg";
 import bluePot from "@/assets/blue-pot.jpg";
@@ -12,68 +14,88 @@ import plantPot from "@/assets/plant-pot.jpg";
 import ikebana from "@/assets/ikebana.jpg";
 import gardenFlowers from "@/assets/garden-flowers.jpg";
 
+// Icon mapping for collections
+const iconMap: Record<string, typeof Leaf> = {
+  plants: Leaf,
+  flowers: Flower2,
+  pots: Package,
+  greenery: Shrub,
+  vases: Sparkles,
+  gifts: Gift,
+  sale: Tag,
+};
+
+// Fallback image mapping
+const fallbackImages: Record<string, string> = {
+  plants: ficusPlant,
+  flowers: flowerPot,
+  pots: plantPot,
+  greenery: hangingPlants,
+  vases: bluePot,
+  gifts: ikebana,
+  sale: gardenFlowers,
+};
+
+// Color mapping for collections
+const colorMap: Record<string, string> = {
+  plants: "from-green-600 to-green-800",
+  flowers: "from-pink-500 to-rose-600",
+  pots: "from-amber-600 to-orange-700",
+  greenery: "from-emerald-600 to-teal-700",
+  vases: "from-blue-600 to-indigo-700",
+  gifts: "from-purple-600 to-violet-700",
+  sale: "from-red-500 to-rose-600",
+};
+
 export const CategoriesGrid = () => {
   const { t } = useLanguage();
+  const [collections, setCollections] = useState<ShopifyCollection[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    {
-      name: t("nav.plants"),
-      icon: Leaf,
-      image: ficusPlant,
-      href: "/shop?category=plants",
-      description: t("category.indoorOutdoor"),
-      color: "from-green-600 to-green-800",
-    },
-    {
-      name: t("nav.flowers"),
-      icon: Flower2,
-      image: flowerPot,
-      href: "/shop?category=flowers",
-      description: t("category.freshArtificial"),
-      color: "from-pink-500 to-rose-600",
-    },
-    {
-      name: t("nav.pots"),
-      icon: Package,
-      image: plantPot,
-      href: "/shop?category=pots",
-      description: t("category.allStyles"),
-      color: "from-amber-600 to-orange-700",
-    },
-    {
-      name: t("nav.greenery"),
-      icon: Shrub,
-      image: hangingPlants,
-      href: "/shop?category=greenery",
-      description: t("category.wallsBunches"),
-      color: "from-emerald-600 to-teal-700",
-    },
-    {
-      name: t("nav.vases"),
-      icon: Sparkles,
-      image: bluePot,
-      href: "/shop?category=vases",
-      description: t("category.decorative"),
-      color: "from-blue-600 to-indigo-700",
-    },
-    {
-      name: t("nav.gifts"),
-      icon: Gift,
-      image: ikebana,
-      href: "/shop?category=gifts",
-      description: t("category.giftSets"),
-      color: "from-purple-600 to-violet-700",
-    },
-    {
-      name: t("nav.sale"),
-      icon: Tag,
-      image: gardenFlowers,
-      href: "/shop?category=sale",
-      description: t("category.upTo40"),
-      color: "from-red-500 to-rose-600",
-      isSale: true,
-    },
-  ];
+  useEffect(() => {
+    const loadCollections = async () => {
+      try {
+        const data = await fetchCollections(20);
+        setCollections(data);
+      } catch (error) {
+        console.error("Failed to fetch collections:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCollections();
+  }, []);
+
+  // Map collections to display data
+  const categories = collections.map((collection) => {
+    const handle = collection.node.handle.toLowerCase();
+    const isSale = handle === "sale" || handle.includes("sale");
+    
+    return {
+      name: collection.node.title,
+      handle: handle,
+      icon: iconMap[handle] || Leaf,
+      image: collection.node.image?.url || fallbackImages[handle] || ficusPlant,
+      href: `/shop?category=${handle}`,
+      description: collection.node.description || "",
+      color: colorMap[handle] || "from-green-600 to-green-800",
+      isSale,
+    };
+  });
+
+  if (loading) {
+    return (
+      <section className="py-8 md:py-16 bg-white">
+        <div className="container mx-auto px-4 flex justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </section>
+    );
+  }
+
+  if (categories.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-8 md:py-16 bg-white">
@@ -98,7 +120,7 @@ export const CategoriesGrid = () => {
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
             {categories.map((category, index) => (
               <motion.div
-                key={category.name}
+                key={category.handle}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -129,11 +151,11 @@ export const CategoriesGrid = () => {
           </div>
         </div>
 
-        {/* Desktop Grid - Large cards */}
-        <div className="hidden md:grid grid-cols-7 gap-4">
+        {/* Desktop Grid - Dynamic columns based on count */}
+        <div className={`hidden md:grid gap-4 ${categories.length <= 4 ? 'grid-cols-4' : categories.length <= 6 ? 'grid-cols-6' : 'grid-cols-7'}`}>
           {categories.map((category, index) => (
             <motion.div
-              key={category.name}
+              key={category.handle}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
@@ -152,7 +174,9 @@ export const CategoriesGrid = () => {
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
                   <category.icon className="w-8 h-8 mb-2 drop-shadow-lg" />
                   <h3 className="font-semibold text-sm text-center drop-shadow-lg">{category.name}</h3>
-                  <p className="text-[10px] text-white/80 text-center mt-1">{category.description}</p>
+                  {category.description && (
+                    <p className="text-[10px] text-white/80 text-center mt-1 line-clamp-2">{category.description}</p>
+                  )}
                 </div>
                 {category.isSale && (
                   <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
