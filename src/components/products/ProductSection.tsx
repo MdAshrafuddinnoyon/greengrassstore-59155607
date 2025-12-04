@@ -18,7 +18,7 @@ export const ProductSection = ({
   columns = 4,
 }: ProductSectionProps) => {
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-10 md:py-14 bg-white">
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div
@@ -26,21 +26,21 @@ export const ProductSection = ({
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="mb-8"
+          className="mb-6"
         >
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+              <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-1">
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-sm text-muted-foreground">{subtitle}</p>
+                <p className="text-sm text-gray-600">{subtitle}</p>
               )}
             </div>
             {viewAllLink && (
               <a
                 href={viewAllLink}
-                className="hidden md:flex items-center gap-2 text-xs uppercase tracking-widest font-medium hover:text-primary transition-colors"
+                className="hidden md:flex items-center gap-2 text-xs uppercase tracking-widest font-medium text-gray-900 hover:text-green-700 transition-colors"
               >
                 View All
                 <ArrowRight className="w-3 h-3" />
@@ -73,7 +73,7 @@ export const ProductSection = ({
           <div className="mt-6 text-center md:hidden">
             <a
               href={viewAllLink}
-              className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-medium"
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-medium text-gray-900"
             >
               View All
               <ArrowRight className="w-3 h-3" />

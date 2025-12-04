@@ -1,35 +1,44 @@
 import { motion } from "framer-motion";
 import { Instagram } from "lucide-react";
+import gardenFlowers from "@/assets/garden-flowers.jpg";
+import plantPot from "@/assets/plant-pot.jpg";
+import hangingPlants from "@/assets/hanging-plants.jpg";
+import ikebana from "@/assets/ikebana.jpg";
+import ficusPlant from "@/assets/ficus-plant.jpg";
+import bluePot from "@/assets/blue-pot.jpg";
 
 const instagramImages = [
-  "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=400&q=80",
-  "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&q=80",
-  "https://images.unsplash.com/photo-1509423350716-97f9360b4e09?w=400&q=80",
-  "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=400&q=80",
-  "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80",
-  "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=400&q=80",
+  gardenFlowers,
+  plantPot,
+  hangingPlants,
+  ikebana,
+  ficusPlant,
+  bluePot,
 ];
 
 export const InstagramSection = () => {
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-12 md:py-16 bg-[#f8f8f5]">
       <div className="container mx-auto px-4 mb-8 text-center">
         <a
-          href="https://instagram.com/greengrass.ae"
+          href="https://instagram.com/greengrassstore"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm uppercase tracking-widest font-medium hover:text-primary transition-colors"
+          className="inline-flex items-center gap-2 text-sm uppercase tracking-widest font-medium text-gray-700 hover:text-green-700 transition-colors"
         >
           <Instagram className="w-5 h-5" />
-          @greengrass.ae
+          @greengrassstore
         </a>
+        <h2 className="font-display text-2xl md:text-3xl font-normal text-gray-900 mt-2">
+          GREEN GRASS
+        </h2>
       </div>
       
       <div className="grid grid-cols-3 md:grid-cols-6 gap-1">
         {instagramImages.map((image, index) => (
           <motion.a
             key={index}
-            href="https://instagram.com/greengrass.ae"
+            href="https://instagram.com/greengrassstore"
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0 }}
@@ -43,8 +52,8 @@ export const InstagramSection = () => {
               alt={`Instagram post ${index + 1}`}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors duration-300 flex items-center justify-center">
-              <Instagram className="w-6 h-6 text-background opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+              <Instagram className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           </motion.a>
         ))}

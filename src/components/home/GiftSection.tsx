@@ -1,63 +1,86 @@
 import { motion } from "framer-motion";
-import { Gift, ArrowRight } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { ArrowRight } from "lucide-react";
+import ikebana from "@/assets/ikebana.jpg";
+import flowerPot from "@/assets/flower-pot.jpg";
+import ficusPlant from "@/assets/ficus-plant.jpg";
+
+const giftItems = [
+  {
+    id: 1,
+    name: "Garden Gift Set",
+    price: 199,
+    image: ikebana,
+  },
+  {
+    id: 2,
+    name: "Plant Lover Bundle",
+    price: 149,
+    image: flowerPot,
+  },
+  {
+    id: 3,
+    name: "Indoor Oasis Kit",
+    price: 249,
+    image: ficusPlant,
+  },
+];
 
 export const GiftSection = () => {
-  const { t } = useLanguage();
-
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-12 md:py-16 bg-white">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          {/* Images */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="grid grid-cols-2 gap-4"
-          >
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600&q=80"
-                alt="Gift plant"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="aspect-[3/4] overflow-hidden mt-8">
-              <img
-                src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80"
-                alt="Gift arrangement"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-center mb-10"
+        >
+          <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+            Perfect Presents
+          </p>
+          <h2 className="font-display text-2xl md:text-3xl font-normal text-gray-900 mb-3">
+            Gift Garden
+          </h2>
+          <p className="text-gray-600 max-w-md mx-auto text-sm">
+            Thoughtfully curated gift sets for plant lovers
+          </p>
+        </motion.div>
 
-          {/* Content */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="text-center md:text-left"
-          >
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
-              <Gift className="w-6 h-6" />
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-normal mb-4">
-              {t("gift.title")}
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto md:mx-0">
-              {t("gift.subtitle")}. {t("gift.desc")}
-            </p>
-            <a
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {giftItems.map((item, index) => (
+            <motion.a
+              key={item.id}
               href="/gifts"
-              className="inline-flex items-center gap-2 bg-foreground text-background px-8 py-3 text-sm uppercase tracking-widest font-medium hover:bg-foreground/90 transition-colors"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              viewport={{ once: true }}
+              className="group"
             >
-              Shop Gifts
-              <ArrowRight className="w-4 h-4" />
-            </a>
-          </motion.div>
+              <div className="aspect-square overflow-hidden bg-[#f5f5f5] mb-3">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <h3 className="text-sm font-normal text-gray-900 mb-1 group-hover:text-green-700 transition-colors">
+                {item.name}
+              </h3>
+              <p className="text-sm text-gray-600">AED {item.price}</p>
+            </motion.a>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <a
+            href="/gifts"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-medium text-gray-900 hover:text-green-700 transition-colors"
+          >
+            View All Gifts
+            <ArrowRight className="w-3 h-3" />
+          </a>
         </div>
       </div>
     </section>

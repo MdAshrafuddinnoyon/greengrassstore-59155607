@@ -9,7 +9,6 @@ interface CategoryBannerProps {
   href: string;
   layout?: "left" | "right" | "center";
   bgColor?: string;
-  textColor?: string;
 }
 
 export const CategoryBanner = ({
@@ -19,18 +18,17 @@ export const CategoryBanner = ({
   image,
   href,
   layout = "left",
-  bgColor = "bg-muted",
-  textColor = "text-foreground",
+  bgColor = "bg-[#f5f5f0]",
 }: CategoryBannerProps) => {
   if (layout === "center") {
     return (
-      <section className="relative h-[400px] md:h-[500px] overflow-hidden">
+      <section className="relative h-[350px] md:h-[450px] overflow-hidden">
         <img
           src={image}
           alt={title}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 flex items-center justify-center text-center text-white">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -39,22 +37,22 @@ export const CategoryBanner = ({
             viewport={{ once: true }}
           >
             {subtitle && (
-              <p className="text-sm uppercase tracking-widest mb-2 text-white/80">
+              <p className="text-xs uppercase tracking-widest mb-2 text-white/80">
                 {subtitle}
               </p>
             )}
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-normal mb-4">
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal mb-4">
               {title}
             </h2>
             {description && (
-              <p className="text-white/80 mb-6 max-w-md mx-auto">{description}</p>
+              <p className="text-white/80 mb-6 max-w-md mx-auto text-sm">{description}</p>
             )}
             <a
               href={href}
-              className="inline-flex items-center gap-2 bg-white text-black px-8 py-3 text-sm uppercase tracking-widest font-medium hover:bg-white/90 transition-colors"
+              className="inline-flex items-center gap-2 bg-white text-black px-6 py-2.5 text-xs uppercase tracking-widest font-medium hover:bg-white/90 transition-colors"
             >
               Shop Now
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3 h-3" />
             </a>
           </motion.div>
         </div>
@@ -65,11 +63,7 @@ export const CategoryBanner = ({
   return (
     <section className={bgColor}>
       <div className="container mx-auto px-4">
-        <div
-          className={`grid md:grid-cols-2 gap-8 items-center py-12 md:py-0 ${
-            layout === "right" ? "" : ""
-          }`}
-        >
+        <div className="grid md:grid-cols-2 gap-6 items-center py-10 md:py-0">
           {/* Image */}
           <motion.div
             initial={{ opacity: 0, x: layout === "left" ? -30 : 30 }}
@@ -78,7 +72,7 @@ export const CategoryBanner = ({
             viewport={{ once: true }}
             className={layout === "right" ? "md:order-2" : "md:order-1"}
           >
-            <div className="aspect-[4/3] md:aspect-[4/5] overflow-hidden">
+            <div className="aspect-[4/3] overflow-hidden">
               <img
                 src={image}
                 alt={title}
@@ -93,27 +87,27 @@ export const CategoryBanner = ({
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
-            className={`py-8 md:py-16 ${textColor} ${
+            className={`py-6 md:py-12 ${
               layout === "right" ? "md:order-1" : "md:order-2"
             }`}
           >
             {subtitle && (
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+              <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">
                 {subtitle}
               </p>
             )}
-            <h2 className="font-display text-3xl md:text-4xl font-normal mb-4">
+            <h2 className="font-display text-2xl md:text-3xl font-normal mb-3 text-gray-900">
               {title}
             </h2>
             {description && (
-              <p className="text-muted-foreground mb-6 max-w-md">{description}</p>
+              <p className="text-gray-600 mb-5 max-w-md text-sm">{description}</p>
             )}
             <a
               href={href}
-              className="inline-flex items-center gap-2 text-sm uppercase tracking-widest font-medium hover:gap-3 transition-all"
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-medium text-gray-900 hover:gap-3 transition-all"
             >
               Shop Now
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3 h-3" />
             </a>
           </motion.div>
         </div>

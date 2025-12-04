@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import heroChair from "@/assets/hero-chair.jpg";
+import plantPot from "@/assets/plant-pot.jpg";
 
 export const HeroSection = () => {
   const { t } = useLanguage();
@@ -10,9 +11,9 @@ export const HeroSection = () => {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1920&q=80"
+          src={plantPot}
           alt="Plants background"
-          className="w-full h-full object-cover opacity-30"
+          className="w-full h-full object-cover opacity-40"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a120a] via-[#0a120a]/80 to-transparent" />
       </div>
@@ -26,7 +27,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.8 }}
             className="text-white py-12 md:py-0"
           >
-            <p className="text-xs text-white/40 mb-4 tracking-wide">
+            <p className="text-xs text-white/50 mb-4 tracking-wide">
               Plants, Planters & Pots Online Store to beautify homes!
             </p>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-normal leading-tight mb-8 text-white">
@@ -34,10 +35,10 @@ export const HeroSection = () => {
             </h1>
             
             <div className="space-y-4">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-white/30 block">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 block">
                 PLANTS
               </span>
-              <p className="text-white/50 text-sm max-w-sm leading-relaxed">
+              <p className="text-white/60 text-sm max-w-sm leading-relaxed">
                 Curated collection of indoor and outdoor plants perfect for Dubai's climate
               </p>
               <a

@@ -14,9 +14,16 @@ import {
   homecareProducts,
 } from "@/data/products";
 
+// Import category banner images
+import heroChair from "@/assets/hero-chair.jpg";
+import hangingPlants from "@/assets/hanging-plants.jpg";
+import womanPlant from "@/assets/woman-plant.jpg";
+import bluePot from "@/assets/blue-pot.jpg";
+import ikebana from "@/assets/ikebana.jpg";
+
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <Header />
       <main>
         {/* Hero Section */}
@@ -34,11 +41,11 @@ const Index = () => {
         <CategoryBanner
           title="POTS"
           subtitle="Collection"
-          description="Beautiful containers in terracotta, ceramic, and modern designs for every plant"
-          image="https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=1200&q=80"
+          description="Beautiful containers in terracotta, ceramic, and modern designs"
+          image={heroChair}
           href="/pots"
           layout="left"
-          bgColor="bg-secondary"
+          bgColor="bg-[#f8f8f5]"
         />
 
         {/* POTS Products */}
@@ -53,19 +60,11 @@ const Index = () => {
         <CategoryBanner
           title="PLANTERS"
           subtitle="Elegant Displays"
-          description="From hanging planters to floor stands, find the perfect display for your greenery"
-          image="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=1200&q=80"
+          description="From hanging planters to floor stands"
+          image={hangingPlants}
           href="/planters"
           layout="right"
-          bgColor="bg-muted"
-        />
-
-        {/* VASES Section */}
-        <ProductSection
-          title="VASES"
-          subtitle="Decorative"
-          products={vasesProducts}
-          viewAllLink="/vases"
+          bgColor="bg-[#f0f4f0]"
         />
 
         {/* HOMECARE Section */}
@@ -74,6 +73,34 @@ const Index = () => {
           subtitle="Plant Care Essentials"
           products={homecareProducts}
           viewAllLink="/homecare"
+        />
+
+        {/* VASES Banner */}
+        <CategoryBanner
+          title="VASES"
+          subtitle="Decorative"
+          description="Elegant vases for every style"
+          image={bluePot}
+          href="/vases"
+          layout="center"
+        />
+
+        {/* VASES Products */}
+        <ProductSection
+          title="VASES"
+          subtitle="Decorative"
+          products={vasesProducts}
+          viewAllLink="/vases"
+        />
+
+        {/* Homecare Banner */}
+        <CategoryBanner
+          title="Homecare"
+          subtitle="Essential Care"
+          description="Everything you need to keep your plants healthy"
+          image={womanPlant}
+          href="/homecare"
+          layout="center"
         />
 
         {/* November Sale Banner */}

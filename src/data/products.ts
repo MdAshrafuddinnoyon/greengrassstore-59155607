@@ -1,13 +1,22 @@
 import { Product } from "@/components/products/ProductCard";
 
+// Import all product images
+import gardenFlowers from "@/assets/garden-flowers.jpg";
+import plantPot from "@/assets/plant-pot.jpg";
+import hangingPlants from "@/assets/hanging-plants.jpg";
+import ikebana from "@/assets/ikebana.jpg";
+import ficusPlant from "@/assets/ficus-plant.jpg";
+import womanPlant from "@/assets/woman-plant.jpg";
+import bluePot from "@/assets/blue-pot.jpg";
+import flowerPot from "@/assets/flower-pot.jpg";
+
 export const plantsProducts: Product[] = [
   {
     id: "plant-1",
     name: "Fern Plant in Ceramic Pot",
     nameAr: "نبات السرخس في إناء سيراميك",
     price: 89,
-    image: "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600&q=80",
-    hoverImage: "https://images.unsplash.com/photo-1463936575829-25148e1db1b8?w=600&q=80",
+    image: gardenFlowers,
     category: "Indoor Plants",
   },
   {
@@ -16,7 +25,7 @@ export const plantsProducts: Product[] = [
     nameAr: "مجموعة حديقة العصارة",
     price: 149,
     originalPrice: 179,
-    image: "https://images.unsplash.com/photo-1509423350716-97f9360b4e09?w=600&q=80",
+    image: plantPot,
     category: "Succulents",
     badge: "sale",
   },
@@ -25,7 +34,7 @@ export const plantsProducts: Product[] = [
     name: "Snake Plant Sansevieria",
     nameAr: "نبات الثعبان سانسيفيريا",
     price: 199,
-    image: "https://images.unsplash.com/photo-1593482892540-9e6d7b52e25e?w=600&q=80",
+    image: hangingPlants,
     category: "Indoor Plants",
     badge: "new",
   },
@@ -34,7 +43,7 @@ export const plantsProducts: Product[] = [
     name: "Monstera Deliciosa",
     nameAr: "مونستيرا ديليسيوسا",
     price: 349,
-    image: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=600&q=80",
+    image: ficusPlant,
     category: "Indoor Plants",
   },
 ];
@@ -45,7 +54,7 @@ export const potsProducts: Product[] = [
     name: "Terracotta Classic Round",
     nameAr: "تيراكوتا كلاسيكي مستدير",
     price: 45,
-    image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=600&q=80",
+    image: bluePot,
     category: "Terracotta",
   },
   {
@@ -53,7 +62,7 @@ export const potsProducts: Product[] = [
     name: "White Ceramic Planter",
     nameAr: "مزهرية سيراميك بيضاء",
     price: 89,
-    image: "https://images.unsplash.com/photo-1602081116037-a4f2f4ec76f9?w=600&q=80",
+    image: flowerPot,
     category: "Ceramic",
     badge: "new",
   },
@@ -63,7 +72,7 @@ export const potsProducts: Product[] = [
     nameAr: "مجموعة أواني سوداء حديثة",
     price: 129,
     originalPrice: 159,
-    image: "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=600&q=80",
+    image: womanPlant,
     category: "Modern",
     badge: "sale",
   },
@@ -72,7 +81,7 @@ export const potsProducts: Product[] = [
     name: "Geometric Concrete Planter",
     nameAr: "مزهرية خرسانية هندسية",
     price: 75,
-    image: "https://images.unsplash.com/photo-1509423350716-97f9360b4e09?w=600&q=80",
+    image: ikebana,
     category: "Concrete",
   },
 ];
@@ -83,7 +92,7 @@ export const plantersProducts: Product[] = [
     name: "Woven Basket Planter",
     nameAr: "مزهرية سلة منسوجة",
     price: 119,
-    image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80",
+    image: hangingPlants,
     category: "Natural",
   },
   {
@@ -91,7 +100,7 @@ export const plantersProducts: Product[] = [
     name: "Hanging Macrame Planter",
     nameAr: "مزهرية مكرمية معلقة",
     price: 79,
-    image: "https://images.unsplash.com/photo-1463936575829-25148e1db1b8?w=600&q=80",
+    image: gardenFlowers,
     category: "Hanging",
     badge: "new",
   },
@@ -101,7 +110,7 @@ export const plantersProducts: Product[] = [
     nameAr: "حامل نباتات خشبي",
     price: 199,
     originalPrice: 249,
-    image: "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600&q=80",
+    image: ficusPlant,
     category: "Wood",
     badge: "sale",
   },
@@ -113,7 +122,7 @@ export const vasesProducts: Product[] = [
     name: "Clear Glass Bubble Vase",
     nameAr: "مزهرية زجاجية فقاعية شفافة",
     price: 159,
-    image: "https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=600&q=80",
+    image: bluePot,
     category: "Glass",
   },
   {
@@ -121,7 +130,7 @@ export const vasesProducts: Product[] = [
     name: "Blue Textured Ceramic",
     nameAr: "سيراميك أزرق منقوش",
     price: 199,
-    image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=600&q=80",
+    image: ikebana,
     category: "Ceramic",
     badge: "new",
   },
@@ -131,7 +140,7 @@ export const vasesProducts: Product[] = [
     nameAr: "مجموعة مزهريات بحافة ذهبية",
     price: 249,
     originalPrice: 299,
-    image: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?w=600&q=80",
+    image: flowerPot,
     category: "Decorative",
     badge: "sale",
   },
@@ -140,7 +149,7 @@ export const vasesProducts: Product[] = [
     name: "Minimalist White Vase",
     nameAr: "مزهرية بيضاء بسيطة",
     price: 129,
-    image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+    image: womanPlant,
     category: "Minimalist",
   },
 ];
@@ -151,7 +160,7 @@ export const homecareProducts: Product[] = [
     name: "Brass Plant Mister",
     nameAr: "بخاخ نباتات نحاسي",
     price: 69,
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80",
+    image: bluePot,
     category: "Tools",
   },
   {
@@ -159,7 +168,7 @@ export const homecareProducts: Product[] = [
     name: "Organic Plant Food",
     nameAr: "غذاء نباتي عضوي",
     price: 35,
-    image: "https://images.unsplash.com/photo-1591958911259-bee2173bdccc?w=600&q=80",
+    image: gardenFlowers,
     category: "Care",
     badge: "new",
   },
@@ -169,7 +178,7 @@ export const homecareProducts: Product[] = [
     nameAr: "مجموعة أدوات الحديقة",
     price: 149,
     originalPrice: 189,
-    image: "https://images.unsplash.com/photo-1617576683096-00fc8eecb3af?w=600&q=80",
+    image: womanPlant,
     category: "Tools",
     badge: "sale",
   },
@@ -178,7 +187,7 @@ export const homecareProducts: Product[] = [
     name: "Copper Watering Can",
     nameAr: "إبريق سقي نحاسي",
     price: 99,
-    image: "https://images.unsplash.com/photo-1559070169-a3077159ee16?w=600&q=80",
+    image: ficusPlant,
     category: "Tools",
   },
 ];
