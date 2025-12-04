@@ -139,6 +139,9 @@ export const PRODUCT_BY_HANDLE_QUERY = `
       title
       description
       handle
+      productType
+      vendor
+      tags
       priceRange {
         minVariantPrice {
           amount
@@ -159,6 +162,10 @@ export const PRODUCT_BY_HANDLE_QUERY = `
             id
             title
             price {
+              amount
+              currencyCode
+            }
+            compareAtPrice {
               amount
               currencyCode
             }
