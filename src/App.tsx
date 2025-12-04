@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { WhatsAppButton } from "@/components/chat/WhatsAppButton";
 import { SalesAgent } from "@/components/chat/SalesAgent";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import Shop from "./pages/Shop";
@@ -45,6 +46,7 @@ const App = () => (
           </Routes>
           <WhatsAppButton />
           <SalesAgent />
+          <MobileBottomNav />
         </BrowserRouter>
       </TooltipProvider>
     </LanguageProvider>

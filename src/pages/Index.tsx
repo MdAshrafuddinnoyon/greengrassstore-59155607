@@ -18,9 +18,9 @@ import ficusPlant from "@/assets/ficus-plant.jpg";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <Header />
-      <main>
+      <main className="pb-16 md:pb-0">
         {/* Hero Section */}
         <HeroSection />
 
@@ -38,7 +38,7 @@ const Index = () => {
           image={ficusPlant}
           href="/shop?category=plants"
           layout="left"
-          bgColor="bg-[#f8f8f5]"
+          bgColor="bg-secondary"
         />
 
         {/* POTS Banner */}
@@ -49,7 +49,7 @@ const Index = () => {
           image={plantPot}
           href="/shop?category=pots"
           layout="right"
-          bgColor="bg-[#f0f4f0]"
+          bgColor="bg-accent"
         />
 
         {/* Sale Banner */}
@@ -73,7 +73,7 @@ const Index = () => {
           image={bluePot}
           href="/shop?category=vases"
           layout="left"
-          bgColor="bg-[#f5f5f0]"
+          bgColor="bg-muted"
         />
 
         {/* Hanging Plants Banner */}

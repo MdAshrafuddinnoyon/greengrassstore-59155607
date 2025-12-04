@@ -31,30 +31,61 @@ const giftItems = [
 
 export const GiftSection = () => {
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-b from-white to-[#f8f8f5]">
+    <section className="py-8 md:py-16 bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          className="text-center mb-6 md:mb-10"
         >
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Gift className="w-5 h-5 text-[#2d5a3d]" />
-            <p className="text-[10px] uppercase tracking-widest text-[#2d5a3d] font-semibold">
+            <Gift className="w-4 md:w-5 h-4 md:h-5 text-primary" />
+            <p className="text-[10px] uppercase tracking-widest text-primary font-semibold">
               Perfect Presents
             </p>
           </div>
-          <h2 className="font-display text-2xl md:text-3xl font-normal text-gray-900 mb-3">
+          <h2 className="font-display text-xl md:text-3xl font-normal text-foreground mb-2 md:mb-3">
             Gift Garden
           </h2>
-          <p className="text-gray-600 max-w-md mx-auto text-sm">
+          <p className="text-muted-foreground max-w-md mx-auto text-xs md:text-sm">
             Thoughtfully curated gift sets for plant lovers
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Mobile Horizontal Scroll */}
+        <div className="md:hidden -mx-4 px-4">
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+            {giftItems.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="snap-start flex-shrink-0 w-[200px]"
+              >
+                <Link to={item.href} className="group block">
+                  <div className="aspect-square overflow-hidden bg-muted rounded-2xl mb-2">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <h3 className="text-sm font-medium text-foreground mb-1 line-clamp-1">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm font-bold text-primary">AED {item.price}</p>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Grid */}
+        <div className="hidden md:grid grid-cols-3 gap-6">
           {giftItems.map((item, index) => (
             <motion.div
               key={item.id}
@@ -67,26 +98,26 @@ export const GiftSection = () => {
                 to={item.href}
                 className="group block"
               >
-                <div className="aspect-square overflow-hidden bg-[#f5f5f5] rounded-xl mb-3">
+                <div className="aspect-square overflow-hidden bg-muted rounded-xl mb-3">
                   <img
                     src={item.image}
                     alt={item.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
-                <h3 className="text-sm font-medium text-gray-900 mb-1 group-hover:text-[#2d5a3d] transition-colors">
+                <h3 className="text-sm font-medium text-foreground mb-1 group-hover:text-primary transition-colors">
                   {item.name}
                 </h3>
-                <p className="text-sm text-gray-600">AED {item.price}</p>
+                <p className="text-sm font-bold text-foreground">AED {item.price}</p>
               </Link>
             </motion.div>
           ))}
         </div>
 
-        <div className="text-center mt-8">
+        <div className="text-center mt-6 md:mt-8">
           <Link
             to="/shop?category=gifts"
-            className="inline-flex items-center gap-2 bg-[#2d5a3d] text-white px-6 py-3 rounded-full text-xs uppercase tracking-widest font-medium hover:bg-[#234a31] transition-colors"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2.5 md:py-3 rounded-full text-xs uppercase tracking-widest font-medium hover:bg-primary/90 transition-colors"
           >
             <Gift className="w-4 h-4" />
             View All Gifts

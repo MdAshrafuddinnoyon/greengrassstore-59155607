@@ -73,22 +73,58 @@ const categories = [
 
 export const CategoriesGrid = () => {
   return (
-    <section className="py-12 md:py-16 bg-white">
+    <section className="py-8 md:py-16 bg-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          className="text-center mb-8 md:mb-10"
         >
-          <p className="text-xs uppercase tracking-widest text-[#2d5a3d] font-semibold mb-2">
+          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
             Browse by Category
           </p>
-          <h2 className="font-display text-2xl md:text-3xl font-normal text-gray-900">
+          <h2 className="font-display text-2xl md:text-3xl font-normal text-foreground">
             Shop Our Collections
           </h2>
         </motion.div>
+
+        {/* Mobile Categories - App Style Scrollable */}
+        <div className="md:hidden -mx-4 px-4">
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+            {categories.map((category, index) => (
+              <motion.div
+                key={category.name}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                viewport={{ once: true }}
+                className="snap-start"
+              >
+                <Link
+                  to={category.href}
+                  className="group flex flex-col items-center w-20"
+                >
+                  <div className={`relative w-16 h-16 rounded-2xl overflow-hidden mb-2 shadow-lg ${category.isSale ? 'ring-2 ring-red-500' : ''}`}>
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-50`} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <category.icon className="w-6 h-6 text-white drop-shadow-lg" />
+                    </div>
+                  </div>
+                  <span className={`text-xs font-medium text-center ${category.isSale ? 'text-red-500' : 'text-foreground'}`}>
+                    {category.name}
+                  </span>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
 
         {/* Desktop Grid - Large cards */}
         <div className="hidden md:grid grid-cols-7 gap-4">
@@ -125,54 +161,21 @@ export const CategoriesGrid = () => {
           ))}
         </div>
 
-        {/* Mobile Grid - Smaller cards */}
-        <div className="md:hidden grid grid-cols-3 gap-3">
-          {categories.slice(0, 6).map((category, index) => (
-            <motion.div
-              key={category.name}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              viewport={{ once: true }}
-            >
-              <Link
-                to={category.href}
-                className="group block relative aspect-square rounded-xl overflow-hidden"
-              >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-70`} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
-                  <category.icon className="w-6 h-6 mb-1" />
-                  <h3 className="font-semibold text-xs text-center">{category.name}</h3>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Mobile Sale Banner */}
-        <div className="md:hidden mt-4">
+        {/* Mobile Quick Actions */}
+        <div className="md:hidden mt-6 grid grid-cols-2 gap-3">
           <Link
             to="/shop?category=sale"
-            className="block relative h-24 rounded-xl overflow-hidden"
+            className="relative h-20 rounded-2xl overflow-hidden bg-gradient-to-r from-red-500 to-rose-600 flex items-center justify-center"
           >
-            <img
-              src={gardenFlowers}
-              alt="Sale"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-red-600/80 to-rose-600/80" />
-            <div className="absolute inset-0 flex items-center justify-center gap-3">
-              <Tag className="w-6 h-6 text-white" />
-              <div className="text-white">
-                <p className="font-bold text-lg">SALE - Up to 40% Off</p>
-                <p className="text-xs text-white/80">Limited Time Offer</p>
-              </div>
-            </div>
+            <Tag className="w-5 h-5 text-white mr-2" />
+            <span className="text-white font-semibold text-sm">Sale 40% Off</span>
+          </Link>
+          <Link
+            to="/shop?sort=newest"
+            className="relative h-20 rounded-2xl overflow-hidden bg-gradient-to-r from-primary to-emerald-700 flex items-center justify-center"
+          >
+            <Sparkles className="w-5 h-5 text-white mr-2" />
+            <span className="text-white font-semibold text-sm">New Arrivals</span>
           </Link>
         </div>
       </div>

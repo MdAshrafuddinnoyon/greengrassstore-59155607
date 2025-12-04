@@ -1,0 +1,69 @@
+import { Link, useLocation } from "react-router-dom";
+import { Home, Search, ShoppingBag, User, Grid3X3 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useCartStore } from "@/stores/cartStore";
+import { motion } from "framer-motion";
+
+const navItems = [
+  { icon: Home, label: "Home", href: "/" },
+  { icon: Grid3X3, label: "Categories", href: "/shop" },
+  { icon: Search, label: "Search", href: "/shop?search=true" },
+  { icon: ShoppingBag, label: "Cart", href: "/cart", isCart: true },
+  { icon: User, label: "Account", href: "/account" },
+];
+
+export const MobileBottomNav = () => {
+  const location = useLocation();
+  const items = useCartStore((state) => state.items);
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] safe-area-bottom">
+      <div className="flex items-center justify-around h-16">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.href || 
+            (item.href === "/shop" && location.pathname === "/shop");
+          
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full relative transition-colors",
+                isActive ? "text-primary" : "text-gray-500"
+              )}
+            >
+              <div className="relative">
+                <item.icon className={cn(
+                  "w-5 h-5 transition-transform",
+                  isActive && "scale-110"
+                )} />
+                {item.isCart && totalItems > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                  >
+                    {totalItems}
+                  </motion.span>
+                )}
+              </div>
+              <span className={cn(
+                "text-[10px] mt-1 font-medium",
+                isActive && "font-semibold"
+              )}>
+                {item.label}
+              </span>
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"
+                />
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};

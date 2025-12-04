@@ -37,25 +37,69 @@ const blogPosts = [
 
 export const BlogSection = () => {
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-8 md:py-16 bg-muted">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center justify-between mb-6 md:mb-10">
           <div>
-            <span className="text-[#1a5d1a] text-xs uppercase tracking-widest font-medium">From Our Blog</span>
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">Latest Articles</h2>
+            <span className="text-primary text-[10px] md:text-xs uppercase tracking-widest font-medium">From Our Blog</span>
+            <h2 className="text-xl md:text-3xl font-semibold text-foreground mt-1 md:mt-2">Latest Articles</h2>
           </div>
           <Link 
             to="/blog" 
-            className="hidden sm:flex items-center gap-2 text-sm font-medium text-[#1a5d1a] hover:underline"
+            className="hidden sm:flex items-center gap-2 text-sm font-medium text-primary hover:underline"
           >
             View All Posts
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
-        {/* Blog Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Mobile Horizontal Scroll */}
+        <div className="md:hidden -mx-4 px-4">
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+            {blogPosts.map((post, index) => (
+              <motion.article
+                key={post.id}
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="snap-start flex-shrink-0 w-[280px] bg-card rounded-2xl overflow-hidden shadow-sm"
+              >
+                <Link to={`/blog/${post.id}`} className="block">
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img 
+                      src={post.image} 
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute top-3 left-3 px-2 py-1 bg-primary text-primary-foreground text-[10px] font-medium rounded-full">
+                      {post.category}
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-2">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {post.date}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-foreground mb-2 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <span className="text-xs font-medium text-primary flex items-center gap-1">
+                      Read More
+                      <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </Link>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Blog Grid */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogPosts.map((post, index) => (
             <motion.article
               key={post.id}
@@ -63,7 +107,7 @@ export const BlogSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
+              className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
             >
               <Link to={`/blog/${post.id}`} className="block">
                 <div className="relative aspect-[16/10] overflow-hidden">
@@ -72,12 +116,12 @@ export const BlogSection = () => {
                     alt={post.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <span className="absolute top-4 left-4 px-3 py-1 bg-[#1a5d1a] text-white text-xs font-medium rounded-full">
+                  <span className="absolute top-4 left-4 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
                     {post.category}
                   </span>
                 </div>
                 <div className="p-5">
-                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {post.date}
@@ -87,13 +131,13 @@ export const BlogSection = () => {
                       {post.author}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-[#1a5d1a] transition-colors line-clamp-2">
+                  <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
                     {post.title}
                   </h3>
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                     {post.excerpt}
                   </p>
-                  <span className="text-sm font-medium text-[#1a5d1a] flex items-center gap-1 group-hover:gap-2 transition-all">
+                  <span className="text-sm font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
                     Read More
                     <ArrowRight className="w-4 h-4" />
                   </span>
@@ -104,10 +148,10 @@ export const BlogSection = () => {
         </div>
 
         {/* Mobile View All */}
-        <div className="mt-8 text-center sm:hidden">
+        <div className="mt-6 text-center sm:hidden">
           <Link 
             to="/blog" 
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1a5d1a] text-white text-sm font-medium rounded-full hover:bg-[#145214] transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-xs font-medium rounded-full hover:bg-primary/90 transition-colors"
           >
             View All Posts
             <ArrowRight className="w-4 h-4" />
