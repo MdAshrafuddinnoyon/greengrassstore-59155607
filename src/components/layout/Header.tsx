@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Search, User, Globe, ChevronDown } from "lucide-react";
+import { Menu, X, Search, User, Globe, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
@@ -18,10 +18,17 @@ const navLinks = [
   { key: "nav.sale", href: "/sale", hasDropdown: false },
 ];
 
+const announcements = [
+  "Shop Now, Pay Later With Tabby",
+  "Free Delivery on Orders Over AED 200",
+  "New Arrivals - Check Out Our Latest Plants!",
+];
+
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentAnnouncement, setCurrentAnnouncement] = useState(0);
   const { t, language, setLanguage } = useLanguage();
   const items = useCartStore((state) => state.items);
   const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
@@ -43,9 +50,40 @@ export const Header = () => {
     return t(link.key);
   };
 
+  const nextAnnouncement = () => {
+    setCurrentAnnouncement((prev) => (prev + 1) % announcements.length);
+  };
+
+  const prevAnnouncement = () => {
+    setCurrentAnnouncement((prev) => (prev - 1 + announcements.length) % announcements.length);
+  };
+
   return (
     <>
-      {/* Top Header */}
+      {/* Announcement Bar */}
+      <div className="bg-[#6b6b5e] text-white py-2.5">
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <button 
+            onClick={prevAnnouncement}
+            className="p-1 hover:bg-white/10 rounded transition-colors"
+            aria-label="Previous announcement"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <p className="text-sm font-medium text-center flex-1">
+            {announcements[currentAnnouncement]}
+          </p>
+          <button 
+            onClick={nextAnnouncement}
+            className="p-1 hover:bg-white/10 rounded transition-colors"
+            aria-label="Next announcement"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Header */}
       <header
         className={cn(
           "sticky top-0 z-50 transition-all duration-300 bg-white",
