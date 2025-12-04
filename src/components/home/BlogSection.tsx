@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, User } from "lucide-react";
+import { Link } from "react-router-dom";
 import ficusPlant from "@/assets/ficus-plant.jpg";
 import gardenFlowers from "@/assets/garden-flowers.jpg";
 import plantPot from "@/assets/plant-pot.jpg";
@@ -44,13 +45,13 @@ export const BlogSection = () => {
             <span className="text-[#1a5d1a] text-xs uppercase tracking-widest font-medium">From Our Blog</span>
             <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">Latest Articles</h2>
           </div>
-          <a 
-            href="/blog" 
+          <Link 
+            to="/blog" 
             className="hidden sm:flex items-center gap-2 text-sm font-medium text-[#1a5d1a] hover:underline"
           >
             View All Posts
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
 
         {/* Blog Grid */}
@@ -64,7 +65,7 @@ export const BlogSection = () => {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
             >
-              <a href={`/blog/${post.id}`} className="block">
+              <Link to={`/blog/${post.id}`} className="block">
                 <div className="relative aspect-[16/10] overflow-hidden">
                   <img 
                     src={post.image} 
@@ -97,20 +98,20 @@ export const BlogSection = () => {
                     <ArrowRight className="w-4 h-4" />
                   </span>
                 </div>
-              </a>
+              </Link>
             </motion.article>
           ))}
         </div>
 
         {/* Mobile View All */}
         <div className="mt-8 text-center sm:hidden">
-          <a 
-            href="/blog" 
+          <Link 
+            to="/blog" 
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#1a5d1a] text-white text-sm font-medium rounded-full hover:bg-[#145214] transition-colors"
           >
             View All Posts
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>
