@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Instagram, Facebook, Twitter, Truck, RefreshCw, CreditCard, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -116,11 +117,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-sm mb-4">Plants & Flowers</h4>
             <ul className="space-y-2.5 text-sm text-gray-400">
-              <li><a href="/shop?category=trees" className="hover:text-white transition-colors">Artificial Trees</a></li>
-              <li><a href="/shop?category=flowers" className="hover:text-white transition-colors">Artificial Flowers</a></li>
-              <li><a href="/shop?category=plants" className="hover:text-white transition-colors">Artificial Plants</a></li>
-              <li><a href="/shop?category=orchids" className="hover:text-white transition-colors">Artificial Orchids</a></li>
-              <li><a href="/shop?category=pots" className="hover:text-white transition-colors">Pots</a></li>
+              <li><Link to="/shop?category=plants" className="hover:text-white transition-colors">Plants</Link></li>
+              <li><Link to="/shop?category=flowers" className="hover:text-white transition-colors">Flowers</Link></li>
+              <li><Link to="/shop?category=greenery" className="hover:text-white transition-colors">Greenery</Link></li>
+              <li><Link to="/shop?category=hanging" className="hover:text-white transition-colors">Hanging</Link></li>
             </ul>
           </div>
 
@@ -128,11 +128,9 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-sm mb-4">Pots</h4>
             <ul className="space-y-2.5 text-sm text-gray-400">
-              <li><a href="/shop?category=trees" className="hover:text-white transition-colors">Artificial Trees</a></li>
-              <li><a href="/shop?category=flowers" className="hover:text-white transition-colors">Artificial Flowers</a></li>
-              <li><a href="/shop?category=plants" className="hover:text-white transition-colors">Artificial Plants</a></li>
-              <li><a href="/shop?category=orchids" className="hover:text-white transition-colors">Artificial Orchids</a></li>
-              <li><a href="/shop?category=pots" className="hover:text-white transition-colors">Pots</a></li>
+              <li><Link to="/shop?category=fiber-pot" className="hover:text-white transition-colors">Fiber Pot</Link></li>
+              <li><Link to="/shop?category=plastic-pot" className="hover:text-white transition-colors">Plastic Pot</Link></li>
+              <li><Link to="/shop?category=ceramic-pot" className="hover:text-white transition-colors">Ceramic Pot</Link></li>
             </ul>
           </div>
 
@@ -140,11 +138,11 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-sm mb-4">Help</h4>
             <ul className="space-y-2.5 text-sm text-gray-400">
-              <li><a href="/contact" className="hover:text-white transition-colors">Contact us</a></li>
-              <li><a href="/order-lookup" className="hover:text-white transition-colors">Order Lookup</a></li>
-              <li><a href="/help" className="hover:text-white transition-colors">Help Center</a></li>
-              <li><a href="/delivery" className="hover:text-white transition-colors">Delivery</a></li>
-              <li><a href="/returns" className="hover:text-white transition-colors">Return</a></li>
+              <li><Link to="/contact" className="hover:text-white transition-colors">Contact us</Link></li>
+              <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+              <li><Link to="/returns" className="hover:text-white transition-colors">Return Policy</Link></li>
+              <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
 
@@ -152,11 +150,9 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-sm mb-4">About</h4>
             <ul className="space-y-2.5 text-sm text-gray-400">
-              <li><a href="/about" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="/faq" className="hover:text-white transition-colors">FAQ</a></li>
-              <li><a href="/stores" className="hover:text-white transition-colors">Store Locator</a></li>
-              <li><a href="/vip" className="hover:text-white transition-colors">VIP Program</a></li>
-              <li><a href="/gift-card" className="hover:text-white transition-colors">Gift Card</a></li>
+              <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link to="/shop" className="hover:text-white transition-colors">Shop</Link></li>
+              <li><Link to="/vip" className="hover:text-white transition-colors">VIP Program</Link></li>
             </ul>
           </div>
         </div>
@@ -167,11 +163,11 @@ export const Footer = () => {
         <div className="container mx-auto px-4 py-5">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500">
-              © 2024 Green Grass Store. All rights reserved.
+              © 2025 Green Grass Store. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-xs text-gray-500">
-              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
               <span>www.greengrassstore.com</span>
             </div>
           </div>
