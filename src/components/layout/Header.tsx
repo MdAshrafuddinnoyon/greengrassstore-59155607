@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Search, ShoppingBag, User, Heart, Globe } from "lucide-react";
+import { Menu, X, Search, User, Heart, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import logo from "@/assets/logo.jpg";
 
 const navLinks = [
@@ -17,7 +18,6 @@ const navLinks = [
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [cartCount] = useState(2);
   const { t, language, setLanguage } = useLanguage();
 
   useEffect(() => {
@@ -105,17 +105,7 @@ export const Header = () => {
               >
                 <User className="w-4 h-4" />
               </button>
-              <button
-                className="relative p-2 hover:bg-gray-100 rounded transition-colors"
-                aria-label="Cart"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                {cartCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-green-700 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
+              <CartDrawer />
             </div>
           </div>
         </div>
