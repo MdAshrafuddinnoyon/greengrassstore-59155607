@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShopifyProduct } from "@/lib/shopify";
 import { useCartStore, CartItem } from "@/stores/cartStore";
+import { useWishlistStore } from "@/stores/wishlistStore";
 import { ShoppingBag, Heart, Eye, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { QuickViewModal } from "./QuickViewModal";
+import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ShopifyProductCardProps {
   product: ShopifyProduct;
@@ -14,15 +17,26 @@ interface ShopifyProductCardProps {
 
 export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [showQuickView, setShowQuickView] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const { node } = product;
   
   const firstVariant = node.variants.edges[0]?.node;
   const firstImage = node.images.edges[0]?.node;
   const secondImage = node.images.edges[1]?.node;
   const price = node.priceRange.minVariantPrice;
+
+  const isWishlisted = isInWishlist(node.id);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsAuthenticated(!!user);
+    });
+  }, []);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -40,7 +54,7 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
     };
 
     addItem(cartItem);
-    toast.success("Added to cart", {
+    toast.success(t("product.addToCart"), {
       description: node.title,
       position: "top-center",
     });
@@ -52,13 +66,32 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
     setShowQuickView(true);
   };
 
-  const handleWishlist = (e: React.MouseEvent) => {
+  const handleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist", {
-      position: "top-center",
-    });
+    
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to wishlist");
+      navigate("/auth");
+      return;
+    }
+
+    if (isWishlisted) {
+      const success = await removeFromWishlist(node.id);
+      if (success) {
+        toast.success("Removed from wishlist", { position: "top-center" });
+      }
+    } else {
+      const success = await addToWishlist({
+        id: node.id,
+        title: node.title,
+        image: firstImage?.url,
+        price: `${price.currencyCode} ${parseFloat(price.amount).toFixed(2)}`,
+      });
+      if (success) {
+        toast.success("Added to wishlist", { position: "top-center" });
+      }
+    }
   };
 
   // Compact Mobile Card
@@ -84,6 +117,19 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
             className="absolute bottom-2 right-2 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
           >
             <Plus className="w-4 h-4" />
+          </button>
+
+          {/* Wishlist Button */}
+          <button
+            onClick={handleWishlist}
+            className={cn(
+              "absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all",
+              isWishlisted
+                ? "bg-red-500 text-white"
+                : "bg-white/80 text-gray-600"
+            )}
+          >
+            <Heart className={cn("w-3.5 h-3.5", isWishlisted && "fill-current")} />
           </button>
         </div>
         
@@ -159,7 +205,7 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-foreground text-background text-xs uppercase tracking-wider font-medium hover:bg-foreground/90 transition-colors rounded-lg"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              Add to Cart
+              {t("product.addToCart")}
             </button>
             <button 
               onClick={handleQuickView}

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings } from "lucide-react";
+import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useWishlistStore, WishlistItem } from "@/stores/wishlistStore";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ const Account = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { items: wishlistItems, fetchWishlist, removeFromWishlist, loading: wishlistLoading } = useWishlistStore();
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -47,6 +49,7 @@ const Account = () => {
         } else {
           setTimeout(() => {
             fetchProfile(session.user.id);
+            fetchWishlist();
           }, 0);
         }
       }
@@ -59,11 +62,12 @@ const Account = () => {
         navigate("/auth");
       } else {
         fetchProfile(session.user.id);
+        fetchWishlist();
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, fetchWishlist]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -124,6 +128,13 @@ const Account = () => {
     navigate("/");
   };
 
+  const handleRemoveFromWishlist = async (productId: string) => {
+    const success = await removeFromWishlist(productId);
+    if (success) {
+      toast.success("Removed from wishlist");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -135,7 +146,7 @@ const Account = () => {
   const tabs = [
     { id: "profile", label: t("account.profile"), icon: User },
     { id: "orders", label: t("account.orders"), icon: Package },
-    { id: "wishlist", label: t("account.wishlist"), icon: Heart },
+    { id: "wishlist", label: t("account.wishlist"), icon: Heart, count: wishlistItems.length },
     { id: "settings", label: t("account.settings"), icon: Settings },
   ];
 
@@ -179,14 +190,23 @@ const Account = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                         activeTab === tab.id
                           ? "bg-primary text-primary-foreground"
                           : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <tab.icon className="w-5 h-5" />
-                      {tab.label}
+                      <span className="flex items-center gap-3">
+                        <tab.icon className="w-5 h-5" />
+                        {tab.label}
+                      </span>
+                      {tab.count !== undefined && tab.count > 0 && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          activeTab === tab.id ? "bg-white/20" : "bg-primary/10 text-primary"
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </nav>
@@ -217,6 +237,9 @@ const Account = () => {
                   >
                     <tab.icon className="w-4 h-4" />
                     {tab.label}
+                    {tab.count !== undefined && tab.count > 0 && (
+                      <span className="text-xs bg-white/20 px-1.5 rounded-full">{tab.count}</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -373,10 +396,63 @@ const Account = () => {
                   <h2 className="text-lg font-semibold text-foreground mb-6">
                     {t("account.myWishlist")}
                   </h2>
-                  <div className="text-center py-12">
-                    <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">{t("account.noWishlist")}</p>
-                  </div>
+                  
+                  {wishlistLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : wishlistItems.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">{t("account.noWishlist")}</p>
+                      <Link 
+                        to="/shop"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        Start Shopping
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {wishlistItems.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="group relative bg-muted rounded-xl overflow-hidden"
+                        >
+                          <div className="aspect-square">
+                            {item.product_image ? (
+                              <img
+                                src={item.product_image}
+                                alt={item.product_title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                <Heart className="w-8 h-8 text-gray-300" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-3">
+                            <h4 className="text-sm font-medium text-foreground line-clamp-2 mb-1">
+                              {item.product_title}
+                            </h4>
+                            {item.product_price && (
+                              <p className="text-sm font-bold text-primary">{item.product_price}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleRemoveFromWishlist(item.product_id)}
+                            className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
 
