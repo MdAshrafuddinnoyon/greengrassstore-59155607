@@ -229,15 +229,15 @@ const Account = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="flex-1 py-8 md:py-12 pb-20 md:pb-12">
+      <main className="flex-1 py-6 md:py-12 pb-24 md:pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-6 md:mb-8"
           >
-            <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">
+            <h1 className="text-xl md:text-3xl font-display font-semibold text-foreground">
               {t("account.myAccount")}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
@@ -299,22 +299,26 @@ const Account = () => {
             </div>
 
             {/* Mobile Tabs */}
-            <div className="md:hidden mb-4">
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="md:hidden mb-6">
+              <div className="flex gap-2 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all snap-start flex-shrink-0 ${
                       activeTab === tab.id
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
                     <tab.icon className="w-4 h-4" />
-                    {tab.label}
+                    <span className="hidden xs:inline">{tab.label}</span>
                     {tab.count !== undefined && tab.count > 0 && (
-                      <span className="text-xs bg-white/20 px-1.5 rounded-full">{tab.count}</span>
+                      <span className={`text-xs px-1.5 rounded-full ${
+                        activeTab === tab.id ? "bg-white/20" : "bg-primary/10 text-primary"
+                      }`}>
+                        {tab.count}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -327,7 +331,7 @@ const Account = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-card rounded-2xl border border-border p-6"
+                  className="bg-card rounded-2xl border border-border p-4 sm:p-6"
                 >
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold text-foreground">
@@ -490,7 +494,7 @@ const Account = () => {
                       </Link>
                     </div>
                   ) : (
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       {wishlistItems.map((item) => (
                         <motion.div
                           key={item.id}
@@ -511,19 +515,19 @@ const Account = () => {
                               </div>
                             )}
                           </div>
-                          <div className="p-3">
-                            <h4 className="text-sm font-medium text-foreground line-clamp-2 mb-1">
+                          <div className="p-2 sm:p-3">
+                            <h4 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 mb-1">
                               {item.product_title}
                             </h4>
                             {item.product_price && (
-                              <p className="text-sm font-bold text-primary">{item.product_price}</p>
+                              <p className="text-xs sm:text-sm font-bold text-primary">{item.product_price}</p>
                             )}
                           </div>
                           <button
                             onClick={() => handleRemoveFromWishlist(item.product_id)}
-                            className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                            className="absolute top-2 right-2 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 rounded-full flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-50"
                           >
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
                           </button>
                         </motion.div>
                       ))}
@@ -565,18 +569,18 @@ const Account = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-card rounded-2xl border border-border p-6"
+                  className="bg-card rounded-2xl border border-border p-4 sm:p-6"
                 >
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                     <h2 className="text-lg font-semibold text-foreground">
                       {t("account.myRequests")}
                     </h2>
                     <button
                       onClick={() => setShowRequestModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors w-full sm:w-auto"
                     >
                       <Plus className="w-4 h-4" />
-                      {isArabic ? "طلب جديد" : "New Request"}
+                      {isArabic ? "طলب جديد" : "New Request"}
                     </button>
                   </div>
                   
@@ -597,17 +601,17 @@ const Account = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {customRequests.map((request) => (
                         <motion.div
                           key={request.id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-4 bg-muted rounded-xl"
+                          className="p-3 sm:p-4 bg-muted rounded-xl"
                         >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
                                 <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
                                   {getTypeLabel(request.requirement_type)}
                                 </span>
@@ -616,9 +620,9 @@ const Account = () => {
                                   {getStatusLabel(request.status)}
                                 </span>
                               </div>
-                              <h4 className="font-medium text-foreground mb-1">{request.title}</h4>
-                              <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
-                              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              <h4 className="font-medium text-foreground mb-1 text-sm sm:text-base">{request.title}</h4>
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{request.description}</p>
+                              <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-2 text-xs text-muted-foreground">
                                 <span>
                                   {new Date(request.created_at).toLocaleDateString(isArabic ? "ar-AE" : "en-AE", {
                                     year: "numeric",
