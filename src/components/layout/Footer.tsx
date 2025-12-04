@@ -184,6 +184,7 @@ export const Footer = () => {
             <ul className="space-y-2.5 text-sm text-gray-400">
               <li><Link to="/about" className="hover:text-white transition-colors">{t("footer.about")}</Link></li>
               <li><Link to="/shop" className="hover:text-white transition-colors">{t("footer.shop")}</Link></li>
+              <li><Link to="/blog" className="hover:text-white transition-colors">{t("blog.title")}</Link></li>
               <li><Link to="/vip" className="hover:text-white transition-colors">{t("footer.vipProgram")}</Link></li>
             </ul>
           </div>
