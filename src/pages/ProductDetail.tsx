@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchProductByHandle } from "@/lib/shopify";
 import { useCartStore, CartItem } from "@/stores/cartStore";
+import { useWishlistStore } from "@/stores/wishlistStore";
+import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductGallery } from "@/components/products/ProductGallery";
@@ -67,8 +69,21 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
+  const { addToWishlist, removeFromWishlist, isInWishlist, fetchWishlist } = useWishlistStore();
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      if (user) {
+        fetchWishlist();
+      }
+    };
+    checkAuth();
+  }, [fetchWishlist]);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -335,15 +350,37 @@ const ProductDetail = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => {
-                        setIsWishlisted(!isWishlisted);
-                        toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
+                      onClick={async () => {
+                        if (!isAuthenticated) {
+                          toast.error("Please login to add to wishlist");
+                          return;
+                        }
+                        if (!product) return;
+                        
+                        const productInWishlist = isInWishlist(product.id);
+                        
+                        if (productInWishlist) {
+                          const success = await removeFromWishlist(product.id);
+                          if (success) {
+                            toast.success("Removed from wishlist");
+                          }
+                        } else {
+                          const success = await addToWishlist({
+                            id: product.id,
+                            title: product.title,
+                            image: product.images.edges[0]?.node.url,
+                            price: `${selectedVariant?.price.currencyCode} ${parseFloat(selectedVariant?.price.amount || "0").toFixed(2)}`,
+                          });
+                          if (success) {
+                            toast.success("Added to wishlist");
+                          }
+                        }
                       }}
                       className={`h-10 w-10 rounded-lg border ${
-                        isWishlisted ? "bg-red-50 border-red-200 text-red-500" : "border-gray-200"
+                        product && isInWishlist(product.id) ? "bg-red-50 border-red-200 text-red-500" : "border-gray-200"
                       }`}
                     >
-                      <Heart className={`w-4 h-4 ${isWishlisted ? "fill-current" : ""}`} />
+                      <Heart className={`w-4 h-4 ${product && isInWishlist(product.id) ? "fill-current" : ""}`} />
                     </Button>
                     <Button
                       variant="outline"
