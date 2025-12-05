@@ -29,7 +29,7 @@ const Checkout = () => {
   const isArabic = language === "ar";
   const navigate = useNavigate();
   const { items, updateQuantity, removeItem, clearCart, createCheckout, isLoading } = useCartStore();
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "online" | "whatsapp">("cod");
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "whatsapp">("online");
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
@@ -89,17 +89,6 @@ Shipping: ${shipping === 0 ? "FREE" : `${currency} ${shipping.toFixed(2)}`}
 Please confirm my order. Thank you!`;
   };
 
-  const handleCODOrder = () => {
-    if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
-      toast.error(isArabic ? "يرجى إدخال الاسم ورقم الهاتف والعنوان" : "Please enter name, phone and address");
-      return;
-    }
-
-    const message = generateOrderMessage("💵 Cash on Delivery (COD)");
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`${WHATSAPP_URL}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
-    toast.success(isArabic ? "تم إرسال طلبك عبر واتساب" : "Your order has been sent via WhatsApp");
-  };
 
   const handleWhatsAppOrder = () => {
     if (!customerInfo.name || !customerInfo.phone) {
@@ -387,36 +376,6 @@ Please confirm my order. Thank you!`;
                     {isArabic ? "طريقة الدفع" : "Payment Method"}
                   </h3>
                   
-                  {/* COD Option */}
-                  <label 
-                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      paymentMethod === "cod" 
-                        ? "border-[#2d5a3d] bg-[#2d5a3d]/5" 
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={paymentMethod === "cod"}
-                      onChange={() => setPaymentMethod("cod")}
-                      className="w-4 h-4 text-[#2d5a3d]"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Truck className="w-5 h-5 text-[#2d5a3d]" />
-                        <span className="font-medium">
-                          {isArabic ? "الدفع عند الاستلام" : "Cash on Delivery"}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {isArabic ? "ادفع نقداً عند استلام طلبك" : "Pay cash when you receive your order"}
-                      </p>
-                    </div>
-                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-                      {isArabic ? "الأكثر شيوعاً" : "Popular"}
-                    </span>
-                  </label>
 
                   {/* Online Payment Option */}
                   <label 
@@ -479,9 +438,7 @@ Please confirm my order. Thank you!`;
                   {/* Place Order Button */}
                   <Button
                     onClick={
-                      paymentMethod === "cod" ? handleCODOrder :
-                      paymentMethod === "online" ? handleShopifyCheckout :
-                      handleWhatsAppOrder
+                      paymentMethod === "online" ? handleShopifyCheckout : handleWhatsAppOrder
                     }
                     disabled={isLoading}
                     className={`w-full h-14 text-lg font-semibold ${
@@ -492,11 +449,6 @@ Please confirm my order. Thank you!`;
                   >
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    ) : paymentMethod === "cod" ? (
-                      <>
-                        <Truck className="w-5 h-5 mr-2" />
-                        {isArabic ? "تأكيد الطلب (الدفع عند الاستلام)" : "Confirm Order (COD)"}
-                      </>
                     ) : paymentMethod === "online" ? (
                       <>
                         <CreditCard className="w-5 h-5 mr-2" />
