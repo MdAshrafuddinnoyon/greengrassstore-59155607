@@ -482,51 +482,29 @@ export const FooterMenuManager = () => {
         </CardContent>
       </Card>
 
-      {/* Developer Credit */}
+      {/* Developer Credit - Read Only Display */}
       <Card>
         <CardHeader>
           <CardTitle>Developer Credit</CardTitle>
-          <CardDescription>Show developer credit in footer</CardDescription>
+          <CardDescription>This credit is permanent and cannot be changed</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 mb-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.developerCredit.enabled}
-                onChange={(e) => setSettings(prev => ({
-                  ...prev,
-                  developerCredit: { ...prev.developerCredit, enabled: e.target.checked }
-                }))}
-                className="w-4 h-4"
-              />
-              <span className="text-sm">Show Developer Credit</span>
-            </label>
+          <div className="p-4 bg-muted/50 rounded-lg border border-border">
+            <p className="text-sm text-muted-foreground mb-2">
+              The following credit is permanently displayed in the footer:
+            </p>
+            <p className="text-sm font-medium">
+              Developed by{" "}
+              <a 
+                href="https://www.websearchbd.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Web Search BD
+              </a>
+            </p>
           </div>
-          {settings.developerCredit.enabled && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Developer Name</Label>
-                <Input
-                  value={settings.developerCredit.name}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    developerCredit: { ...prev.developerCredit, name: e.target.value }
-                  }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Developer Website</Label>
-                <Input
-                  value={settings.developerCredit.url}
-                  onChange={(e) => setSettings(prev => ({
-                    ...prev,
-                    developerCredit: { ...prev.developerCredit, url: e.target.value }
-                  }))}
-                />
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
