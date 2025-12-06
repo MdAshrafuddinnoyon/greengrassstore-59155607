@@ -29,7 +29,7 @@ const Checkout = () => {
   const isArabic = language === "ar";
   const navigate = useNavigate();
   const { items, updateQuantity, removeItem, clearCart, createCheckout, isLoading } = useCartStore();
-  const [paymentMethod, setPaymentMethod] = useState<"online" | "whatsapp">("online");
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "whatsapp" | "home_delivery">("online");
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
@@ -99,6 +99,51 @@ Please confirm my order. Thank you!`;
     const message = generateOrderMessage("📱 WhatsApp Order");
     const encodedMessage = encodeURIComponent(message);
     window.open(`${WHATSAPP_URL}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleHomeDeliveryOrder = async () => {
+    if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
+      toast.error(isArabic ? "يرجى إدخال الاسم ورقم الهاتف والعنوان" : "Please enter name, phone and address");
+      return;
+    }
+
+    try {
+      // Create order in Supabase
+      const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
+      const orderItems = items.map(item => ({
+        name: item.product.node.title,
+        options: item.selectedOptions.map(o => o.value).join(', '),
+        quantity: item.quantity,
+        price: parseFloat(item.price.amount),
+        total: parseFloat(item.price.amount) * item.quantity
+      }));
+
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { error } = await supabase.from('orders').insert({
+        order_number: orderNumber,
+        customer_name: customerInfo.name,
+        customer_email: customerInfo.email || '',
+        customer_phone: customerInfo.phone,
+        customer_address: `${customerInfo.address}, ${customerInfo.city}`,
+        items: orderItems,
+        subtotal: subtotal,
+        shipping: shipping,
+        tax: 0,
+        total: total,
+        payment_method: 'home_delivery',
+        notes: customerInfo.notes,
+        status: 'pending'
+      });
+
+      if (error) throw error;
+
+      toast.success(isArabic ? "تم تأكيد طلبك! رقم الطلب: " + orderNumber : "Order confirmed! Order #: " + orderNumber);
+      clearCart();
+      navigate('/track-order?order=' + orderNumber);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error(isArabic ? "حدث خطأ في إنشاء الطلب" : "Error creating order");
+    }
   };
 
   if (items.length === 0) {
@@ -435,15 +480,47 @@ Please confirm my order. Thank you!`;
                     </div>
                   </label>
 
+                  {/* Home Delivery Option */}
+                  <label 
+                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      paymentMethod === "home_delivery" 
+                        ? "border-amber-500 bg-amber-50" 
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === "home_delivery"}
+                      onChange={() => setPaymentMethod("home_delivery")}
+                      className="w-4 h-4 text-amber-500"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Truck className="w-5 h-5 text-amber-600" />
+                        <span className="font-medium">
+                          {isArabic ? "الدفع عند الاستلام" : "Home Delivery (COD)"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {isArabic ? "ادفع نقداً عند استلام الطلب" : "Pay cash when you receive your order"}
+                      </p>
+                    </div>
+                  </label>
+
                   {/* Place Order Button */}
                   <Button
                     onClick={
-                      paymentMethod === "online" ? handleShopifyCheckout : handleWhatsAppOrder
+                      paymentMethod === "online" ? handleShopifyCheckout : 
+                      paymentMethod === "home_delivery" ? handleHomeDeliveryOrder :
+                      handleWhatsAppOrder
                     }
                     disabled={isLoading}
                     className={`w-full h-14 text-lg font-semibold ${
                       paymentMethod === "whatsapp" 
                         ? "bg-[#25D366] hover:bg-[#128C7E] text-white"
+                        : paymentMethod === "home_delivery"
+                        ? "bg-amber-500 hover:bg-amber-600 text-white"
                         : "bg-[#2d5a3d] hover:bg-[#234830] text-white"
                     }`}
                   >
@@ -453,6 +530,11 @@ Please confirm my order. Thank you!`;
                       <>
                         <CreditCard className="w-5 h-5 mr-2" />
                         {isArabic ? "الدفع الآن" : "Pay Now"}
+                      </>
+                    ) : paymentMethod === "home_delivery" ? (
+                      <>
+                        <Truck className="w-5 h-5 mr-2" />
+                        {isArabic ? "تأكيد الطلب" : "Confirm Order"}
                       </>
                     ) : (
                       <>

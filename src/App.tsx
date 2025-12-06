@@ -26,6 +26,7 @@ import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import FAQ from "./pages/FAQ";
 import Checkout from "./pages/Checkout";
+import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 import Maintenance from "./pages/Maintenance";
 
@@ -69,6 +70,7 @@ const AppContent = () => {
           <Route path="/vip" element={<VIPProgram />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/track-order" element={<OrderTracking />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/account" element={<Account />} />
           <Route path="/maintenance" element={<Maintenance />} />

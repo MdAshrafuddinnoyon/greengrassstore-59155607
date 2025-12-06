@@ -151,36 +151,16 @@ export const CartDrawer = () => {
                   </span>
                 </div>
                 
-                {/* View Full Cart */}
-                <Link to="/checkout" onClick={() => setIsOpen(false)}>
+                {/* Proceed to Checkout Page */}
+                <Link to="/checkout" onClick={() => setIsOpen(false)} className="block">
                   <Button 
-                    variant="outline"
-                    className="w-full" 
+                    className="w-full bg-[#2d5a3d] hover:bg-[#234830]" 
                     size="lg"
                   >
                     <ShoppingBag className="w-4 h-4 mr-2" />
-                    View Full Cart
+                    Proceed to Checkout
                   </Button>
                 </Link>
-                
-                <Button 
-                  onClick={handleCheckout}
-                  className="w-full bg-[#2d5a3d] hover:bg-[#234830]" 
-                  size="lg"
-                  disabled={items.length === 0 || isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating Checkout...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Checkout
-                    </>
-                  )}
-                </Button>
                 
                 <Button 
                   onClick={handleWhatsAppCheckout}
