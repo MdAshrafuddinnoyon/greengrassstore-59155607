@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Users, MessageSquare, Eye, TrendingUp, ShoppingBag } from "lucide-react";
+import { FileText, Users, MessageSquare, Eye, TrendingUp, ShoppingBag, Package, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Stats {
@@ -10,9 +11,12 @@ interface Stats {
   pendingRequests: number;
   totalUsers: number;
   totalViews: number;
+  totalProducts: number;
+  totalOrders: number;
 }
 
 export const DashboardOverview = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({
     totalPosts: 0,
     publishedPosts: 0,
@@ -20,6 +24,8 @@ export const DashboardOverview = () => {
     pendingRequests: 0,
     totalUsers: 0,
     totalViews: 0,
+    totalProducts: 0,
+    totalOrders: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -58,6 +64,16 @@ export const DashboardOverview = () => {
           .from("profiles")
           .select("*", { count: "exact", head: true });
 
+        // Fetch products count
+        const { count: totalProducts } = await supabase
+          .from("products")
+          .select("*", { count: "exact", head: true });
+
+        // Fetch orders count
+        const { count: totalOrders } = await supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true });
+
         setStats({
           totalPosts: totalPosts || 0,
           publishedPosts: publishedPosts || 0,
@@ -65,6 +81,8 @@ export const DashboardOverview = () => {
           pendingRequests: pendingRequests || 0,
           totalUsers: totalUsers || 0,
           totalViews,
+          totalProducts: totalProducts || 0,
+          totalOrders: totalOrders || 0,
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -78,34 +96,43 @@ export const DashboardOverview = () => {
 
   const statCards = [
     {
-      title: "Total Blog Posts",
-      value: stats.totalPosts,
-      subtext: `${stats.publishedPosts} published`,
-      icon: FileText,
+      title: "Total Products",
+      value: stats.totalProducts,
+      subtext: "Active products",
+      icon: Package,
+      color: "bg-emerald-500",
+    },
+    {
+      title: "Total Orders",
+      value: stats.totalOrders,
+      subtext: "All orders",
+      icon: Receipt,
       color: "bg-blue-500",
     },
     {
-      title: "Total Views",
-      value: stats.totalViews,
-      subtext: "Blog post views",
-      icon: Eye,
-      color: "bg-green-500",
-    },
-    {
-      title: "Custom Requests",
-      value: stats.totalRequests,
-      subtext: `${stats.pendingRequests} pending`,
-      icon: MessageSquare,
-      color: "bg-orange-500",
+      title: "Blog Posts",
+      value: stats.totalPosts,
+      subtext: `${stats.publishedPosts} published`,
+      icon: FileText,
+      color: "bg-purple-500",
     },
     {
       title: "Registered Users",
       value: stats.totalUsers,
       subtext: "Total accounts",
       icon: Users,
-      color: "bg-purple-500",
+      color: "bg-orange-500",
     },
   ];
+
+  // Navigate to products tab with add mode
+  const handleAddProduct = () => {
+    // Scroll to products tab
+    const productsTab = document.querySelector('[value="products"]') as HTMLButtonElement;
+    if (productsTab) {
+      productsTab.click();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -139,26 +166,42 @@ export const DashboardOverview = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <a
-              href="https://admin.shopify.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+            <div
+              onClick={handleAddProduct}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
             >
               <ShoppingBag className="w-6 h-6 text-primary" />
-              <span className="text-sm font-medium">Shopify Admin</span>
-            </a>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+              <span className="text-sm font-medium">Add Product</span>
+            </div>
+            <div 
+              onClick={() => {
+                const blogTab = document.querySelector('[value="blog"]') as HTMLButtonElement;
+                if (blogTab) blogTab.click();
+              }}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
               <FileText className="w-6 h-6 text-primary" />
               <span className="text-sm font-medium">New Blog Post</span>
             </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+            <div 
+              onClick={() => {
+                const requestsTab = document.querySelector('[value="requests"]') as HTMLButtonElement;
+                if (requestsTab) requestsTab.click();
+              }}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
               <MessageSquare className="w-6 h-6 text-primary" />
               <span className="text-sm font-medium">View Requests</span>
             </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
-              <Users className="w-6 h-6 text-primary" />
-              <span className="text-sm font-medium">Manage Users</span>
+            <div 
+              onClick={() => {
+                const ordersTab = document.querySelector('[value="orders"]') as HTMLButtonElement;
+                if (ordersTab) ordersTab.click();
+              }}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
+              <Receipt className="w-6 h-6 text-primary" />
+              <span className="text-sm font-medium">View Orders</span>
             </div>
           </div>
         </CardContent>

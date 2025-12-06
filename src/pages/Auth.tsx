@@ -20,12 +20,14 @@ const signupSchema = loginSchema.extend({
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -111,6 +113,28 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setErrors({ email: "Email is required" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) throw error;
+      setResetEmailSent(true);
+      toast.success("Password reset email sent! Check your inbox.");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
@@ -126,6 +150,101 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Forgot Password UI
+  if (isForgotPassword) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12 px-4 pb-20 md:pb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md"
+          >
+            <div className="bg-card rounded-2xl shadow-xl p-8 border border-border">
+              <div className="text-center mb-8">
+                <motion.h1
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-2xl md:text-3xl font-display font-semibold text-foreground mb-2"
+                >
+                  {resetEmailSent ? "Check Your Email" : "Reset Password"}
+                </motion.h1>
+                <p className="text-muted-foreground text-sm">
+                  {resetEmailSent 
+                    ? "We've sent a password reset link to your email"
+                    : "Enter your email address and we'll send you a reset link"
+                  }
+                </p>
+              </div>
+
+              {!resetEmailSent ? (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="w-full pl-10 pr-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-xs text-destructive mt-1">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        Send Reset Link
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              ) : (
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-8 h-8 text-green-600" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Check your inbox for a password reset link.
+                  </p>
+                </div>
+              )}
+
+              <p className="text-center text-sm text-muted-foreground mt-6">
+                <button
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setResetEmailSent(false);
+                    setErrors({});
+                  }}
+                  className="text-primary font-medium hover:underline"
+                >
+                  Back to Login
+                </button>
+              </p>
+            </div>
+          </motion.div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -223,9 +342,20 @@ const Auth = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  {t("auth.password")}
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-foreground">
+                    {t("auth.password")}
+                  </label>
+                  {isLogin && (
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input

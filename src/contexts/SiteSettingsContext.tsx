@@ -107,6 +107,12 @@ export interface StoreInfo {
   address: string;
 }
 
+export interface SecuritySettings {
+  recaptchaEnabled: boolean;
+  adminUrlPath: string;
+  maintenanceMode: boolean;
+}
+
 // Mega Menu Types
 export interface SubCategory {
   id: string;
@@ -192,6 +198,7 @@ interface SiteSettingsContextType {
   whatsapp: WhatsAppSettings;
   salesAgent: SalesAgentSettings;
   storeInfo: StoreInfo;
+  securitySettings: SecuritySettings;
   megaMenuCategories: MegaMenuCategory[];
   faqItems: FAQItem[];
   returnPolicySections: PolicySection[];
@@ -202,6 +209,12 @@ interface SiteSettingsContextType {
   loading: boolean;
   refetch: () => Promise<void>;
 }
+
+const defaultSecuritySettings: SecuritySettings = {
+  recaptchaEnabled: false,
+  adminUrlPath: 'admin',
+  maintenanceMode: false
+};
 
 // Default values
 const defaultAnnouncementBar: AnnouncementBarSettings = {
@@ -481,6 +494,7 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   whatsapp: defaultWhatsApp,
   salesAgent: defaultSalesAgent,
   storeInfo: defaultStoreInfo,
+  securitySettings: defaultSecuritySettings,
   megaMenuCategories: defaultMegaMenuCategories,
   faqItems: defaultFaqItems,
   returnPolicySections: defaultPolicySections,
@@ -505,6 +519,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [whatsapp, setWhatsapp] = useState(defaultWhatsApp);
   const [salesAgent, setSalesAgent] = useState(defaultSalesAgent);
   const [storeInfo, setStoreInfo] = useState(defaultStoreInfo);
+  const [securitySettings, setSecuritySettings] = useState(defaultSecuritySettings);
   const [megaMenuCategories, setMegaMenuCategories] = useState(defaultMegaMenuCategories);
   const [faqItems, setFaqItems] = useState(defaultFaqItems);
   const [returnPolicySections, setReturnPolicySections] = useState(defaultPolicySections);
@@ -572,6 +587,9 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
           case 'contact_content':
             setContactContent(value as unknown as ContactPageContent);
             break;
+          case 'security_settings':
+            setSecuritySettings(value as unknown as SecuritySettings);
+            break;
         }
       });
     } catch (error) {
@@ -597,6 +615,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         whatsapp,
         salesAgent,
         storeInfo,
+        securitySettings,
         megaMenuCategories,
         faqItems,
         returnPolicySections,
