@@ -11,6 +11,8 @@ import { Loader2, Minus, Plus, ShoppingCart, Heart, Share2, Truck, Shield, Rotat
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ProductGallery } from "@/components/products/ProductGallery";
+import { LocalRelatedProducts } from "@/components/products/LocalRelatedProducts";
 
 interface LocalProduct {
   id: string;
@@ -273,39 +275,10 @@ const ProductDetail = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <div className="space-y-4">
-                {/* Main Image */}
-                <div className="aspect-square rounded-xl overflow-hidden bg-muted">
-                  {allImages[selectedImageIndex] ? (
-                    <img
-                      src={allImages[selectedImageIndex]}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      No Image
-                    </div>
-                  )}
-                </div>
-                
-                {/* Thumbnails */}
-                {allImages.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {allImages.map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedImageIndex(idx)}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                          selectedImageIndex === idx ? 'border-primary' : 'border-transparent'
-                        }`}
-                      >
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ProductGallery 
+                images={allImages} 
+                productTitle={product.name} 
+              />
             </motion.div>
 
             {/* Product Info */}
@@ -557,6 +530,11 @@ const ProductDetail = () => {
             </motion.div>
           </div>
         </div>
+        {/* Related Products */}
+        <LocalRelatedProducts 
+          currentProductId={product.id} 
+          category={product.category} 
+        />
       </main>
 
       <Footer />

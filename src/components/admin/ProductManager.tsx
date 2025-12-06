@@ -12,8 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw, X, Copy } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw, X, Copy, Eye } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
+import { ExportButtons } from "./ExportButtons";
 
 interface ProductVariant {
   id?: string;
@@ -389,10 +390,28 @@ export const ProductManager = () => {
             <Package className="w-5 h-5" />
             Products ({products.length})
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={fetchProducts}>
               <RefreshCw className="w-4 h-4" />
             </Button>
+            <ExportButtons 
+              data={products.map(p => ({
+                name: p.name,
+                slug: p.slug,
+                category: p.category,
+                subcategory: p.subcategory || '',
+                price: `${p.currency} ${p.price}`,
+                compare_at_price: p.compare_at_price ? `${p.currency} ${p.compare_at_price}` : '',
+                stock: p.stock_quantity,
+                sku: p.sku || '',
+                type: p.product_type,
+                is_featured: p.is_featured ? 'Yes' : 'No',
+                is_on_sale: p.is_on_sale ? 'Yes' : 'No',
+                is_new: p.is_new ? 'Yes' : 'No',
+                is_active: p.is_active ? 'Yes' : 'No'
+              }))} 
+              filename={`products-${new Date().toISOString().split('T')[0]}`}
+            />
             <Button size="sm" onClick={openNewProduct}>
               <Plus className="w-4 h-4 mr-1" />
               Add Product

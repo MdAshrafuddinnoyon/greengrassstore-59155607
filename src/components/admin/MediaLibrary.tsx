@@ -11,6 +11,7 @@ import {
   Upload, Image, File, Trash2, Copy, Search, 
   FolderPlus, Grid3X3, List, Loader2, X, Download
 } from "lucide-react";
+import { ExportButtons } from "./ExportButtons";
 
 interface MediaFile {
   id: string;
@@ -184,7 +185,17 @@ export const MediaLibrary = () => {
           <p className="text-sm text-muted-foreground">{files.length} files</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <ExportButtons 
+            data={files.map(f => ({ 
+              name: f.file_name, 
+              type: f.file_type, 
+              size: formatFileSize(f.file_size),
+              folder: f.folder,
+              url: f.publicUrl || ''
+            }))} 
+            filename={`media-library-${new Date().toISOString().split('T')[0]}`}
+          />
           <Button variant="outline" size="sm" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
             {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
           </Button>

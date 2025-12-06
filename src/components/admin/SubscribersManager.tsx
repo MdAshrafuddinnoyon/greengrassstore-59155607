@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ExportButtons } from "./ExportButtons";
 import { Loader2, Mail, Search, Download, Trash2, RefreshCw, Users } from "lucide-react";
 
 interface Subscriber {
@@ -177,10 +178,11 @@ export const SubscribersManager = () => {
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Refresh
               </Button>
-              <Button size="sm" onClick={exportCSV}>
-                <Download className="w-4 h-4 mr-1" />
-                Export CSV
-              </Button>
+              <ExportButtons 
+                data={subscribers} 
+                filename={`subscribers-${new Date().toISOString().split('T')[0]}`}
+                label="Export"
+              />
             </div>
           </div>
         </CardHeader>
