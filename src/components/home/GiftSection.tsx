@@ -1,28 +1,34 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import ikebana from "@/assets/ikebana.jpg";
 import flowerPot from "@/assets/flower-pot.jpg";
 import ficusPlant from "@/assets/ficus-plant.jpg";
 
-const giftItems = [
+// Default gift items (used when no custom items are set)
+const defaultGiftItems = [
   {
-    id: 1,
+    id: "1",
     name: "Garden Gift Set",
+    nameAr: "مجموعة هدايا الحديقة",
     price: 199,
     image: ikebana,
     href: "/shop?category=gifts",
   },
   {
-    id: 2,
+    id: "2",
     name: "Plant Lover Bundle",
+    nameAr: "حزمة محبي النباتات",
     price: 149,
     image: flowerPot,
     href: "/shop?category=gifts",
   },
   {
-    id: 3,
+    id: "3",
     name: "Indoor Oasis Kit",
+    nameAr: "مجموعة الواحة الداخلية",
     price: 249,
     image: ficusPlant,
     href: "/shop?category=gifts",
@@ -30,6 +36,19 @@ const giftItems = [
 ];
 
 export const GiftSection = () => {
+  const { giftSection, loading } = useSiteSettings();
+  const { language } = useLanguage();
+  const isArabic = language === "ar";
+
+  if (!giftSection.enabled && !loading) return null;
+
+  const title = isArabic ? giftSection.titleAr : giftSection.title;
+  const subtitle = isArabic ? giftSection.subtitleAr : giftSection.subtitle;
+  const buttonText = isArabic ? giftSection.buttonTextAr : giftSection.buttonText;
+  
+  // Use custom items if available, otherwise use defaults
+  const giftItems = giftSection.items?.length > 0 ? giftSection.items : defaultGiftItems;
+
   return (
     <section className="py-8 md:py-16 bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4">
@@ -43,14 +62,14 @@ export const GiftSection = () => {
           <div className="flex items-center justify-center gap-2 mb-2">
             <Gift className="w-4 md:w-5 h-4 md:h-5 text-primary" />
             <p className="text-[10px] uppercase tracking-widest text-primary font-semibold">
-              Perfect Presents
+              {isArabic ? "هدايا مثالية" : "Perfect Presents"}
             </p>
           </div>
           <h2 className="font-display text-xl md:text-3xl font-normal text-foreground mb-2 md:mb-3">
-            Gift Garden
+            {title}
           </h2>
           <p className="text-muted-foreground max-w-md mx-auto text-xs md:text-sm">
-            Thoughtfully curated gift sets for plant lovers
+            {subtitle}
           </p>
         </motion.div>
 
@@ -70,12 +89,12 @@ export const GiftSection = () => {
                   <div className="aspect-square overflow-hidden bg-muted rounded-2xl mb-2">
                     <img
                       src={item.image}
-                      alt={item.name}
+                      alt={isArabic ? item.nameAr : item.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
                   <h3 className="text-sm font-medium text-foreground mb-1 line-clamp-1">
-                    {item.name}
+                    {isArabic ? item.nameAr : item.name}
                   </h3>
                   <p className="text-sm font-bold text-primary">AED {item.price}</p>
                 </Link>
@@ -101,12 +120,12 @@ export const GiftSection = () => {
                 <div className="aspect-square overflow-hidden bg-muted rounded-xl mb-3">
                   <img
                     src={item.image}
-                    alt={item.name}
+                    alt={isArabic ? item.nameAr : item.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 <h3 className="text-sm font-medium text-foreground mb-1 group-hover:text-primary transition-colors">
-                  {item.name}
+                  {isArabic ? item.nameAr : item.name}
                 </h3>
                 <p className="text-sm font-bold text-foreground">AED {item.price}</p>
               </Link>
@@ -116,11 +135,11 @@ export const GiftSection = () => {
 
         <div className="text-center mt-6 md:mt-8">
           <Link
-            to="/shop?category=gifts"
+            to={giftSection.buttonLink}
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2.5 md:py-3 rounded-full text-xs uppercase tracking-widest font-medium hover:bg-primary/90 transition-colors"
           >
             <Gift className="w-4 h-4" />
-            View All Gifts
+            {buttonText}
             <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
