@@ -316,6 +316,60 @@ export type Database = {
         }
         Relationships: []
       }
+      popup_notifications: {
+        Row: {
+          button_link: string | null
+          button_text: string | null
+          button_text_ar: string | null
+          created_at: string
+          description: string | null
+          description_ar: string | null
+          display_frequency: string | null
+          end_date: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          start_date: string | null
+          title: string
+          title_ar: string | null
+          updated_at: string
+        }
+        Insert: {
+          button_link?: string | null
+          button_text?: string | null
+          button_text_ar?: string | null
+          created_at?: string
+          description?: string | null
+          description_ar?: string | null
+          display_frequency?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          start_date?: string | null
+          title: string
+          title_ar?: string | null
+          updated_at?: string
+        }
+        Update: {
+          button_link?: string | null
+          button_text?: string | null
+          button_text_ar?: string | null
+          created_at?: string
+          description?: string | null
+          description_ar?: string | null
+          display_frequency?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          start_date?: string | null
+          title?: string
+          title_ar?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_variants: {
         Row: {
           compare_at_price: number | null
