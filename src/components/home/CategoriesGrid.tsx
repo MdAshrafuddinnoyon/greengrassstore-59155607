@@ -1,11 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Leaf, Flower2, Package, Shrub, Sparkles, Gift, Tag, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Leaf, Flower2, Package, Shrub, Sparkles, Gift, Tag, Loader2, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchCollections, ShopifyCollection } from "@/lib/shopify";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 
 // Fallback images
 import ficusPlant from "@/assets/ficus-plant.jpg";
@@ -38,38 +36,15 @@ const fallbackImages: Record<string, string> = {
   sale: gardenFlowers,
 };
 
-// Color mapping for collections
-const colorMap: Record<string, string> = {
-  plants: "from-green-600 to-green-800",
-  flowers: "from-pink-500 to-rose-600",
-  pots: "from-amber-600 to-orange-700",
-  greenery: "from-emerald-600 to-teal-700",
-  vases: "from-blue-600 to-indigo-700",
-  gifts: "from-purple-600 to-violet-700",
-  sale: "from-red-500 to-rose-600",
-};
-
 export const CategoriesGrid = () => {
   const { t } = useLanguage();
   const [collections, setCollections] = useState<ShopifyCollection[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { 
-      loop: true, 
-      align: "start",
-      slidesToScroll: 1,
-    },
-    [Autoplay({ delay: 3000, stopOnInteraction: true })]
-  );
-
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
-
   useEffect(() => {
     const loadCollections = async () => {
       try {
-        const data = await fetchCollections(20);
+        const data = await fetchCollections(8);
         setCollections(data);
       } catch (error) {
         console.error("Failed to fetch collections:", error);
@@ -92,14 +67,13 @@ export const CategoriesGrid = () => {
       image: collection.node.image?.url || fallbackImages[handle] || ficusPlant,
       href: `/shop?category=${handle}`,
       description: collection.node.description || "",
-      color: colorMap[handle] || "from-green-600 to-green-800",
       isSale,
     };
   });
 
   if (loading) {
     return (
-      <section className="py-8 md:py-16 bg-white">
+      <section className="py-12 md:py-20 bg-[#f8f8f5]">
         <div className="container mx-auto px-4 flex justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -112,99 +86,110 @@ export const CategoriesGrid = () => {
   }
 
   return (
-    <section className="py-8 md:py-16 bg-white overflow-hidden">
+    <section className="py-12 md:py-20 bg-[#f8f8f5]">
       <div className="container mx-auto px-4">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-8 md:mb-10"
+          className="text-center mb-10 md:mb-14"
         >
-          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
+          <span className="inline-block text-xs uppercase tracking-[0.2em] text-primary font-medium mb-3">
             {t("categories.browse")}
-          </p>
-          <h2 className="font-display text-2xl md:text-3xl font-normal text-foreground">
+          </span>
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-light text-foreground">
             {t("categories.title")}
           </h2>
         </motion.div>
 
-        {/* Carousel with Navigation */}
-        <div className="relative group">
-          {/* Previous Button */}
-          <button
-            onClick={scrollPrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 md:p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0 hidden md:flex items-center justify-center"
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </button>
-
-          {/* Next Button */}
-          <button
-            onClick={scrollNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 md:p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 hidden md:flex items-center justify-center"
-          >
-            <ChevronRight className="w-5 h-5 text-foreground" />
-          </button>
-
-          {/* Embla Carousel */}
-          <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-4">
-              {categories.map((category, index) => (
-                <motion.div
-                  key={category.handle}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  viewport={{ once: true }}
-                  className="flex-none w-[140px] md:w-[200px] lg:w-[220px]"
-                >
-                  <Link
-                    to={category.href}
-                    className="group block relative aspect-[3/4] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
-                  >
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-60 group-hover:opacity-70 transition-opacity`} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
-                      <category.icon className="w-8 h-8 md:w-10 md:h-10 mb-2 drop-shadow-lg" />
-                      <h3 className="font-semibold text-sm md:text-base text-center drop-shadow-lg">{category.name}</h3>
-                      {category.description && (
-                        <p className="text-[10px] md:text-xs text-white/80 text-center mt-1 line-clamp-2 hidden md:block">{category.description}</p>
-                      )}
+        {/* Categories Grid - Mobile: 2 cols, Tablet: 3 cols, Desktop: 4 cols */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {categories.slice(0, 8).map((category, index) => (
+            <motion.div
+              key={category.handle}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+              viewport={{ once: true }}
+            >
+              <Link
+                to={category.href}
+                className="group block relative overflow-hidden rounded-2xl bg-white shadow-sm hover:shadow-xl transition-all duration-500"
+              >
+                {/* Image Container */}
+                <div className="relative aspect-[4/5] overflow-hidden">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  
+                  {/* Sale Badge */}
+                  {category.isSale && (
+                    <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full">
+                      SALE
                     </div>
-                    {category.isSale && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
-                        {t("product.sale").toUpperCase()}
-                      </div>
-                    )}
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <category.icon className="w-4 h-4 md:w-5 md:h-5 text-white/90" />
+                      <h3 className="font-medium text-sm md:text-base text-white">
+                        {category.name}
+                      </h3>
+                    </div>
+                    
+                    {/* Hover Arrow */}
+                    <div className="flex items-center gap-1 text-white/70 text-xs md:text-sm mt-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                      <span>Shop Now</span>
+                      <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Mobile Quick Actions */}
+        {/* Quick Action Buttons - Mobile Only */}
         <div className="md:hidden mt-6 grid grid-cols-2 gap-3">
           <Link
             to="/shop?category=sale"
-            className="relative h-20 rounded-2xl overflow-hidden bg-gradient-to-r from-red-500 to-rose-600 flex items-center justify-center"
+            className="group relative h-16 rounded-xl overflow-hidden bg-gradient-to-r from-red-500 to-rose-600 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
           >
-            <Tag className="w-5 h-5 text-white mr-2" />
-            <span className="text-white font-semibold text-sm">{t("category.sale40")}</span>
+            <Tag className="w-4 h-4 text-white" />
+            <span className="text-white font-medium text-sm">Sale Items</span>
           </Link>
           <Link
             to="/shop?sort=newest"
-            className="relative h-20 rounded-2xl overflow-hidden bg-gradient-to-r from-primary to-emerald-700 flex items-center justify-center"
+            className="group relative h-16 rounded-xl overflow-hidden bg-gradient-to-r from-[#2d5a3d] to-[#1e3d2a] flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
           >
-            <Sparkles className="w-5 h-5 text-white mr-2" />
-            <span className="text-white font-semibold text-sm">{t("header.newArrivals")}</span>
+            <Sparkles className="w-4 h-4 text-white" />
+            <span className="text-white font-medium text-sm">New Arrivals</span>
           </Link>
         </div>
+
+        {/* View All Button - Desktop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="hidden md:flex justify-center mt-10"
+        >
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-2 px-8 py-3 border border-foreground/20 rounded-full text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
+          >
+            View All Categories
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
