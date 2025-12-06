@@ -263,6 +263,81 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string
+          compare_at_price: number | null
+          created_at: string
+          currency: string
+          description: string | null
+          description_ar: string | null
+          featured_image: string | null
+          id: string
+          images: string[] | null
+          is_active: boolean
+          is_featured: boolean
+          is_new: boolean
+          is_on_sale: boolean
+          name: string
+          name_ar: string | null
+          price: number
+          sku: string | null
+          slug: string
+          stock_quantity: number
+          subcategory: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          compare_at_price?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          description_ar?: string | null
+          featured_image?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean
+          is_featured?: boolean
+          is_new?: boolean
+          is_on_sale?: boolean
+          name: string
+          name_ar?: string | null
+          price?: number
+          sku?: string | null
+          slug: string
+          stock_quantity?: number
+          subcategory?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          compare_at_price?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          description_ar?: string | null
+          featured_image?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean
+          is_featured?: boolean
+          is_new?: boolean
+          is_on_sale?: boolean
+          name?: string
+          name_ar?: string | null
+          price?: number
+          sku?: string | null
+          slug?: string
+          stock_quantity?: number
+          subcategory?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
