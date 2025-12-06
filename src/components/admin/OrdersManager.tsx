@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, Eye, FileText, Search, Download, Printer, Trash2 } from "lucide-react";
+import { Loader2, Plus, Eye, FileText, Search, Download, Printer, Trash2, RefreshCw } from "lucide-react";
+import { ExportButtons } from "./ExportButtons";
 import { format } from "date-fns";
 
 interface OrderItem {
@@ -295,18 +296,36 @@ export const OrdersManager = () => {
             <CardDescription>Manage orders and generate invoices</CardDescription>
           </div>
           
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Order
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Order</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={fetchOrders}>
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Refresh
+            </Button>
+            <ExportButtons 
+              data={orders.map(o => ({
+                order_number: o.order_number,
+                customer_name: o.customer_name,
+                customer_email: o.customer_email,
+                customer_phone: o.customer_phone || '',
+                total: `AED ${o.total.toFixed(2)}`,
+                status: o.status,
+                payment_method: o.payment_method || '',
+                date: new Date(o.created_at).toLocaleDateString()
+              }))} 
+              filename={`orders-${new Date().toISOString().split('T')[0]}`}
+            />
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Order
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Order</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Customer Name *</Label>
@@ -462,9 +481,10 @@ export const OrdersManager = () => {
                 >
                   Create Order & Generate Invoice
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

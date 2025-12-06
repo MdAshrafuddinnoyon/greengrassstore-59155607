@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, FolderTree, Plus, Pencil, Trash2, Save, RefreshCw } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
+import { ExportButtons } from "./ExportButtons";
 
 interface Category {
   id: string;
@@ -176,11 +177,15 @@ export const LocalCategoryManager = () => {
                 {categories.length} categories
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={fetchCategories}>
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Refresh
               </Button>
+              <ExportButtons 
+                data={categories} 
+                filename={`categories-${new Date().toISOString().split('T')[0]}`}
+              />
               <Button onClick={handleAdd}>
                 <Plus className="w-4 h-4 mr-1" />
                 Add Category

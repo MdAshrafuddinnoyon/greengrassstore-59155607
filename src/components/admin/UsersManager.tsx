@@ -4,8 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Shield, User } from "lucide-react";
+import { Loader2, Shield, User, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ExportButtons } from "./ExportButtons";
 import { toast } from "sonner";
 
 interface UserWithRole {
@@ -120,11 +121,31 @@ export const UsersManager = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          Users & Roles
-        </CardTitle>
-        <CardDescription>Manage user accounts and permissions</CardDescription>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Users & Roles
+            </CardTitle>
+            <CardDescription>Manage user accounts and permissions</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchUsers}>
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Refresh
+            </Button>
+            <ExportButtons 
+              data={users.map(u => ({ 
+                name: u.full_name || 'Unknown', 
+                phone: u.phone || '-', 
+                city: u.city || '-', 
+                role: u.role || 'user',
+                joined: new Date(u.created_at).toLocaleDateString()
+              }))} 
+              filename={`users-${new Date().toISOString().split('T')[0]}`}
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (
