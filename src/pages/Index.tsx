@@ -4,7 +4,9 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { ShopifyProductGrid } from "@/components/products/ShopifyProductGrid";
 import { CategoriesGrid } from "@/components/home/CategoriesGrid";
 import { PromoSection } from "@/components/home/PromoSection";
+import { BlogSection } from "@/components/home/BlogSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
+import { FAQSection } from "@/components/home/FAQSection";
 
 const Index = () => {
   return (
@@ -28,6 +30,12 @@ const Index = () => {
 
         {/* Sale Banner */}
         <PromoSection />
+
+        {/* Blog Section */}
+        <BlogSection />
+
+        {/* FAQ Section */}
+        <FAQSection />
 
         {/* Instagram Feed */}
         <InstagramSection />
