@@ -8,9 +8,18 @@ import {
   ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchCollections, ShopifyCollection } from "@/lib/shopify";
+import { supabase } from "@/integrations/supabase/client";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
+
+interface Category {
+  id: string;
+  name: string;
+  name_ar: string | null;
+  slug: string;
+  image: string | null;
+  description: string | null;
+}
 
 // Extended icon mapping - matches category names dynamically
 const getIconForCategory = (handle: string, title: string): typeof Leaf => {
@@ -76,8 +85,9 @@ const getIconForCategory = (handle: string, title: string): typeof Leaf => {
 };
 
 export const CategoriesGrid = () => {
-  const { t } = useLanguage();
-  const [collections, setCollections] = useState<ShopifyCollection[]>([]);
+  const { t, language } = useLanguage();
+  const isArabic = language === 'ar';
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
@@ -93,31 +103,37 @@ export const CategoriesGrid = () => {
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
   useEffect(() => {
-    const loadCollections = async () => {
+    const loadCategories = async () => {
       try {
-        const data = await fetchCollections(20); // Fetch more for future categories
-        setCollections(data);
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        
+        if (error) throw error;
+        setCategories(data || []);
       } catch (error) {
-        console.error("Failed to fetch collections:", error);
+        console.error("Failed to fetch categories:", error);
       } finally {
         setLoading(false);
       }
     };
-    loadCollections();
+    loadCategories();
   }, []);
 
-  // Map collections to display data with dynamic icons
-  const categories = collections.map((collection) => {
-    const handle = collection.node.handle.toLowerCase();
-    const title = collection.node.title;
-    const isSale = handle === "sale" || handle.includes("sale");
+  // Map categories to display data with dynamic icons
+  const displayCategories = categories.map((category) => {
+    const isSale = category.slug === "sale" || category.slug.includes("sale");
     
     return {
-      name: title,
-      handle: handle,
-      icon: getIconForCategory(handle, title),
-      href: `/shop?category=${handle}`,
+      id: category.id,
+      name: isArabic && category.name_ar ? category.name_ar : category.name,
+      slug: category.slug,
+      icon: getIconForCategory(category.slug, category.name),
+      href: `/shop?category=${category.slug}`,
       isSale,
+      image: category.image,
     };
   });
 
@@ -131,7 +147,7 @@ export const CategoriesGrid = () => {
     );
   }
 
-  if (categories.length === 0) {
+  if (displayCategories.length === 0) {
     return null;
   }
 
@@ -175,11 +191,11 @@ export const CategoriesGrid = () => {
           {/* Embla Carousel */}
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex gap-6 md:gap-8">
-              {categories.map((category, index) => {
+              {displayCategories.map((category, index) => {
                 const IconComponent = category.icon;
                 return (
                   <motion.div
-                    key={category.handle}
+                    key={category.id}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.03 }}
@@ -190,9 +206,17 @@ export const CategoriesGrid = () => {
                       to={category.href}
                       className="group/item flex flex-col items-center gap-3 min-w-[80px]"
                     >
-                      {/* Icon Circle */}
-                      <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#f8f8f5] group-hover/item:bg-primary/10 border border-border/50 group-hover/item:border-primary/30 flex items-center justify-center transition-all duration-300 group-hover/item:scale-110 group-hover/item:shadow-lg">
-                        <IconComponent className="w-6 h-6 md:w-8 md:h-8 text-foreground/70 group-hover/item:text-primary transition-colors duration-300" />
+                      {/* Icon Circle or Image */}
+                      <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#f8f8f5] group-hover/item:bg-primary/10 border border-border/50 group-hover/item:border-primary/30 flex items-center justify-center transition-all duration-300 group-hover/item:scale-110 group-hover/item:shadow-lg overflow-hidden">
+                        {category.image ? (
+                          <img 
+                            src={category.image} 
+                            alt={category.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <IconComponent className="w-6 h-6 md:w-8 md:h-8 text-foreground/70 group-hover/item:text-primary transition-colors duration-300" />
+                        )}
                         
                         {/* Sale Badge */}
                         {category.isSale && (

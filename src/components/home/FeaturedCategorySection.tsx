@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { supabase } from "@/integrations/supabase/client";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
@@ -57,38 +56,46 @@ interface CategoryWithProducts {
 export const FeaturedCategorySection = () => {
   const [categories, setCategories] = useState<CategoryWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
-  const { megaMenuCategories } = useSiteSettings();
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Fetch categories from Supabase
+        const { data: categoriesData, error: catError } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true })
+          .limit(4);
+        
+        if (catError) throw catError;
+
         // Get products from Supabase
-        const { data: products, error } = await supabase
+        const { data: products, error: prodError } = await supabase
           .from('products')
           .select('*')
           .eq('is_active', true)
           .limit(50);
 
-        if (error) throw error;
+        if (prodError) throw prodError;
 
-        // Map products to categories from megaMenuCategories
-        const activeCategories = megaMenuCategories
-          .filter(cat => cat.isActive && !cat.isSale)
-          .slice(0, 4);
-
-        const categoriesWithProducts = activeCategories.map((cat) => {
+        // Map products to categories
+        const categoriesWithProducts = (categoriesData || []).map((cat) => {
+          const categorySlug = cat.slug.toLowerCase();
           const categoryName = cat.name.toLowerCase();
+          
           const matchedProducts = (products || []).filter((product) => {
-            return product.category?.toLowerCase() === categoryName;
+            const prodCategory = product.category?.toLowerCase() || '';
+            return prodCategory === categorySlug || prodCategory === categoryName;
           });
 
           return {
             category: {
               id: cat.id,
               name: cat.name,
-              nameAr: cat.nameAr,
-              href: cat.href,
-              image: cat.image || fallbackBanners[categoryName] || ficusPlant,
+              nameAr: cat.name_ar || cat.name,
+              href: `/shop?category=${cat.slug}`,
+              image: cat.image || fallbackBanners[categorySlug] || ficusPlant,
             },
             products: matchedProducts.slice(0, 6),
           };
@@ -102,7 +109,7 @@ export const FeaturedCategorySection = () => {
       }
     };
     loadData();
-  }, [megaMenuCategories]);
+  }, []);
 
   if (loading) {
     return (
