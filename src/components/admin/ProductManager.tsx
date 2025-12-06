@@ -66,11 +66,47 @@ export const ProductManager = () => {
     if (!editingProduct?.name) { toast.error('Name required'); return; }
     setSaving(true);
     try {
-      const data = { ...editingProduct, slug: editingProduct.slug || editingProduct.name.toLowerCase().replace(/\s+/g, '-') };
+      const slug = editingProduct.slug || editingProduct.name.toLowerCase().replace(/\s+/g, '-');
+      const category = editingProduct.category || 'General';
+      
       if (editingProduct.id) {
-        await supabase.from('products').update(data).eq('id', editingProduct.id);
+        const { error } = await supabase.from('products').update({
+          name: editingProduct.name,
+          name_ar: editingProduct.name_ar,
+          slug,
+          description: editingProduct.description,
+          price: editingProduct.price || 0,
+          compare_at_price: editingProduct.compare_at_price,
+          currency: editingProduct.currency || 'AED',
+          category,
+          subcategory: editingProduct.subcategory,
+          featured_image: editingProduct.featured_image,
+          is_featured: editingProduct.is_featured || false,
+          is_on_sale: editingProduct.is_on_sale || false,
+          is_new: editingProduct.is_new || false,
+          is_active: editingProduct.is_active ?? true,
+          stock_quantity: editingProduct.stock_quantity || 0,
+        }).eq('id', editingProduct.id);
+        if (error) throw error;
       } else {
-        await supabase.from('products').insert(data);
+        const { error } = await supabase.from('products').insert({
+          name: editingProduct.name,
+          name_ar: editingProduct.name_ar,
+          slug,
+          description: editingProduct.description,
+          price: editingProduct.price || 0,
+          compare_at_price: editingProduct.compare_at_price,
+          currency: editingProduct.currency || 'AED',
+          category,
+          subcategory: editingProduct.subcategory,
+          featured_image: editingProduct.featured_image,
+          is_featured: editingProduct.is_featured || false,
+          is_on_sale: editingProduct.is_on_sale || false,
+          is_new: editingProduct.is_new || false,
+          is_active: editingProduct.is_active ?? true,
+          stock_quantity: editingProduct.stock_quantity || 0,
+        });
+        if (error) throw error;
       }
       toast.success('Product saved');
       setIsDialogOpen(false);
