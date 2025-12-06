@@ -231,7 +231,7 @@ export const Footer = () => {
               <span>www.greengrassstore.com</span>
             </div>
           </div>
-          {/* Developer Credit - PERMANENT - Cannot be changed by admin */}
+          {/* Developer Credit - PERMANENT - Cannot be changed */}
           <div className="mt-4 pt-4 border-t border-white/10 text-center">
             <p className="text-xs text-gray-500">
               Developed by{" "}
@@ -243,10 +243,6 @@ export const Footer = () => {
               >
                 Web Search BD
               </a>
-              {" "}- Where Ideas Meet Innovation
-            </p>
-            <p className="text-xs text-gray-600 mt-1">
-              📧 info@websearchbd.com | 📞 +880 1XXX-XXXXXX
             </p>
           </div>
         </div>
