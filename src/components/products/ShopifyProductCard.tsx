@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { ShopifyProduct } from "@/lib/shopify";
 import { useCartStore, CartItem } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
-import { ShoppingBag, Heart, Eye, Plus } from "lucide-react";
+import { useCompareStore } from "@/stores/compareStore";
+import { ShoppingBag, Heart, Eye, Plus, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
+  const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare, items: compareItems } = useCompareStore();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { node } = product;
@@ -31,6 +33,7 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
   const price = node.priceRange.minVariantPrice;
 
   const isWishlisted = isInWishlist(node.id);
+  const isCompared = isInCompare(node.id);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -64,6 +67,28 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
     e.preventDefault();
     e.stopPropagation();
     setShowQuickView(true);
+  };
+
+  const handleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isCompared) {
+      removeFromCompare(node.id);
+      toast.success("Removed from compare", { position: "top-center" });
+    } else {
+      if (compareItems.length >= 4) {
+        toast.error("You can compare up to 4 products", { position: "top-center" });
+        return;
+      }
+      const success = addToCompare(product);
+      if (success) {
+        toast.success("Added to compare", { 
+          description: `${compareItems.length + 1} of 4 products`,
+          position: "top-center" 
+        });
+      }
+    }
   };
 
   const handleWishlist = async (e: React.MouseEvent) => {
@@ -131,6 +156,19 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
           >
             <Heart className={cn("w-3.5 h-3.5", isWishlisted && "fill-current")} />
           </button>
+
+          {/* Compare Button */}
+          <button
+            onClick={handleCompare}
+            className={cn(
+              "absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center transition-all",
+              isCompared
+                ? "bg-primary text-primary-foreground"
+                : "bg-white/80 text-gray-600"
+            )}
+          >
+            <Scale className="w-3.5 h-3.5" />
+          </button>
         </div>
         
         <h3 className="text-xs font-medium text-foreground line-clamp-2 mb-1">
@@ -180,18 +218,34 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
             </div>
           )}
 
-          {/* Wishlist Button */}
-          <button
-            onClick={handleWishlist}
-            className={cn(
-              "absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
-              isWishlisted
-                ? "bg-red-500 text-white"
-                : "bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100"
-            )}
-          >
-            <Heart className={cn("w-4 h-4", isWishlisted && "fill-current")} />
-          </button>
+          {/* Top Right Actions */}
+          <div className="absolute top-3 right-3 flex flex-col gap-2">
+            {/* Wishlist Button */}
+            <button
+              onClick={handleWishlist}
+              className={cn(
+                "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
+                isWishlisted
+                  ? "bg-red-500 text-white"
+                  : "bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100"
+              )}
+            >
+              <Heart className={cn("w-4 h-4", isWishlisted && "fill-current")} />
+            </button>
+
+            {/* Compare Button */}
+            <button
+              onClick={handleCompare}
+              className={cn(
+                "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
+                isCompared
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100"
+              )}
+            >
+              <Scale className="w-4 h-4" />
+            </button>
+          </div>
 
           {/* Quick Actions */}
           <div

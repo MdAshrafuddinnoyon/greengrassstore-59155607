@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FloatingActionMenu } from "@/components/FloatingActionMenu";
+import { CompareDrawer } from "@/components/compare/CompareDrawer";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import Shop from "./pages/Shop";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <FloatingActionMenu />
+          <CompareDrawer />
           <MobileBottomNav />
         </BrowserRouter>
       </TooltipProvider>
