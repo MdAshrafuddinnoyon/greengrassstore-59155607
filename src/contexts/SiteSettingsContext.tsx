@@ -107,6 +107,81 @@ export interface StoreInfo {
   address: string;
 }
 
+// Mega Menu Types
+export interface SubCategory {
+  id: string;
+  name: string;
+  nameAr: string;
+  href: string;
+  icon: string;
+  order: number;
+}
+
+export interface MegaMenuCategory {
+  id: string;
+  name: string;
+  nameAr: string;
+  href: string;
+  icon: string;
+  image: string;
+  isSale: boolean;
+  isActive: boolean;
+  order: number;
+  featuredTitle: string;
+  featuredTitleAr: string;
+  featuredSubtitle: string;
+  featuredSubtitleAr: string;
+  featuredHref: string;
+  subcategories: SubCategory[];
+}
+
+// Page Content Types
+export interface FAQItem {
+  id: string;
+  question: string;
+  questionAr: string;
+  answer: string;
+  answerAr: string;
+  category: string;
+  order: number;
+}
+
+export interface PolicySection {
+  id: string;
+  title: string;
+  titleAr: string;
+  content: string;
+  contentAr: string;
+  icon: string;
+  order: number;
+}
+
+export interface AboutPageContent {
+  heroTitle: string;
+  heroTitleAr: string;
+  heroSubtitle: string;
+  heroSubtitleAr: string;
+  storyTitle: string;
+  storyTitleAr: string;
+  storyContent: string;
+  storyContentAr: string;
+  yearsInBusiness: string;
+}
+
+export interface ContactPageContent {
+  heroTitle: string;
+  heroTitleAr: string;
+  heroSubtitle: string;
+  heroSubtitleAr: string;
+  address: string;
+  addressAr: string;
+  phone: string;
+  email: string;
+  workingHours: string;
+  workingHoursAr: string;
+  mapEmbedUrl: string;
+}
+
 interface SiteSettingsContextType {
   announcementBar: AnnouncementBarSettings;
   hero: HeroSettings;
@@ -117,6 +192,13 @@ interface SiteSettingsContextType {
   whatsapp: WhatsAppSettings;
   salesAgent: SalesAgentSettings;
   storeInfo: StoreInfo;
+  megaMenuCategories: MegaMenuCategory[];
+  faqItems: FAQItem[];
+  returnPolicySections: PolicySection[];
+  privacySections: PolicySection[];
+  termsSections: PolicySection[];
+  aboutContent: AboutPageContent;
+  contactContent: ContactPageContent;
   loading: boolean;
   refetch: () => Promise<void>;
 }
@@ -216,6 +298,134 @@ const defaultStoreInfo: StoreInfo = {
   address: "Dubai, UAE"
 };
 
+const defaultMegaMenuCategories: MegaMenuCategory[] = [
+  {
+    id: '1',
+    name: 'Plants',
+    nameAr: 'نباتات',
+    href: '/shop?category=plants',
+    icon: 'leaf',
+    image: '',
+    isSale: false,
+    isActive: true,
+    order: 1,
+    featuredTitle: 'New Arrivals',
+    featuredTitleAr: 'وصل حديثاً',
+    featuredSubtitle: 'Fresh plants collection',
+    featuredSubtitleAr: 'مجموعة نباتات طازجة',
+    featuredHref: '/shop?category=plants&sort=newest',
+    subcategories: [
+      { id: '1-1', name: 'Mixed Plant', nameAr: 'نباتات مختلطة', href: '/shop?category=mixed-plant', icon: 'leaf', order: 1 },
+      { id: '1-2', name: 'Palm Tree', nameAr: 'شجرة النخيل', href: '/shop?category=palm-tree', icon: 'leaf', order: 2 },
+    ]
+  },
+  {
+    id: '2',
+    name: 'Flowers',
+    nameAr: 'زهور',
+    href: '/shop?category=flowers',
+    icon: 'flower',
+    image: '',
+    isSale: false,
+    isActive: true,
+    order: 2,
+    featuredTitle: 'Seasonal Blooms',
+    featuredTitleAr: 'أزهار موسمية',
+    featuredSubtitle: 'Beautiful arrangements',
+    featuredSubtitleAr: 'ترتيبات جميلة',
+    featuredHref: '/shop?category=flowers',
+    subcategories: []
+  },
+  {
+    id: '3',
+    name: 'Pots',
+    nameAr: 'أواني',
+    href: '/shop?category=pots',
+    icon: 'package',
+    image: '',
+    isSale: false,
+    isActive: true,
+    order: 3,
+    featuredTitle: 'Designer Pots',
+    featuredTitleAr: 'أواني مصممة',
+    featuredSubtitle: 'Premium collection',
+    featuredSubtitleAr: 'مجموعة فاخرة',
+    featuredHref: '/shop?category=pots',
+    subcategories: [
+      { id: '3-1', name: 'Fiber Pot', nameAr: 'أواني فايبر', href: '/shop?category=fiber-pot', icon: 'package', order: 1 },
+      { id: '3-2', name: 'Ceramic Pot', nameAr: 'أواني سيراميك', href: '/shop?category=ceramic-pot', icon: 'package', order: 2 },
+    ]
+  },
+  {
+    id: '4',
+    name: 'Greenery',
+    nameAr: 'خضرة',
+    href: '/shop?category=greenery',
+    icon: 'shrub',
+    image: '',
+    isSale: false,
+    isActive: true,
+    order: 4,
+    featuredTitle: 'Green Walls',
+    featuredTitleAr: 'جدران خضراء',
+    featuredSubtitle: 'Transform your space',
+    featuredSubtitleAr: 'حول مساحتك',
+    featuredHref: '/shop?category=green-wall',
+    subcategories: []
+  },
+  {
+    id: '5',
+    name: 'Sale',
+    nameAr: 'تخفيضات',
+    href: '/shop?category=sale',
+    icon: 'tag',
+    image: '',
+    isSale: true,
+    isActive: true,
+    order: 5,
+    featuredTitle: '',
+    featuredTitleAr: '',
+    featuredSubtitle: '',
+    featuredSubtitleAr: '',
+    featuredHref: '',
+    subcategories: []
+  }
+];
+
+const defaultFaqItems: FAQItem[] = [
+  { id: '1', question: 'What areas do you deliver to?', questionAr: 'ما هي مناطق التوصيل؟', answer: 'We deliver across all UAE.', answerAr: 'نقوم بالتوصيل إلى جميع أنحاء الإمارات.', category: 'shipping', order: 1 },
+];
+
+const defaultPolicySections: PolicySection[] = [
+  { id: '1', title: 'Eligible for Return', titleAr: 'المؤهل للإرجاع', content: 'Items in original condition...', contentAr: 'العناصر في حالتها الأصلية...', icon: 'check-circle', order: 1 },
+];
+
+const defaultAboutContent: AboutPageContent = {
+  heroTitle: 'About Green Grass',
+  heroTitleAr: 'عن جرين جراس',
+  heroSubtitle: 'Bringing nature into every home across the UAE',
+  heroSubtitleAr: 'نجلب الطبيعة إلى كل منزل في الإمارات',
+  storyTitle: 'A Passion for Plants & Beautiful Spaces',
+  storyTitleAr: 'شغف بالنباتات والمساحات الجميلة',
+  storyContent: 'Founded in Dubai in 2018...',
+  storyContentAr: 'تأسست في دبي عام 2018...',
+  yearsInBusiness: '6+'
+};
+
+const defaultContactContent: ContactPageContent = {
+  heroTitle: "We'd Love to Hear From You",
+  heroTitleAr: 'يسعدنا سماعك',
+  heroSubtitle: 'Have questions about our products?',
+  heroSubtitleAr: 'هل لديك أسئلة حول منتجاتنا؟',
+  address: 'Al Quoz Industrial Area 3, Dubai, UAE',
+  addressAr: 'منطقة القوز الصناعية 3، دبي، الإمارات',
+  phone: '+971 54 775 1901',
+  email: 'info@greengrassstore.com',
+  workingHours: 'Sat-Thu: 9AM-9PM, Fri: 2PM-9PM',
+  workingHoursAr: 'السبت-الخميس: 9ص-9م، الجمعة: 2م-9م',
+  mapEmbedUrl: ''
+};
+
 const SiteSettingsContext = createContext<SiteSettingsContextType>({
   announcementBar: defaultAnnouncementBar,
   hero: defaultHero,
@@ -226,6 +436,13 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   whatsapp: defaultWhatsApp,
   salesAgent: defaultSalesAgent,
   storeInfo: defaultStoreInfo,
+  megaMenuCategories: defaultMegaMenuCategories,
+  faqItems: defaultFaqItems,
+  returnPolicySections: defaultPolicySections,
+  privacySections: defaultPolicySections,
+  termsSections: defaultPolicySections,
+  aboutContent: defaultAboutContent,
+  contactContent: defaultContactContent,
   loading: true,
   refetch: async () => {}
 });
@@ -243,6 +460,13 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [whatsapp, setWhatsapp] = useState(defaultWhatsApp);
   const [salesAgent, setSalesAgent] = useState(defaultSalesAgent);
   const [storeInfo, setStoreInfo] = useState(defaultStoreInfo);
+  const [megaMenuCategories, setMegaMenuCategories] = useState(defaultMegaMenuCategories);
+  const [faqItems, setFaqItems] = useState(defaultFaqItems);
+  const [returnPolicySections, setReturnPolicySections] = useState(defaultPolicySections);
+  const [privacySections, setPrivacySections] = useState(defaultPolicySections);
+  const [termsSections, setTermsSections] = useState(defaultPolicySections);
+  const [aboutContent, setAboutContent] = useState(defaultAboutContent);
+  const [contactContent, setContactContent] = useState(defaultContactContent);
 
   const fetchSettings = async () => {
     try {
@@ -282,6 +506,27 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
           case 'store_info':
             setStoreInfo(value as unknown as StoreInfo);
             break;
+          case 'mega_menu_categories':
+            setMegaMenuCategories(value as unknown as MegaMenuCategory[]);
+            break;
+          case 'faq_items':
+            setFaqItems(value as unknown as FAQItem[]);
+            break;
+          case 'return_policy_sections':
+            setReturnPolicySections(value as unknown as PolicySection[]);
+            break;
+          case 'privacy_sections':
+            setPrivacySections(value as unknown as PolicySection[]);
+            break;
+          case 'terms_sections':
+            setTermsSections(value as unknown as PolicySection[]);
+            break;
+          case 'about_content':
+            setAboutContent(value as unknown as AboutPageContent);
+            break;
+          case 'contact_content':
+            setContactContent(value as unknown as ContactPageContent);
+            break;
         }
       });
     } catch (error) {
@@ -307,6 +552,13 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         whatsapp,
         salesAgent,
         storeInfo,
+        megaMenuCategories,
+        faqItems,
+        returnPolicySections,
+        privacySections,
+        termsSections,
+        aboutContent,
+        contactContent,
         loading,
         refetch: fetchSettings
       }}
