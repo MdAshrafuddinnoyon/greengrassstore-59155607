@@ -124,43 +124,7 @@ export const ProductFilters = ({
         )}
       </div>
 
-      {/* Category Filter */}
-      <div className="border-b border-gray-100">
-        <button
-          onClick={() => toggleSection("category")}
-          className="w-full p-4 flex items-center justify-between hover:bg-gray-50"
-        >
-          <span className="font-medium text-gray-900">Category</span>
-          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${openSections.category ? "rotate-180" : ""}`} />
-        </button>
-        {openSections.category && (
-          <div className="px-4 pb-4 space-y-1">
-            {categories.map((cat) => (
-              <label 
-                key={cat.key} 
-                className={cn(
-                  "flex items-center gap-3 cursor-pointer group py-1.5",
-                  cat.isParent && "font-medium text-gray-900 mt-2 first:mt-0"
-                )}
-              >
-                <Checkbox
-                  checked={selectedCategory === cat.key}
-                  onCheckedChange={() => onCategoryChange(cat.key)}
-                  className="border-gray-300 data-[state=checked]:bg-[#2d5a3d] data-[state=checked]:border-[#2d5a3d]"
-                />
-                <span className={cn(
-                  "text-sm group-hover:text-gray-900",
-                  cat.isParent ? "text-gray-900 font-medium" : "text-gray-600 pl-2"
-                )}>
-                  {cat.label}
-                </span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Price Range Filter */}
+      {/* Price Range Filter - AT TOP */}
       <div className="border-b border-gray-100">
         <button
           onClick={() => toggleSection("price")}
@@ -204,6 +168,42 @@ export const ProductFilters = ({
         )}
       </div>
 
+      {/* Category Filter */}
+      <div className="border-b border-gray-100">
+        <button
+          onClick={() => toggleSection("category")}
+          className="w-full p-4 flex items-center justify-between hover:bg-gray-50"
+        >
+          <span className="font-medium text-gray-900">Category</span>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${openSections.category ? "rotate-180" : ""}`} />
+        </button>
+        {openSections.category && (
+          <div className="px-4 pb-4 space-y-1">
+            {categories.map((cat) => (
+              <label 
+                key={cat.key} 
+                className={cn(
+                  "flex items-center gap-3 cursor-pointer group py-1.5",
+                  cat.isParent && "font-medium text-gray-900 mt-2 first:mt-0"
+                )}
+              >
+                <Checkbox
+                  checked={selectedCategory === cat.key}
+                  onCheckedChange={() => onCategoryChange(cat.key)}
+                  className="border-gray-300 data-[state=checked]:bg-[#2d5a3d] data-[state=checked]:border-[#2d5a3d]"
+                />
+                <span className={cn(
+                  "text-sm group-hover:text-gray-900",
+                  cat.isParent ? "text-gray-900 font-medium" : "text-gray-600 pl-2"
+                )}>
+                  {cat.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Colors Filter */}
       {colors.length > 0 && (
         <div className="border-b border-gray-100">
@@ -238,6 +238,21 @@ export const ProductFilters = ({
                     </button>
                   );
                 })}
+              </div>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {colors.map((color) => (
+                  <button
+                    key={`label-${color}`}
+                    onClick={() => handleColorToggle(color)}
+                    className={`px-2 py-0.5 text-xs rounded ${
+                      selectedColors.includes(color)
+                        ? "bg-[#2d5a3d] text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
               </div>
             </div>
           )}
