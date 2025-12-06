@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Menu, X, User, ChevronDown, ChevronLeft, ChevronRight, Leaf, TreeDeciduous, Flower2, Package, Grid3X3, Shrub, Tag, Gift, Sparkles } from "lucide-react";
+import { Menu, X, User, ChevronDown, ChevronLeft, ChevronRight, Leaf, TreeDeciduous, Flower2, Package, Grid3X3, Shrub, Tag, Gift, Sparkles, Fence, Boxes } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
@@ -21,6 +21,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   tag: Tag,
   'tree-deciduous': TreeDeciduous,
   grid: Grid3X3,
+  fence: Fence,
+  boxes: Boxes,
 };
 
 const getIconComponent = (iconName: string) => {
