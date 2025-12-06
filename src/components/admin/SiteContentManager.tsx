@@ -7,16 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Menu, Type, Image, Save, RefreshCw, Plus, Trash2, GripVertical } from "lucide-react";
+import { Loader2, Type, Image, Save, RefreshCw } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
-
-interface MenuItem {
-  id: string;
-  label: string;
-  labelAr: string;
-  href: string;
-  order: number;
-}
 
 interface FooterContent {
   description: string;
@@ -40,12 +32,6 @@ interface BrandingContent {
 export const SiteContentManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([
-    { id: '1', label: 'Plants', labelAr: 'نباتات', href: '/shop?category=plants', order: 1 },
-    { id: '2', label: 'Flowers', labelAr: 'زهور', href: '/shop?category=flowers', order: 2 },
-    { id: '3', label: 'Pots', labelAr: 'أواني', href: '/shop?category=pots', order: 3 },
-  ]);
 
   const [footerContent, setFooterContent] = useState<FooterContent>({
     description: "We craft timeless pieces that blend elegance and functionality.",
@@ -77,9 +63,7 @@ export const SiteContentManager = () => {
 
       data?.forEach((setting) => {
         const value = setting.setting_value as Record<string, unknown>;
-        if (setting.setting_key === 'menu_items') {
-          setMenuItems(value as unknown as MenuItem[]);
-        } else if (setting.setting_key === 'footer_content') {
+        if (setting.setting_key === 'footer_content') {
           setFooterContent(value as unknown as FooterContent);
         } else if (setting.setting_key === 'branding') {
           setBranding(value as unknown as BrandingContent);
@@ -128,27 +112,6 @@ export const SiteContentManager = () => {
     }
   };
 
-  const addMenuItem = () => {
-    const newItem: MenuItem = {
-      id: Date.now().toString(),
-      label: 'New Item',
-      labelAr: 'عنصر جديد',
-      href: '/',
-      order: menuItems.length + 1
-    };
-    setMenuItems([...menuItems, newItem]);
-  };
-
-  const removeMenuItem = (id: string) => {
-    setMenuItems(menuItems.filter(item => item.id !== id));
-  };
-
-  const updateMenuItem = (id: string, field: keyof MenuItem, value: string | number) => {
-    setMenuItems(menuItems.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -160,14 +123,10 @@ export const SiteContentManager = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="branding" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
           <TabsTrigger value="branding" className="gap-2">
             <Image className="w-4 h-4" />
             Branding
-          </TabsTrigger>
-          <TabsTrigger value="menu" className="gap-2">
-            <Menu className="w-4 h-4" />
-            Menu
           </TabsTrigger>
           <TabsTrigger value="footer" className="gap-2">
             <Type className="w-4 h-4" />
@@ -271,72 +230,6 @@ export const SiteContentManager = () => {
               >
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Branding
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Menu Tab */}
-        <TabsContent value="menu">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Menu className="w-5 h-5 text-primary" />
-                Navigation Menu
-              </CardTitle>
-              <CardDescription>
-                Manage header navigation menu items
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                {menuItems.map((item, index) => (
-                  <div key={item.id} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-                    <GripVertical className="w-4 h-4 text-muted-foreground cursor-move" />
-                    <span className="text-sm text-muted-foreground w-6">{index + 1}</span>
-                    <Input
-                      value={item.label}
-                      onChange={(e) => updateMenuItem(item.id, 'label', e.target.value)}
-                      placeholder="Label (EN)"
-                      className="flex-1"
-                    />
-                    <Input
-                      value={item.labelAr}
-                      onChange={(e) => updateMenuItem(item.id, 'labelAr', e.target.value)}
-                      placeholder="Label (AR)"
-                      className="flex-1"
-                      dir="rtl"
-                    />
-                    <Input
-                      value={item.href}
-                      onChange={(e) => updateMenuItem(item.id, 'href', e.target.value)}
-                      placeholder="URL"
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeMenuItem(item.id)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              <Button variant="outline" onClick={addMenuItem} className="w-full">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Menu Item
-              </Button>
-
-              <Button 
-                onClick={() => saveContent('menu_items', menuItems)}
-                disabled={saving}
-                className="w-full"
-              >
-                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                Save Menu
               </Button>
             </CardContent>
           </Card>

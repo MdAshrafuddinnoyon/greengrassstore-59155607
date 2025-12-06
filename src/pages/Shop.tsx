@@ -2,12 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { ShopifyProductCard } from "@/components/products/ShopifyProductCard";
+import { LocalProductCard, LocalProduct } from "@/components/products/LocalProductCard";
 import { ProductFilters } from "@/components/products/ProductFilters";
-import { fetchProducts, fetchCollections, ShopifyProduct, ShopifyCollection, filterProductsByCategory, isProductOnSale } from "@/lib/shopify";
+import { supabase } from "@/integrations/supabase/client";
 import { Search, SlidersHorizontal, Grid3X3, LayoutGrid, ChevronDown, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const sortOptions = [
   { value: "featured", label: "Featured" },
@@ -19,10 +20,16 @@ const sortOptions = [
 
 const ITEMS_PER_PAGE = 12;
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<ShopifyProduct[]>([]);
-  const [collections, setCollections] = useState<ShopifyCollection[]>([]);
+  const [products, setProducts] = useState<LocalProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
@@ -35,53 +42,23 @@ export default function Shop() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const { language } = useLanguage();
+  const isArabic = language === 'ar';
 
-  // Build categories from collections
-  const categories = useMemo(() => {
-    const dynamicCategories = collections.map((c) => ({
-      key: c.node.handle,
-      label: c.node.title,
+  // Build categories list
+  const categoryOptions = useMemo(() => {
+    const dynamicCategories = categories.map((c) => ({
+      key: c.slug,
+      label: c.name,
       isParent: true,
     }));
-    return [{ key: "all", label: "All Products" }, ...dynamicCategories];
-  }, [collections]);
-
-  // Extract unique tags from products
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    products.forEach((p) => {
-      const productTags = ["indoor", "outdoor", "low-maintenance", "tropical", "decorative", "air-purifying"];
-      productTags.forEach((tag) => tags.add(tag));
-    });
-    return Array.from(tags);
-  }, [products]);
-
-  // Extract colors and sizes from product options
-  const { allColors, allSizes } = useMemo(() => {
-    const colors = new Set<string>();
-    const sizes = new Set<string>();
-    
-    products.forEach((p) => {
-      p.node.options?.forEach((opt) => {
-        if (opt.name.toLowerCase() === "color" || opt.name.toLowerCase() === "colour") {
-          opt.values.forEach((v) => colors.add(v));
-        }
-        if (opt.name.toLowerCase() === "size") {
-          opt.values.forEach((v) => sizes.add(v));
-        }
-      });
-    });
-    
-    return { 
-      allColors: Array.from(colors), 
-      allSizes: Array.from(sizes) 
-    };
-  }, [products]);
+    return [{ key: "all", label: isArabic ? "جميع المنتجات" : "All Products" }, ...dynamicCategories];
+  }, [categories, isArabic]);
 
   // Calculate max price
   const maxPrice = useMemo(() => {
     if (products.length === 0) return 1000;
-    const prices = products.map((p) => parseFloat(p.node.priceRange.minVariantPrice.amount));
+    const prices = products.map((p) => p.price);
     return Math.ceil(Math.max(...prices, 1000) / 100) * 100;
   }, [products]);
 
@@ -89,16 +66,33 @@ export default function Shop() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const query = searchParams.get("q") || undefined;
+        const query = searchParams.get("q") || "";
         
-        // Fetch products and collections in parallel
-        const [productsData, collectionsData] = await Promise.all([
-          fetchProducts(100, query),
-          fetchCollections(20)
-        ]);
+        // Fetch products
+        let productsQuery = supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true);
         
-        setProducts(productsData);
-        setCollections(collectionsData);
+        if (query) {
+          productsQuery = productsQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
+        }
+        
+        const { data: productsData, error: productsError } = await productsQuery.order('created_at', { ascending: false });
+        
+        if (productsError) throw productsError;
+        setProducts(productsData || []);
+
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        
+        if (categoriesError) throw categoriesError;
+        setCategories(categoriesData || []);
+        
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -153,64 +147,44 @@ export default function Shop() {
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...products];
 
-    // Category filter (client-side)
+    // Category filter
     if (selectedCategory && selectedCategory !== "all") {
-      // Special handling for sale category
       if (selectedCategory === "sale") {
-        result = result.filter(p => isProductOnSale(p));
+        result = result.filter(p => p.is_on_sale);
       } else {
-        result = filterProductsByCategory(result, selectedCategory);
+        result = result.filter(p => 
+          p.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+          p.subcategory?.toLowerCase() === selectedCategory.toLowerCase()
+        );
       }
     }
 
     // Price filter
     result = result.filter((p) => {
-      const price = parseFloat(p.node.priceRange.minVariantPrice.amount);
-      return price >= priceRange[0] && price <= priceRange[1];
+      return p.price >= priceRange[0] && p.price <= priceRange[1];
     });
-
-    // Color filter
-    if (selectedColors.length > 0) {
-      result = result.filter((p) => {
-        const colorOption = p.node.options?.find(
-          (opt) => opt.name.toLowerCase() === "color" || opt.name.toLowerCase() === "colour"
-        );
-        if (!colorOption) return false;
-        return colorOption.values.some((v) => selectedColors.includes(v));
-      });
-    }
-
-    // Size filter
-    if (selectedSizes.length > 0) {
-      result = result.filter((p) => {
-        const sizeOption = p.node.options?.find((opt) => opt.name.toLowerCase() === "size");
-        if (!sizeOption) return false;
-        return sizeOption.values.some((v) => selectedSizes.includes(v));
-      });
-    }
 
     // Sort
     switch (sortBy) {
       case "price-low":
-        result.sort((a, b) => 
-          parseFloat(a.node.priceRange.minVariantPrice.amount) - parseFloat(b.node.priceRange.minVariantPrice.amount)
-        );
+        result.sort((a, b) => a.price - b.price);
         break;
       case "price-high":
-        result.sort((a, b) => 
-          parseFloat(b.node.priceRange.minVariantPrice.amount) - parseFloat(a.node.priceRange.minVariantPrice.amount)
-        );
+        result.sort((a, b) => b.price - a.price);
         break;
       case "name-asc":
-        result.sort((a, b) => a.node.title.localeCompare(b.node.title));
+        result.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case "name-desc":
-        result.sort((a, b) => b.node.title.localeCompare(a.node.title));
+        result.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "featured":
+        result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
         break;
     }
 
     return result;
-  }, [products, selectedCategory, priceRange, sortBy, selectedColors, selectedSizes]);
+  }, [products, selectedCategory, priceRange, sortBy]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredAndSortedProducts.length / ITEMS_PER_PAGE);
@@ -233,19 +207,19 @@ export default function Shop() {
 
   const FilterSidebar = () => (
     <ProductFilters
-      categories={categories}
+      categories={categoryOptions}
       selectedCategory={selectedCategory}
       onCategoryChange={handleCategoryChange}
       priceRange={priceRange}
       onPriceRangeChange={setPriceRange}
       maxPrice={maxPrice}
-      tags={allTags}
+      tags={[]}
       selectedTags={selectedTags}
       onTagsChange={setSelectedTags}
-      colors={allColors}
+      colors={[]}
       selectedColors={selectedColors}
       onColorsChange={setSelectedColors}
-      sizes={allSizes}
+      sizes={[]}
       selectedSizes={selectedSizes}
       onSizesChange={setSelectedSizes}
       onClearAll={handleClearAll}
@@ -256,9 +230,9 @@ export default function Shop() {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="flex-1 bg-gray-50 pb-24 lg:pb-0">
+      <main className="flex-1 bg-muted/30 pb-24 lg:pb-0">
         {/* Hero Banner */}
-        <div className="bg-gradient-to-br from-[#2d5a3d] to-[#1a3d28] text-white py-12 md:py-16">
+        <div className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-12 md:py-16">
           <div className="container mx-auto px-4 text-center">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
@@ -266,19 +240,22 @@ export default function Shop() {
               className="text-3xl md:text-5xl font-serif font-bold mb-4"
             >
               {searchParams.get("q") 
-                ? `Search: "${searchParams.get("q")}"` 
+                ? `${isArabic ? 'بحث:' : 'Search:'} "${searchParams.get("q")}"` 
                 : selectedCategory !== "all" 
-                  ? categories.find(c => c.key === selectedCategory)?.label || "Shop"
-                  : "Shop All Products"
+                  ? categoryOptions.find(c => c.key === selectedCategory)?.label || (isArabic ? "التسوق" : "Shop")
+                  : isArabic ? "جميع المنتجات" : "Shop All Products"
               }
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-white/80 max-w-2xl mx-auto text-lg"
+              className="text-primary-foreground/80 max-w-2xl mx-auto text-lg"
             >
-              Discover our curated collection of plants, pots, and home decor
+              {isArabic 
+                ? "اكتشف مجموعتنا المختارة من النباتات والأواني وديكور المنزل"
+                : "Discover our curated collection of plants, pots, and home decor"
+              }
             </motion.p>
           </div>
         </div>
@@ -295,22 +272,22 @@ export default function Shop() {
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Top Bar */}
-              <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+              <div className="bg-background rounded-xl shadow-sm p-4 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   {/* Search */}
                   <form onSubmit={handleSearch} className="flex-1 max-w-md">
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="Search by name, category, type..."
+                        placeholder={isArabic ? "البحث حسب الاسم، الفئة..." : "Search by name, category..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-4 pr-12 py-3 bg-gray-100 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2d5a3d]/20"
+                        className="w-full pl-4 pr-12 py-3 bg-muted border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                       <button 
                         type="submit"
                         disabled={isSearching}
-                        className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-[#2d5a3d] text-white rounded-lg hover:bg-[#234a31] transition-colors disabled:opacity-50"
+                        className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                       >
                         {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                       </button>
@@ -321,11 +298,11 @@ export default function Shop() {
                     {/* Mobile Filter Button */}
                     <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
                       <SheetTrigger asChild>
-                        <button className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-gray-100 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                        <button className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-muted rounded-xl text-sm font-medium hover:bg-muted/80 transition-colors">
                           <SlidersHorizontal className="w-4 h-4" />
-                          Filters
+                          {isArabic ? "فلترة" : "Filters"}
                           {activeFiltersCount > 0 && (
-                            <span className="ml-1 px-2 py-0.5 bg-[#2d5a3d] text-white rounded-full text-xs">
+                            <span className="ml-1 px-2 py-0.5 bg-primary text-primary-foreground rounded-full text-xs">
                               {activeFiltersCount}
                             </span>
                           )}
@@ -333,7 +310,7 @@ export default function Shop() {
                       </SheetTrigger>
                       <SheetContent side="left" className="w-[320px] p-0">
                         <SheetHeader className="p-4 border-b">
-                          <SheetTitle>Filters</SheetTitle>
+                          <SheetTitle>{isArabic ? "فلترة" : "Filters"}</SheetTitle>
                         </SheetHeader>
                         <div className="p-4 overflow-y-auto max-h-[calc(100vh-80px)]">
                           <FilterSidebar />
@@ -346,7 +323,7 @@ export default function Shop() {
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="appearance-none bg-gray-100 px-4 py-2.5 pr-10 rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2d5a3d]/20"
+                        className="appearance-none bg-muted px-4 py-2.5 pr-10 rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
                       >
                         {sortOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -354,15 +331,15 @@ export default function Shop() {
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     </div>
 
                     {/* Grid View Toggle */}
-                    <div className="flex items-center border border-gray-200 rounded-xl p-1">
+                    <div className="flex items-center border border-border rounded-xl p-1">
                       <button
                         onClick={() => setGridView("large")}
                         className={`p-2 rounded-lg transition-colors ${
-                          gridView === "large" ? "bg-[#2d5a3d] text-white" : "text-gray-500 hover:bg-gray-100"
+                          gridView === "large" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         <LayoutGrid className="w-4 h-4" />
@@ -370,7 +347,7 @@ export default function Shop() {
                       <button
                         onClick={() => setGridView("small")}
                         className={`p-2 rounded-lg transition-colors ${
-                          gridView === "small" ? "bg-[#2d5a3d] text-white" : "text-gray-500 hover:bg-gray-100"
+                          gridView === "small" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         <Grid3X3 className="w-4 h-4" />
@@ -381,37 +358,29 @@ export default function Shop() {
 
                 {/* Active Filters Pills */}
                 {activeFiltersCount > 0 && (
-                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 flex-wrap">
-                    <span className="text-sm text-gray-500">Active filters:</span>
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border flex-wrap">
+                    <span className="text-sm text-muted-foreground">{isArabic ? "فلاتر نشطة:" : "Active filters:"}</span>
                     {selectedCategory !== "all" && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#2d5a3d]/10 text-[#2d5a3d] rounded-full text-sm">
-                        {categories.find(c => c.key === selectedCategory)?.label}
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                        {categoryOptions.find(c => c.key === selectedCategory)?.label}
                         <button onClick={() => handleCategoryChange("all")}>
                           <X className="w-3 h-3" />
                         </button>
                       </span>
                     )}
                     {(priceRange[0] > 0 || priceRange[1] < maxPrice) && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#2d5a3d]/10 text-[#2d5a3d] rounded-full text-sm">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                         AED {priceRange[0]} - {priceRange[1]}
                         <button onClick={() => setPriceRange([0, maxPrice])}>
                           <X className="w-3 h-3" />
                         </button>
                       </span>
                     )}
-                    {selectedTags.map(tag => (
-                      <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 bg-[#2d5a3d]/10 text-[#2d5a3d] rounded-full text-sm">
-                        {tag}
-                        <button onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))}>
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
                     <button
                       onClick={handleClearAll}
-                      className="text-sm text-gray-500 hover:text-gray-700 underline"
+                      className="text-sm text-muted-foreground hover:text-foreground underline"
                     >
-                      Clear all
+                      {isArabic ? "مسح الكل" : "Clear all"}
                     </button>
                   </div>
                 )}
@@ -419,8 +388,11 @@ export default function Shop() {
 
               {/* Results Count */}
               <div className="flex items-center justify-between mb-6">
-                <p className="text-gray-600">
-                  {loading ? "Loading..." : `${filteredAndSortedProducts.length} products found`}
+                <p className="text-muted-foreground">
+                  {loading 
+                    ? (isArabic ? "جاري التحميل..." : "Loading...") 
+                    : `${filteredAndSortedProducts.length} ${isArabic ? "منتج" : "products found"}`
+                  }
                 </p>
               </div>
 
@@ -432,11 +404,11 @@ export default function Shop() {
                     : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
                 }`}>
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-xl overflow-hidden animate-pulse">
-                      <div className="aspect-square bg-gray-200" />
+                    <div key={i} className="bg-background rounded-xl overflow-hidden animate-pulse">
+                      <div className="aspect-square bg-muted" />
                       <div className="p-3 md:p-4 space-y-2 md:space-y-3">
-                        <div className="h-3 md:h-4 bg-gray-200 rounded w-3/4" />
-                        <div className="h-3 md:h-4 bg-gray-200 rounded w-1/2" />
+                        <div className="h-3 md:h-4 bg-muted rounded w-3/4" />
+                        <div className="h-3 md:h-4 bg-muted rounded w-1/2" />
                       </div>
                     </div>
                   ))}
@@ -449,28 +421,30 @@ export default function Shop() {
                       : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
                   }`}>
                     {paginatedProducts.map((product) => (
-                      <ShopifyProductCard key={product.node.id} product={product} compact={gridView === "small"} />
+                      <LocalProductCard key={product.id} product={product} isArabic={isArabic} />
                     ))}
                   </div>
 
                   {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="flex flex-col items-center gap-4 mt-10">
-                      <p className="text-sm text-gray-500">
-                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProducts.length)} of {filteredAndSortedProducts.length} products
+                      <p className="text-sm text-muted-foreground">
+                        {isArabic 
+                          ? `عرض ${((currentPage - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProducts.length)} من ${filteredAndSortedProducts.length} منتج`
+                          : `Showing ${((currentPage - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProducts.length)} of ${filteredAndSortedProducts.length} products`
+                        }
                       </p>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-4 py-2 text-sm font-medium bg-background border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          Previous
+                          {isArabic ? "السابق" : "Previous"}
                         </button>
                         
                         <div className="flex items-center gap-1">
                           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                            // Show first, last, current, and adjacent pages
                             const showPage = page === 1 || 
                               page === totalPages || 
                               Math.abs(page - currentPage) <= 1;
@@ -481,7 +455,7 @@ export default function Shop() {
                             
                             if (showEllipsis && !showPage) {
                               return (
-                                <span key={page} className="px-2 text-gray-400">
+                                <span key={page} className="px-2 text-muted-foreground">
                                   ...
                                 </span>
                               );
@@ -493,8 +467,8 @@ export default function Shop() {
                                 onClick={() => setCurrentPage(page)}
                                 className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${
                                   currentPage === page
-                                    ? "bg-[#2d5a3d] text-white"
-                                    : "bg-white border border-gray-200 hover:bg-gray-50"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-background border border-border hover:bg-muted"
                                 }`}
                               >
                                 {page}
@@ -502,34 +476,43 @@ export default function Shop() {
                             );
                           })}
                         </div>
-                        
+
                         <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-4 py-2 text-sm font-medium bg-background border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          Next
+                          {isArabic ? "التالي" : "Next"}
                         </button>
                       </div>
                     </div>
                   )}
                 </>
               ) : (
-                <div className="text-center py-16 bg-white rounded-xl">
-                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Search className="w-10 h-10 text-gray-400" />
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-16"
+                >
+                  <div className="w-20 h-20 mx-auto mb-6 bg-muted rounded-full flex items-center justify-center">
+                    <Search className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-                  <p className="text-gray-600 mb-6">
-                    Try adjusting your filters to find what you're looking for
+                  <h3 className="text-xl font-semibold mb-2">
+                    {isArabic ? "لم يتم العثور على منتجات" : "No products found"}
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    {isArabic 
+                      ? "جرب تغيير معايير البحث أو تصفح الفئات"
+                      : "Try adjusting your search criteria or browse our categories"
+                    }
                   </p>
-                  <button 
+                  <button
                     onClick={handleClearAll}
-                    className="px-6 py-3 bg-[#2d5a3d] text-white rounded-xl hover:bg-[#234a31] transition-colors"
+                    className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                   >
-                    Clear All Filters
+                    {isArabic ? "مسح الفلاتر" : "Clear Filters"}
                   </button>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>

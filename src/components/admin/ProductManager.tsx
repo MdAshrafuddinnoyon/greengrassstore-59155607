@@ -7,12 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw, Image, Search } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw } from "lucide-react";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { MediaPicker } from "./MediaPicker";
 
 interface Product {
   id: string;
@@ -167,7 +168,12 @@ export const ProductManager = () => {
                 <div><Label>Price</Label><Input type="number" value={editingProduct.price || 0} onChange={e => setEditingProduct({...editingProduct, price: parseFloat(e.target.value)})} /></div>
                 <div><Label>Compare Price</Label><Input type="number" value={editingProduct.compare_at_price || ''} onChange={e => setEditingProduct({...editingProduct, compare_at_price: parseFloat(e.target.value) || undefined})} /></div>
               </div>
-              <div><Label>Image URL</Label><Input value={editingProduct.featured_image || ''} onChange={e => setEditingProduct({...editingProduct, featured_image: e.target.value})} /></div>
+              <MediaPicker 
+                label="Product Image" 
+                value={editingProduct.featured_image || ''} 
+                onChange={(url) => setEditingProduct({...editingProduct, featured_image: url})}
+                placeholder="Select or upload image"
+              />
               <div className="flex gap-4 flex-wrap">
                 <div className="flex items-center gap-2"><Switch checked={editingProduct.is_active} onCheckedChange={c => setEditingProduct({...editingProduct, is_active: c})} /><Label>Active</Label></div>
                 <div className="flex items-center gap-2"><Switch checked={editingProduct.is_on_sale} onCheckedChange={c => setEditingProduct({...editingProduct, is_on_sale: c})} /><Label>Sale</Label></div>
