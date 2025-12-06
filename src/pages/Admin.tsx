@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, Receipt, Mail, Palette, Key, Megaphone, FolderTree, LayoutTemplate, Menu, BookOpen, UserCheck, Bell, Ticket, CreditCard } from "lucide-react";
+import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, Receipt, Mail, Palette, Key, Megaphone, FolderTree, LayoutTemplate, Menu, BookOpen, UserCheck, Bell, Ticket, CreditCard, Target, PieChart } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,6 +30,9 @@ import { HeroSliderManager } from "@/components/admin/HeroSliderManager";
 import { PopupManager } from "@/components/admin/PopupManager";
 import { CouponManager } from "@/components/admin/CouponManager";
 import { PaymentSettingsManager } from "@/components/admin/PaymentSettingsManager";
+import { TrackingPixelManager } from "@/components/admin/TrackingPixelManager";
+import { AnalyticsReport } from "@/components/admin/AnalyticsReport";
+import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -179,6 +182,18 @@ const Admin = () => {
                 <CreditCard className="w-4 h-4" />
                 <span className="hidden sm:inline">Payments</span>
               </TabsTrigger>
+              <TabsTrigger value="tracking" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+                <Target className="w-4 h-4" />
+                <span className="hidden sm:inline">Tracking</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+                <PieChart className="w-4 h-4" />
+                <span className="hidden sm:inline">Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger value="email-templates" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+                <Mail className="w-4 h-4" />
+                <span className="hidden sm:inline">Emails</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -265,6 +280,18 @@ const Admin = () => {
 
             <TabsContent value="payments" className="m-0">
               <PaymentSettingsManager />
+            </TabsContent>
+
+            <TabsContent value="tracking" className="m-0">
+              <TrackingPixelManager />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="m-0">
+              <AnalyticsReport />
+            </TabsContent>
+
+            <TabsContent value="email-templates" className="m-0">
+              <EmailTemplateManager />
             </TabsContent>
           </div>
         </Tabs>
