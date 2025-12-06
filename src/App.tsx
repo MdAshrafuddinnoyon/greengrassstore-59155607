@@ -29,6 +29,7 @@ import Checkout from "./pages/Checkout";
 import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 import Maintenance from "./pages/Maintenance";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const AppContent = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/account" element={<Account />} />
           <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/install" element={<Install />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

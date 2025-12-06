@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Loader2, ArrowRight, AlertTriangle, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useLeakedPasswordCheck } from "@/hooks/useLeakedPasswordCheck";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -28,7 +29,9 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [passwordWarning, setPasswordWarning] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { checkPassword, isLeaked, count, isChecking: isCheckingPassword } = useLeakedPasswordCheck();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -72,9 +75,31 @@ const Auth = () => {
     }
   };
 
+  // Check password when typing (for signup only)
+  const handlePasswordChange = async (value: string) => {
+    setPassword(value);
+    setPasswordWarning(null);
+    
+    if (!isLogin && value.length >= 6) {
+      const result = await checkPassword(value);
+      if (result.isLeaked) {
+        setPasswordWarning(`This password has been found in ${result.count.toLocaleString()} data breaches. Please choose a different password.`);
+      }
+    }
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // For signup, check if password is leaked
+    if (!isLogin) {
+      const result = await checkPassword(password);
+      if (result.isLeaked) {
+        toast.error('This password has been compromised in data breaches. Please choose a different password.');
+        return;
+      }
+    }
 
     setLoading(true);
     try {
@@ -361,9 +386,11 @@ const Auth = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
                     placeholder={t("auth.passwordPlaceholder")}
-                    className="w-full pl-10 pr-12 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                    className={`w-full pl-10 pr-12 py-3 bg-muted border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground ${
+                      passwordWarning ? 'border-destructive' : 'border-border'
+                    }`}
                   />
                   <button
                     type="button"
@@ -375,6 +402,18 @@ const Auth = () => {
                 </div>
                 {errors.password && (
                   <p className="text-xs text-destructive mt-1">{errors.password}</p>
+                )}
+                {!isLogin && passwordWarning && (
+                  <div className="flex items-start gap-2 mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <ShieldAlert className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-destructive">{passwordWarning}</p>
+                  </div>
+                )}
+                {!isLogin && isCheckingPassword && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Checking password security...
+                  </p>
                 )}
               </div>
 
