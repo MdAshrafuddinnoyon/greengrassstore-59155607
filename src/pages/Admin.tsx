@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, Receipt, Mail, Palette, Key, Megaphone, Sparkles, FolderTree, LayoutTemplate, Menu, BookOpen } from "lucide-react";
+import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, Receipt, Mail, Palette, Key, Megaphone, FolderTree, LayoutTemplate, Menu, BookOpen, UserCheck } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,11 +21,12 @@ import { SubscribersManager } from "@/components/admin/SubscribersManager";
 import { SiteContentManager } from "@/components/admin/SiteContentManager";
 import { APISettingsManager } from "@/components/admin/APISettingsManager";
 import { AnnouncementManager } from "@/components/admin/AnnouncementManager";
-import { AIImageGenerator } from "@/components/admin/AIImageGenerator";
-import { CategoryManager } from "@/components/admin/CategoryManager";
+import { LocalCategoryManager } from "@/components/admin/LocalCategoryManager";
 import { HomepageSectionsManager } from "@/components/admin/HomepageSectionsManager";
 import { PagesContentManager } from "@/components/admin/PagesContentManager";
 import { MegaMenuManager } from "@/components/admin/MegaMenuManager";
+import { CustomerManager } from "@/components/admin/CustomerManager";
+import { HeroSliderManager } from "@/components/admin/HeroSliderManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -115,9 +116,9 @@ const Admin = () => {
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">Blog</span>
               </TabsTrigger>
-              <TabsTrigger value="ai-generator" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg">
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">AI Image</span>
+              <TabsTrigger value="customers" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+                <UserCheck className="w-4 h-4" />
+                <span className="hidden sm:inline">Customers</span>
               </TabsTrigger>
               <TabsTrigger value="subscribers" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Mail className="w-4 h-4" />
@@ -177,19 +178,19 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="categories" className="m-0">
-              <CategoryManager />
+              <LocalCategoryManager />
             </TabsContent>
 
             <TabsContent value="orders" className="m-0">
               <OrdersManager />
             </TabsContent>
 
-            <TabsContent value="blog" className="m-0">
-              <BlogManager />
+            <TabsContent value="customers" className="m-0">
+              <CustomerManager />
             </TabsContent>
 
-            <TabsContent value="ai-generator" className="m-0">
-              <AIImageGenerator />
+            <TabsContent value="blog" className="m-0">
+              <BlogManager />
             </TabsContent>
 
             <TabsContent value="subscribers" className="m-0">
@@ -213,7 +214,10 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="homepage" className="m-0">
-              <HomepageSectionsManager />
+              <div className="space-y-6">
+                <HeroSliderManager />
+                <HomepageSectionsManager />
+              </div>
             </TabsContent>
 
             <TabsContent value="megamenu" className="m-0">

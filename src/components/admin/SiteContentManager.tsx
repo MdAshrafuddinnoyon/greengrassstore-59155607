@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Menu, Type, Image, Save, RefreshCw, Plus, Trash2, GripVertical } from "lucide-react";
+import { MediaPicker } from "./MediaPicker";
 
 interface MenuItem {
   id: string;
@@ -189,28 +190,19 @@ export const SiteContentManager = () => {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="logo-url">Logo URL</Label>
-                    <Input
-                      id="logo-url"
-                      value={branding.logoUrl}
-                      onChange={(e) => setBranding(prev => ({ ...prev, logoUrl: e.target.value }))}
-                      placeholder="https://..."
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Upload to Media Library and paste URL here
-                    </p>
-                  </div>
+                  <MediaPicker
+                    label="Logo"
+                    value={branding.logoUrl}
+                    onChange={(url) => setBranding(prev => ({ ...prev, logoUrl: url }))}
+                    placeholder="Select or enter logo URL"
+                  />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="favicon-url">Favicon URL</Label>
-                    <Input
-                      id="favicon-url"
-                      value={branding.faviconUrl}
-                      onChange={(e) => setBranding(prev => ({ ...prev, faviconUrl: e.target.value }))}
-                      placeholder="https://..."
-                    />
-                  </div>
+                  <MediaPicker
+                    label="Favicon"
+                    value={branding.faviconUrl}
+                    onChange={(url) => setBranding(prev => ({ ...prev, faviconUrl: url }))}
+                    placeholder="Select or enter favicon URL"
+                  />
                 </div>
 
                 <div className="space-y-4">

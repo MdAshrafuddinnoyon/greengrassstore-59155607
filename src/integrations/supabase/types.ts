@@ -86,6 +86,59 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          description_ar: string | null
+          display_order: number
+          id: string
+          image: string | null
+          is_active: boolean
+          name: string
+          name_ar: string | null
+          parent_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          description_ar?: string | null
+          display_order?: number
+          id?: string
+          image?: string | null
+          is_active?: boolean
+          name: string
+          name_ar?: string | null
+          parent_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          description_ar?: string | null
+          display_order?: number
+          id?: string
+          image?: string | null
+          is_active?: boolean
+          name?: string
+          name_ar?: string | null
+          parent_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_requirements: {
         Row: {
           admin_notes: string | null

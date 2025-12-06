@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MediaPicker } from "./MediaPicker";
 
 interface BlogPost {
   id: string;
@@ -273,15 +274,12 @@ export const BlogManager = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="featured_image">Featured Image URL</Label>
-                  <Input
-                    id="featured_image"
-                    value={formData.featured_image}
-                    onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
+                <MediaPicker
+                  label="Featured Image"
+                  value={formData.featured_image}
+                  onChange={(url) => setFormData({ ...formData, featured_image: url })}
+                  placeholder="Select or enter image URL"
+                />
 
                 <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
