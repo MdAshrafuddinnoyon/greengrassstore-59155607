@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, FileSpreadsheet, Receipt, Mail, Palette, Key } from "lucide-react";
+import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, FileSpreadsheet, Receipt, Mail, Palette, Key, Megaphone, Sparkles, FolderTree } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +21,9 @@ import { ProductManager } from "@/components/admin/ProductManager";
 import { SubscribersManager } from "@/components/admin/SubscribersManager";
 import { SiteContentManager } from "@/components/admin/SiteContentManager";
 import { APISettingsManager } from "@/components/admin/APISettingsManager";
+import { AnnouncementManager } from "@/components/admin/AnnouncementManager";
+import { AIImageGenerator } from "@/components/admin/AIImageGenerator";
+import { CategoryManager } from "@/components/admin/CategoryManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -98,6 +101,10 @@ const Admin = () => {
                 <ShoppingBag className="w-4 h-4" />
                 <span className="hidden sm:inline">Products</span>
               </TabsTrigger>
+              <TabsTrigger value="categories" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+                <FolderTree className="w-4 h-4" />
+                <span className="hidden sm:inline">Categories</span>
+              </TabsTrigger>
               <TabsTrigger value="orders" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Receipt className="w-4 h-4" />
                 <span className="hidden sm:inline">Orders</span>
@@ -105,6 +112,10 @@ const Admin = () => {
               <TabsTrigger value="blog" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">Blog</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai-generator" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg">
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Image</span>
               </TabsTrigger>
               <TabsTrigger value="subscribers" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Mail className="w-4 h-4" />
@@ -118,13 +129,13 @@ const Admin = () => {
                 <Image className="w-4 h-4" />
                 <span className="hidden sm:inline">Media</span>
               </TabsTrigger>
-              <TabsTrigger value="import" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <FileSpreadsheet className="w-4 h-4" />
-                <span className="hidden lg:inline">Import</span>
-              </TabsTrigger>
               <TabsTrigger value="users" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:inline">Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="announcements" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+                <Megaphone className="w-4 h-4" />
+                <span className="hidden sm:inline">TopBar</span>
               </TabsTrigger>
               <TabsTrigger value="content" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Palette className="w-4 h-4" />
@@ -151,12 +162,20 @@ const Admin = () => {
               <ProductManager />
             </TabsContent>
 
+            <TabsContent value="categories" className="m-0">
+              <CategoryManager />
+            </TabsContent>
+
             <TabsContent value="orders" className="m-0">
               <OrdersManager />
             </TabsContent>
 
             <TabsContent value="blog" className="m-0">
               <BlogManager />
+            </TabsContent>
+
+            <TabsContent value="ai-generator" className="m-0">
+              <AIImageGenerator />
             </TabsContent>
 
             <TabsContent value="subscribers" className="m-0">
@@ -171,12 +190,12 @@ const Admin = () => {
               <MediaLibrary />
             </TabsContent>
 
-            <TabsContent value="import" className="m-0">
-              <ProductImporter />
-            </TabsContent>
-
             <TabsContent value="users" className="m-0">
               <UsersManager />
+            </TabsContent>
+
+            <TabsContent value="announcements" className="m-0">
+              <AnnouncementManager />
             </TabsContent>
 
             <TabsContent value="content" className="m-0">
