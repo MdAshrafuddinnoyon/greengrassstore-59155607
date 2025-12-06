@@ -12,9 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw, X, Copy, Eye } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw, X, Copy, Eye, Upload } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
 import { ExportButtons } from "./ExportButtons";
+import { ProductCSVImporter } from "./ProductCSVImporter";
 
 interface ProductVariant {
   id?: string;
@@ -79,7 +80,9 @@ export const ProductManager = () => {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+  const [mainTab, setMainTab] = useState("products");
   const [newOptionValue, setNewOptionValue] = useState({ opt1: "", opt2: "", opt3: "" });
+  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
 
   const fetchCategories = async () => {
     const { data } = await supabase.from('categories').select('*').eq('is_active', true).order('display_order');
@@ -402,6 +405,9 @@ export const ProductManager = () => {
                 subcategory: p.subcategory || '',
                 price: `${p.currency} ${p.price}`,
                 compare_at_price: p.compare_at_price ? `${p.currency} ${p.compare_at_price}` : '',
+                discount: p.compare_at_price && p.compare_at_price > p.price 
+                  ? `${Math.round((1 - p.price / p.compare_at_price) * 100)}%` 
+                  : '',
                 stock: p.stock_quantity,
                 sku: p.sku || '',
                 type: p.product_type,
@@ -420,80 +426,107 @@ export const ProductManager = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <Input 
-          placeholder="Search products..." 
-          value={searchTerm} 
-          onChange={(e) => setSearchTerm(e.target.value)} 
-          className="mb-4" 
-        />
-        
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Image</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map(p => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    {p.featured_image ? (
-                      <img src={p.featured_image} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                    ) : (
-                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                        <Package className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={p.product_type === 'variable' ? 'default' : 'outline'}>
-                      {p.product_type === 'variable' ? `Variable (${p.variants?.length || 0})` : 'Simple'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell><Badge variant="outline">{p.category}</Badge></TableCell>
-                  <TableCell>{p.currency} {p.price}</TableCell>
-                  <TableCell>{p.stock_quantity}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {p.is_active && <Badge className="bg-green-100 text-green-800">Active</Badge>}
-                      {p.is_on_sale && <Badge className="bg-red-100 text-red-800">Sale</Badge>}
-                      {p.is_new && <Badge className="bg-blue-100 text-blue-800">New</Badge>}
-                      {p.is_featured && <Badge className="bg-amber-100 text-amber-800">Featured</Badge>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(p); setActiveTab("general"); setIsDialogOpen(true); }}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDuplicate(p)}>
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="products">All Products</TabsTrigger>
+            <TabsTrigger value="import" className="gap-1">
+              <Upload className="w-4 h-4" />
+              CSV Import
+            </TabsTrigger>
+          </TabsList>
 
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No products found. Add your first product!
-          </div>
-        )}
+          <TabsContent value="products" className="space-y-4">
+            <Input 
+              placeholder="Search products..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
+            
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Image</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Discount</TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map(p => {
+                    const discountPct = p.compare_at_price && p.compare_at_price > p.price 
+                      ? Math.round((1 - p.price / p.compare_at_price) * 100)
+                      : 0;
+                    
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          {p.featured_image ? (
+                            <img src={p.featured_image} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                              <Package className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{p.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={p.product_type === 'variable' ? 'default' : 'outline'}>
+                            {p.product_type === 'variable' ? `Variable (${p.variants?.length || 0})` : 'Simple'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell><Badge variant="outline">{p.category}</Badge></TableCell>
+                        <TableCell>{p.currency} {p.price}</TableCell>
+                        <TableCell>
+                          {discountPct > 0 ? (
+                            <Badge className="bg-red-100 text-red-800">{discountPct}% OFF</Badge>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell>{p.stock_quantity}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {p.is_active && <Badge className="bg-green-100 text-green-800">Active</Badge>}
+                            {p.is_on_sale && <Badge className="bg-red-100 text-red-800">Sale</Badge>}
+                            {p.is_new && <Badge className="bg-blue-100 text-blue-800">New</Badge>}
+                            {p.is_featured && <Badge className="bg-amber-100 text-amber-800">Featured</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(p); setActiveTab("general"); setDiscountPercentage(discountPct); setIsDialogOpen(true); }}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDuplicate(p)}>
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            {filtered.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                No products found. Add your first product!
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="import">
+            <ProductCSVImporter onImportComplete={fetchProducts} />
+          </TabsContent>
+        </Tabs>
       </CardContent>
 
       {/* Product Dialog */}
@@ -788,13 +821,38 @@ export const ProductManager = () => {
 
                 {/* Pricing Tab */}
                 <TabsContent value="pricing" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label>Price *</Label>
                       <Input 
                         type="number" 
                         value={editingProduct.price || 0} 
-                        onChange={e => setEditingProduct({...editingProduct, price: parseFloat(e.target.value) || 0})}
+                        onChange={e => {
+                          const price = parseFloat(e.target.value) || 0;
+                          setEditingProduct({...editingProduct, price});
+                          // Recalculate compare price if discount is set
+                          if (discountPercentage > 0) {
+                            setEditingProduct({...editingProduct, price, compare_at_price: price / (1 - discountPercentage / 100)});
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Discount %</Label>
+                      <Input 
+                        type="number" 
+                        value={discountPercentage || ''} 
+                        onChange={e => {
+                          const discount = parseFloat(e.target.value) || 0;
+                          setDiscountPercentage(discount);
+                          if (discount > 0 && discount < 100 && editingProduct.price) {
+                            const comparePrice = editingProduct.price / (1 - discount / 100);
+                            setEditingProduct({...editingProduct, compare_at_price: Math.round(comparePrice * 100) / 100, is_on_sale: true});
+                          } else {
+                            setEditingProduct({...editingProduct, compare_at_price: undefined});
+                          }
+                        }}
+                        placeholder="e.g., 10"
                       />
                     </div>
                     <div className="space-y-2">
@@ -802,7 +860,13 @@ export const ProductManager = () => {
                       <Input 
                         type="number" 
                         value={editingProduct.compare_at_price || ''} 
-                        onChange={e => setEditingProduct({...editingProduct, compare_at_price: parseFloat(e.target.value) || undefined})}
+                        onChange={e => {
+                          const comparePrice = parseFloat(e.target.value) || undefined;
+                          setEditingProduct({...editingProduct, compare_at_price: comparePrice});
+                          if (comparePrice && editingProduct.price && comparePrice > editingProduct.price) {
+                            setDiscountPercentage(Math.round((1 - editingProduct.price / comparePrice) * 100));
+                          }
+                        }}
                         placeholder="Original price"
                       />
                     </div>
@@ -824,10 +888,18 @@ export const ProductManager = () => {
                   </div>
 
                   {editingProduct.compare_at_price && editingProduct.price && editingProduct.compare_at_price > editingProduct.price && (
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-green-800 font-medium">
-                        Discount: {Math.round((1 - editingProduct.price / editingProduct.compare_at_price) * 100)}% off
-                      </p>
+                    <div className="p-4 bg-green-50 rounded-lg flex items-center gap-3">
+                      <Badge className="bg-red-500 text-white text-lg px-3 py-1">
+                        {Math.round((1 - editingProduct.price / editingProduct.compare_at_price) * 100)}% OFF
+                      </Badge>
+                      <div>
+                        <p className="text-green-800 font-medium">
+                          Save {editingProduct.currency} {(editingProduct.compare_at_price - editingProduct.price).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-green-600">
+                          Original: {editingProduct.currency} {editingProduct.compare_at_price} → Now: {editingProduct.currency} {editingProduct.price}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </TabsContent>
