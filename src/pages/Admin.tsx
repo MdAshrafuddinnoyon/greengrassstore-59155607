@@ -4,9 +4,11 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LayoutDashboard, FileText, Settings, ShoppingBag, MessageSquare, Image, Receipt, Palette, Megaphone, FolderTree, LayoutTemplate, Menu, BookOpen, UserCheck, Bell, Ticket } from "lucide-react";
+import { Loader2, LayoutDashboard, Settings } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { cn } from "@/lib/utils";
 
 // Admin Dashboard Components
 import { BlogManager } from "@/components/admin/BlogManager";
@@ -34,12 +36,14 @@ import { TrackingPixelManager } from "@/components/admin/TrackingPixelManager";
 import { AnalyticsReport } from "@/components/admin/AnalyticsReport";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
 import { FooterMenuManager } from "@/components/admin/FooterMenuManager";
+import { SMTPSettingsManager } from "@/components/admin/SMTPSettingsManager";
 
 const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading, checkRole } = useAdminStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -72,7 +76,10 @@ const Admin = () => {
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading admin panel...</p>
+        </div>
       </div>
     );
   }
@@ -81,217 +88,159 @@ const Admin = () => {
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
-      <main className="container mx-auto px-4 py-8 pb-20 md:pb-8">
-        {/* Header */}
-        <div className="mb-8 p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 bg-primary/10 rounded-xl">
-              <LayoutDashboard className="w-6 h-6 text-primary" />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-            <Badge className="bg-primary/10 text-primary border-0 font-medium">Admin</Badge>
+  const renderContent = () => {
+    switch (activeTab) {
+      case "overview":
+        return (
+          <div className="space-y-8">
+            <DashboardOverview />
+            <AnalyticsReport />
           </div>
-          <p className="text-slate-500 ml-14">
-            Manage your store content, users, and settings
-          </p>
-        </div>
-
-        {/* Admin Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2">
-            <TabsList className="flex flex-wrap w-full gap-1 h-auto bg-transparent">
-              <TabsTrigger value="overview" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="hidden sm:inline">Overview</span>
-              </TabsTrigger>
-              <TabsTrigger value="products" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline">Products</span>
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <FolderTree className="w-4 h-4" />
-                <span className="hidden sm:inline">Categories</span>
-              </TabsTrigger>
-              <TabsTrigger value="orders" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Receipt className="w-4 h-4" />
-                <span className="hidden sm:inline">Orders</span>
-              </TabsTrigger>
-              <TabsTrigger value="blog" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Blog</span>
-              </TabsTrigger>
-              <TabsTrigger value="customers" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <UserCheck className="w-4 h-4" />
-                <span className="hidden sm:inline">Customers</span>
-              </TabsTrigger>
-              <TabsTrigger value="subscribers" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <MessageSquare className="w-4 h-4" />
-                <span className="hidden sm:inline">Subscribers</span>
-              </TabsTrigger>
-              <TabsTrigger value="requests" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <MessageSquare className="w-4 h-4" />
-                <span className="hidden sm:inline">Requests</span>
-              </TabsTrigger>
-              <TabsTrigger value="media" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Image className="w-4 h-4" />
-                <span className="hidden sm:inline">Media</span>
-              </TabsTrigger>
-              <TabsTrigger value="announcements" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Megaphone className="w-4 h-4" />
-                <span className="hidden sm:inline">TopBar</span>
-              </TabsTrigger>
-              <TabsTrigger value="homepage" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <LayoutTemplate className="w-4 h-4" />
-                <span className="hidden sm:inline">Homepage</span>
-              </TabsTrigger>
-              <TabsTrigger value="megamenu" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Menu className="w-4 h-4" />
-                <span className="hidden sm:inline">Mega Menu</span>
-              </TabsTrigger>
-              <TabsTrigger value="pages" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">Pages</span>
-              </TabsTrigger>
-              <TabsTrigger value="content" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Palette className="w-4 h-4" />
-                <span className="hidden sm:inline">Branding</span>
-              </TabsTrigger>
-              <TabsTrigger value="footer" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Menu className="w-4 h-4" />
-                <span className="hidden sm:inline">Footer</span>
-              </TabsTrigger>
-              <TabsTrigger value="popups" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Bell className="w-4 h-4" />
-                <span className="hidden sm:inline">Popups</span>
-              </TabsTrigger>
-              <TabsTrigger value="coupons" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Ticket className="w-4 h-4" />
-                <span className="hidden sm:inline">Coupons</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Settings</span>
-              </TabsTrigger>
+        );
+      case "products":
+        return <ProductManager />;
+      case "categories":
+        return <LocalCategoryManager />;
+      case "orders":
+        return <OrdersManager />;
+      case "customers":
+        return <CustomerManager />;
+      case "blog":
+        return <BlogManager />;
+      case "subscribers":
+        return <SubscribersManager />;
+      case "requests":
+        return <CustomRequestsManager />;
+      case "media":
+        return <MediaLibrary />;
+      case "announcements":
+        return <AnnouncementManager />;
+      case "homepage":
+        return (
+          <div className="space-y-6">
+            <HeroSliderManager />
+            <HomepageSectionsManager />
+          </div>
+        );
+      case "megamenu":
+        return <MegaMenuManager />;
+      case "pages":
+        return <PagesContentManager />;
+      case "content":
+        return <SiteContentManager />;
+      case "footer":
+        return <FooterMenuManager />;
+      case "popups":
+        return <PopupManager />;
+      case "coupons":
+        return <CouponManager />;
+      case "settings":
+        return (
+          <Tabs defaultValue="general" className="space-y-6">
+            <TabsList className="bg-muted/50 p-1 flex-wrap h-auto gap-1">
+              <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
+              <TabsTrigger value="users" className="text-xs sm:text-sm">Users & Roles</TabsTrigger>
+              <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
+              <TabsTrigger value="tracking" className="text-xs sm:text-sm">Tracking</TabsTrigger>
+              <TabsTrigger value="api" className="text-xs sm:text-sm">API & Security</TabsTrigger>
+              <TabsTrigger value="smtp" className="text-xs sm:text-sm">SMTP / Email</TabsTrigger>
+              <TabsTrigger value="templates" className="text-xs sm:text-sm">Email Templates</TabsTrigger>
             </TabsList>
-          </div>
-
-          {/* Tab Contents */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <TabsContent value="overview" className="m-0 space-y-8">
-              <DashboardOverview />
-              <AnalyticsReport />
+            
+            <TabsContent value="general" className="m-0">
+              <SiteSettingsManager />
             </TabsContent>
-
-            <TabsContent value="products" className="m-0">
-              <ProductManager />
+            
+            <TabsContent value="users" className="m-0">
+              <UsersManager />
             </TabsContent>
-
-            <TabsContent value="categories" className="m-0">
-              <LocalCategoryManager />
+            
+            <TabsContent value="payments" className="m-0">
+              <PaymentSettingsManager />
             </TabsContent>
-
-            <TabsContent value="orders" className="m-0">
-              <OrdersManager />
+            
+            <TabsContent value="tracking" className="m-0">
+              <TrackingPixelManager />
             </TabsContent>
-
-            <TabsContent value="customers" className="m-0">
-              <CustomerManager />
+            
+            <TabsContent value="api" className="m-0">
+              <APISettingsManager />
             </TabsContent>
-
-            <TabsContent value="blog" className="m-0">
-              <BlogManager />
+            
+            <TabsContent value="smtp" className="m-0">
+              <SMTPSettingsManager />
             </TabsContent>
-
-            <TabsContent value="subscribers" className="m-0">
-              <SubscribersManager />
+            
+            <TabsContent value="templates" className="m-0">
+              <EmailTemplateManager />
             </TabsContent>
+          </Tabs>
+        );
+      default:
+        return <DashboardOverview />;
+    }
+  };
 
-            <TabsContent value="requests" className="m-0">
-              <CustomRequestsManager />
-            </TabsContent>
+  const getPageTitle = () => {
+    const titles: Record<string, string> = {
+      overview: "Dashboard Overview",
+      products: "Product Management",
+      categories: "Category Management",
+      orders: "Order Management",
+      customers: "Customer Management",
+      blog: "Blog Management",
+      subscribers: "Newsletter Subscribers",
+      requests: "Custom Requests",
+      media: "Media Library",
+      announcements: "Announcement Bar",
+      homepage: "Homepage Sections",
+      megamenu: "Mega Menu",
+      pages: "Pages Content",
+      content: "Branding & Content",
+      footer: "Footer Menu",
+      popups: "Popup Notifications",
+      coupons: "Discount Coupons",
+      settings: "Settings",
+    };
+    return titles[activeTab] || "Dashboard";
+  };
 
-            <TabsContent value="media" className="m-0">
-              <MediaLibrary />
-            </TabsContent>
-
-            <TabsContent value="announcements" className="m-0">
-              <AnnouncementManager />
-            </TabsContent>
-
-            <TabsContent value="homepage" className="m-0">
-              <div className="space-y-6">
-                <HeroSliderManager />
-                <HomepageSectionsManager />
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <Header />
+      
+      <div className="flex min-h-[calc(100vh-80px)]">
+        {/* Sidebar */}
+        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+            {/* Page Header */}
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+                <div className="p-2.5 bg-gradient-to-br from-primary to-primary/70 rounded-xl shadow-lg shadow-primary/20 w-fit">
+                  <LayoutDashboard className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                    {getPageTitle()}
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Manage your store content, users, and settings
+                  </p>
+                </div>
               </div>
-            </TabsContent>
+            </div>
 
-            <TabsContent value="megamenu" className="m-0">
-              <MegaMenuManager />
-            </TabsContent>
-
-            <TabsContent value="pages" className="m-0">
-              <PagesContentManager />
-            </TabsContent>
-
-            <TabsContent value="content" className="m-0">
-              <SiteContentManager />
-            </TabsContent>
-
-            <TabsContent value="footer" className="m-0">
-              <FooterMenuManager />
-            </TabsContent>
-
-            <TabsContent value="popups" className="m-0">
-              <PopupManager />
-            </TabsContent>
-
-            <TabsContent value="coupons" className="m-0">
-              <CouponManager />
-            </TabsContent>
-
-            {/* Consolidated Settings Tab */}
-            <TabsContent value="settings" className="m-0">
-              <Tabs defaultValue="general" className="space-y-6">
-                <TabsList className="bg-muted/50 p-1">
-                  <TabsTrigger value="general">General</TabsTrigger>
-                  <TabsTrigger value="users">Users & Roles</TabsTrigger>
-                  <TabsTrigger value="payments">Payments</TabsTrigger>
-                  <TabsTrigger value="tracking">Tracking</TabsTrigger>
-                  <TabsTrigger value="api">API & Security</TabsTrigger>
-                  <TabsTrigger value="email">Email</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="general" className="m-0">
-                  <SiteSettingsManager />
-                </TabsContent>
-                
-                <TabsContent value="users" className="m-0">
-                  <UsersManager />
-                </TabsContent>
-                
-                <TabsContent value="payments" className="m-0">
-                  <PaymentSettingsManager />
-                </TabsContent>
-                
-                <TabsContent value="tracking" className="m-0">
-                  <TrackingPixelManager />
-                </TabsContent>
-                
-                <TabsContent value="api" className="m-0">
-                  <APISettingsManager />
-                </TabsContent>
-                
-                <TabsContent value="email" className="m-0">
-                  <EmailTemplateManager />
-                </TabsContent>
-              </Tabs>
-            </TabsContent>
+            {/* Content Card */}
+            <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4 sm:p-6">
+              {renderContent()}
+            </div>
           </div>
-        </Tabs>
-      </main>
+        </main>
+      </div>
+      
       <Footer />
     </div>
   );
