@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Loader2, Save, RefreshCw, Plus, Trash2, GripVertical, 
   ChevronDown, ChevronUp, Leaf, Flower2, Package, Shrub, 
-  Sparkles, Gift, Tag, Image 
+  Sparkles, Gift, Tag, Image, Upload, TreeDeciduous, Boxes, Fence
 } from "lucide-react";
 
 interface SubCategory {
@@ -41,10 +42,13 @@ interface MegaMenuCategory {
 }
 
 const iconOptions = [
-  { value: 'leaf', label: 'Leaf', Icon: Leaf },
+  { value: 'leaf', label: 'Leaf/Plants', Icon: Leaf },
+  { value: 'tree-deciduous', label: 'Tree', Icon: TreeDeciduous },
   { value: 'flower', label: 'Flower', Icon: Flower2 },
   { value: 'package', label: 'Package/Pot', Icon: Package },
+  { value: 'boxes', label: 'Boxes', Icon: Boxes },
   { value: 'shrub', label: 'Shrub/Greenery', Icon: Shrub },
+  { value: 'fence', label: 'Fence/Hanging', Icon: Fence },
   { value: 'sparkles', label: 'Sparkles', Icon: Sparkles },
   { value: 'gift', label: 'Gift', Icon: Gift },
   { value: 'tag', label: 'Tag/Sale', Icon: Tag },
@@ -54,6 +58,8 @@ export const MegaMenuManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<{ id: string; file_path: string; file_name: string }[]>([]);
+  const [imageSelectOpen, setImageSelectOpen] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<MegaMenuCategory[]>([
     {
@@ -73,11 +79,28 @@ export const MegaMenuManager = () => {
       featuredHref: '/shop?category=plants&sort=newest',
       subcategories: [
         { id: '1-1', name: 'Mixed Plant', nameAr: 'نباتات مختلطة', href: '/shop?category=mixed-plant', icon: 'leaf', order: 1 },
-        { id: '1-2', name: 'Palm Tree', nameAr: 'شجرة النخيل', href: '/shop?category=palm-tree', icon: 'leaf', order: 2 },
+        { id: '1-2', name: 'Palm Tree', nameAr: 'شجرة النخيل', href: '/shop?category=palm-tree', icon: 'tree-deciduous', order: 2 },
       ]
     },
     {
       id: '2',
+      name: 'Trees',
+      nameAr: 'أشجار',
+      href: '/shop?category=trees',
+      icon: 'tree-deciduous',
+      image: '',
+      isSale: false,
+      isActive: true,
+      order: 2,
+      featuredTitle: 'Indoor Trees',
+      featuredTitleAr: 'أشجار داخلية',
+      featuredSubtitle: 'Statement pieces',
+      featuredSubtitleAr: 'قطع مميزة',
+      featuredHref: '/shop?category=trees',
+      subcategories: []
+    },
+    {
+      id: '3',
       name: 'Flowers',
       nameAr: 'زهور',
       href: '/shop?category=flowers',
@@ -85,7 +108,7 @@ export const MegaMenuManager = () => {
       image: '',
       isSale: false,
       isActive: true,
-      order: 2,
+      order: 3,
       featuredTitle: 'Seasonal Blooms',
       featuredTitleAr: 'أزهار موسمية',
       featuredSubtitle: 'Beautiful flower arrangements',
@@ -94,7 +117,7 @@ export const MegaMenuManager = () => {
       subcategories: []
     },
     {
-      id: '3',
+      id: '4',
       name: 'Pots',
       nameAr: 'أواني',
       href: '/shop?category=pots',
@@ -102,16 +125,75 @@ export const MegaMenuManager = () => {
       image: '',
       isSale: false,
       isActive: true,
-      order: 3,
+      order: 4,
       featuredTitle: 'Designer Pots',
       featuredTitleAr: 'أواني مصممة',
       featuredSubtitle: 'Premium collection',
       featuredSubtitleAr: 'مجموعة فاخرة',
       featuredHref: '/shop?category=pots',
+      subcategories: [
+        { id: '4-1', name: 'Fiber Pot', nameAr: 'أواني فايبر', href: '/shop?category=fiber-pot', icon: 'package', order: 1 },
+        { id: '4-2', name: 'Plastic Pot', nameAr: 'أواني بلاستيك', href: '/shop?category=plastic-pot', icon: 'package', order: 2 },
+        { id: '4-3', name: 'Ceramic Pot', nameAr: 'أواني سيراميك', href: '/shop?category=ceramic-pot', icon: 'package', order: 3 },
+      ]
+    },
+    {
+      id: '5',
+      name: 'Greenary Bunch',
+      nameAr: 'حزمة الخضرة',
+      href: '/shop?category=greenery',
+      icon: 'shrub',
+      image: '',
+      isSale: false,
+      isActive: true,
+      order: 5,
+      featuredTitle: 'Green Walls',
+      featuredTitleAr: 'جدران خضراء',
+      featuredSubtitle: 'Transform your space',
+      featuredSubtitleAr: 'حول مساحتك',
+      featuredHref: '/shop?category=green-wall',
+      subcategories: [
+        { id: '5-1', name: 'Green Wall', nameAr: 'جدار أخضر', href: '/shop?category=green-wall', icon: 'shrub', order: 1 },
+        { id: '5-2', name: 'Greenery Bunch', nameAr: 'حزمة الخضرة', href: '/shop?category=greenery-bunch', icon: 'shrub', order: 2 },
+        { id: '5-3', name: 'Moss', nameAr: 'طحلب', href: '/shop?category=moss', icon: 'shrub', order: 3 },
+      ]
+    },
+    {
+      id: '6',
+      name: 'Hanging',
+      nameAr: 'معلقات',
+      href: '/shop?category=hanging',
+      icon: 'fence',
+      image: '',
+      isSale: false,
+      isActive: true,
+      order: 6,
+      featuredTitle: 'Hanging Plants',
+      featuredTitleAr: 'نباتات معلقة',
+      featuredSubtitle: 'Beautiful hanging decor',
+      featuredSubtitleAr: 'ديكور معلق جميل',
+      featuredHref: '/shop?category=hanging',
       subcategories: []
     },
     {
-      id: '4',
+      id: '7',
+      name: 'Grass',
+      nameAr: 'عشب',
+      href: '/shop?category=grass',
+      icon: 'shrub',
+      image: '',
+      isSale: false,
+      isActive: true,
+      order: 7,
+      featuredTitle: 'Artificial Grass',
+      featuredTitleAr: 'عشب صناعي',
+      featuredSubtitle: 'Premium quality',
+      featuredSubtitleAr: 'جودة عالية',
+      featuredHref: '/shop?category=grass',
+      subcategories: []
+    },
+    {
+      id: '8',
       name: 'Sale',
       nameAr: 'تخفيضات',
       href: '/shop?category=sale',
@@ -119,7 +201,7 @@ export const MegaMenuManager = () => {
       image: '',
       isSale: true,
       isActive: true,
-      order: 7,
+      order: 8,
       featuredTitle: '',
       featuredTitleAr: '',
       featuredSubtitle: '',
@@ -128,6 +210,22 @@ export const MegaMenuManager = () => {
       subcategories: []
     }
   ]);
+
+  // Fetch media files for image selection
+  const fetchMediaFiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('media_files')
+        .select('id, file_path, file_name')
+        .eq('file_type', 'image')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setMediaFiles(data || []);
+    } catch (error) {
+      console.error('Error fetching media files:', error);
+    }
+  };
 
   const fetchContent = async () => {
     setLoading(true);
@@ -152,6 +250,7 @@ export const MegaMenuManager = () => {
 
   useEffect(() => {
     fetchContent();
+    fetchMediaFiles();
   }, []);
 
   const saveContent = async () => {
@@ -409,12 +508,55 @@ export const MegaMenuManager = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Category Image URL</Label>
-                      <Input
-                        value={category.image}
-                        onChange={(e) => updateCategory(category.id, 'image', e.target.value)}
-                        placeholder="https://..."
-                      />
+                      <Label>Category Image</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={category.image}
+                          onChange={(e) => updateCategory(category.id, 'image', e.target.value)}
+                          placeholder="Enter URL or select from media"
+                          className="flex-1"
+                        />
+                        <Dialog open={imageSelectOpen === category.id} onOpenChange={(open) => setImageSelectOpen(open ? category.id : null)}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                              <Image className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+                            <DialogHeader>
+                              <DialogTitle>Select Image from Media Library</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                              {mediaFiles.map((file) => (
+                                <div
+                                  key={file.id}
+                                  className="relative aspect-square cursor-pointer rounded-lg overflow-hidden border-2 hover:border-primary transition-colors"
+                                  onClick={() => {
+                                    updateCategory(category.id, 'image', file.file_path);
+                                    setImageSelectOpen(null);
+                                  }}
+                                >
+                                  <img
+                                    src={file.file_path}
+                                    alt={file.file_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              ))}
+                              {mediaFiles.length === 0 && (
+                                <div className="col-span-full text-center py-8 text-muted-foreground">
+                                  No images in media library. Upload images in Media Library first.
+                                </div>
+                              )}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      {category.image && (
+                        <div className="mt-2 relative w-24 h-16 rounded overflow-hidden bg-slate-100">
+                          <img src={category.image} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>Is Sale Category</Label>
