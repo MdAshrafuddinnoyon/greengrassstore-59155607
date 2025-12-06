@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   BarChart3, 
-  TrendingUp, 
-  TrendingDown,
   ShoppingCart,
   Users,
   Package,
@@ -14,7 +12,6 @@ import {
   RefreshCw,
   Calendar,
   Download,
-  Eye,
   FileText
 } from "lucide-react";
 import { 
@@ -50,6 +47,7 @@ export const AnalyticsReport = () => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30");
+  const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadAnalytics();
@@ -79,7 +77,7 @@ export const AnalyticsReport = () => {
       if (productsError) throw productsError;
 
       // Fetch profiles (customers)
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('id');
 
@@ -167,7 +165,7 @@ export const AnalyticsReport = () => {
     }
   };
 
-  const exportReport = () => {
+  const exportJSON = () => {
     if (!data) return;
 
     const report = {
@@ -195,6 +193,164 @@ export const AnalyticsReport = () => {
     URL.revokeObjectURL(url);
   };
 
+  const exportPDF = () => {
+    if (!data) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const pdfHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Analytics Report - Green Grass Store</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 900px; margin: 0 auto; color: #333; }
+          .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #2d5a3d; padding-bottom: 20px; }
+          .header h1 { color: #2d5a3d; margin: 0; font-size: 28px; }
+          .header p { color: #666; margin: 10px 0 0; }
+          .meta { display: flex; justify-content: space-between; margin-bottom: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+          .meta-item { text-align: center; }
+          .meta-item label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; }
+          .meta-item value { font-size: 14px; font-weight: bold; }
+          .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 40px; }
+          .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+          .stat-card .value { font-size: 28px; font-weight: bold; color: #2d5a3d; }
+          .stat-card .label { font-size: 12px; color: #666; margin-top: 5px; }
+          .section { margin-bottom: 40px; }
+          .section h2 { color: #2d5a3d; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; font-size: 18px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+          th { background: #f8f9fa; font-weight: 600; color: #374151; }
+          .footer { text-align: center; margin-top: 50px; color: #666; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+          @media print { body { padding: 20px; } .stats-grid { grid-template-columns: repeat(5, 1fr); } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📊 Analytics Report</h1>
+          <p>Green Grass Store - Performance Overview</p>
+        </div>
+
+        <div class="meta">
+          <div class="meta-item">
+            <label>Report Generated</label>
+            <value>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</value>
+          </div>
+          <div class="meta-item">
+            <label>Time Period</label>
+            <value>Last ${dateRange} Days</value>
+          </div>
+          <div class="meta-item">
+            <label>Store</label>
+            <value>Green Grass Store</value>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="value">${data.totalOrders}</div>
+            <div class="label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="value">AED ${data.totalRevenue.toFixed(0)}</div>
+            <div class="label">Total Revenue</div>
+          </div>
+          <div class="stat-card">
+            <div class="value">${data.totalCustomers}</div>
+            <div class="label">Customers</div>
+          </div>
+          <div class="stat-card">
+            <div class="value">${data.totalProducts}</div>
+            <div class="label">Products</div>
+          </div>
+          <div class="stat-card">
+            <div class="value">AED ${data.avgOrderValue.toFixed(0)}</div>
+            <div class="label">Avg Order</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📦 Orders by Status</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Count</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.ordersByStatus.map(s => `
+                <tr>
+                  <td style="text-transform: capitalize;">${s.status}</td>
+                  <td>${s.count}</td>
+                  <td>${data.totalOrders > 0 ? ((s.count / data.totalOrders) * 100).toFixed(1) : 0}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>🏆 Top Selling Products</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Qty Sold</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.topProducts.length > 0 ? data.topProducts.map((p, i) => `
+                <tr>
+                  <td>${i + 1}</td>
+                  <td>${p.name}</td>
+                  <td>${p.quantity}</td>
+                  <td>AED ${p.revenue.toFixed(2)}</td>
+                </tr>
+              `).join('') : '<tr><td colspan="4" style="text-align: center; color: #666;">No sales data available</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>📂 Products by Category</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Product Count</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.topCategories.map(c => `
+                <tr>
+                  <td style="text-transform: capitalize;">${c.category}</td>
+                  <td>${c.count}</td>
+                  <td>${data.totalProducts > 0 ? ((c.count / data.totalProducts) * 100).toFixed(1) : 0}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          <p>Generated by Green Grass Store Admin Dashboard</p>
+          <p>© ${new Date().getFullYear()} Green Grass Store. All rights reserved.</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(pdfHTML);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -204,13 +360,13 @@ export const AnalyticsReport = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={reportRef}>
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Analytics Report</h2>
           <p className="text-gray-600">Track your store performance and sales</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-[180px]">
               <Calendar className="w-4 h-4 mr-2" />
@@ -227,9 +383,13 @@ export const AnalyticsReport = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={exportReport}>
+          <Button variant="outline" onClick={exportJSON}>
             <Download className="w-4 h-4 mr-2" />
-            Export
+            JSON
+          </Button>
+          <Button onClick={exportPDF}>
+            <FileText className="w-4 h-4 mr-2" />
+            PDF Report
           </Button>
         </div>
       </div>

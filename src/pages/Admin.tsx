@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, Receipt, Mail, Palette, Key, Megaphone, FolderTree, LayoutTemplate, Menu, BookOpen, UserCheck, Bell, Ticket, CreditCard, Target, PieChart } from "lucide-react";
+import { Loader2, LayoutDashboard, FileText, Settings, ShoppingBag, MessageSquare, Image, Receipt, Palette, Megaphone, FolderTree, LayoutTemplate, Menu, BookOpen, UserCheck, Bell, Ticket } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -104,7 +104,7 @@ const Admin = () => {
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2">
             <TabsList className="flex flex-wrap w-full gap-1 h-auto bg-transparent">
               <TabsTrigger value="overview" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <BarChart3 className="w-4 h-4" />
+                <LayoutDashboard className="w-4 h-4" />
                 <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
               <TabsTrigger value="products" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
@@ -128,7 +128,7 @@ const Admin = () => {
                 <span className="hidden sm:inline">Customers</span>
               </TabsTrigger>
               <TabsTrigger value="subscribers" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Mail className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" />
                 <span className="hidden sm:inline">Subscribers</span>
               </TabsTrigger>
               <TabsTrigger value="requests" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
@@ -138,10 +138,6 @@ const Admin = () => {
               <TabsTrigger value="media" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Image className="w-4 h-4" />
                 <span className="hidden sm:inline">Media</span>
-              </TabsTrigger>
-              <TabsTrigger value="users" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Users className="w-4 h-4" />
-                <span className="hidden sm:inline">Users</span>
               </TabsTrigger>
               <TabsTrigger value="announcements" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Megaphone className="w-4 h-4" />
@@ -167,14 +163,6 @@ const Admin = () => {
                 <Menu className="w-4 h-4" />
                 <span className="hidden sm:inline">Footer</span>
               </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Settings</span>
-              </TabsTrigger>
-              <TabsTrigger value="api" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Key className="w-4 h-4" />
-                <span className="hidden sm:inline">API</span>
-              </TabsTrigger>
               <TabsTrigger value="popups" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Popups</span>
@@ -183,29 +171,18 @@ const Admin = () => {
                 <Ticket className="w-4 h-4" />
                 <span className="hidden sm:inline">Coupons</span>
               </TabsTrigger>
-              <TabsTrigger value="payments" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <CreditCard className="w-4 h-4" />
-                <span className="hidden sm:inline">Payments</span>
-              </TabsTrigger>
-              <TabsTrigger value="tracking" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Target className="w-4 h-4" />
-                <span className="hidden sm:inline">Tracking</span>
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <PieChart className="w-4 h-4" />
-                <span className="hidden sm:inline">Analytics</span>
-              </TabsTrigger>
-              <TabsTrigger value="email-templates" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
-                <Mail className="w-4 h-4" />
-                <span className="hidden sm:inline">Emails</span>
+              <TabsTrigger value="settings" className="gap-1.5 py-2.5 px-3 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">Settings</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
           {/* Tab Contents */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <TabsContent value="overview" className="m-0">
+            <TabsContent value="overview" className="m-0 space-y-8">
               <DashboardOverview />
+              <AnalyticsReport />
             </TabsContent>
 
             <TabsContent value="products" className="m-0">
@@ -240,10 +217,6 @@ const Admin = () => {
               <MediaLibrary />
             </TabsContent>
 
-            <TabsContent value="users" className="m-0">
-              <UsersManager />
-            </TabsContent>
-
             <TabsContent value="announcements" className="m-0">
               <AnnouncementManager />
             </TabsContent>
@@ -271,14 +244,6 @@ const Admin = () => {
               <FooterMenuManager />
             </TabsContent>
 
-            <TabsContent value="settings" className="m-0">
-              <SiteSettingsManager />
-            </TabsContent>
-
-            <TabsContent value="api" className="m-0">
-              <APISettingsManager />
-            </TabsContent>
-
             <TabsContent value="popups" className="m-0">
               <PopupManager />
             </TabsContent>
@@ -287,20 +252,42 @@ const Admin = () => {
               <CouponManager />
             </TabsContent>
 
-            <TabsContent value="payments" className="m-0">
-              <PaymentSettingsManager />
-            </TabsContent>
-
-            <TabsContent value="tracking" className="m-0">
-              <TrackingPixelManager />
-            </TabsContent>
-
-            <TabsContent value="analytics" className="m-0">
-              <AnalyticsReport />
-            </TabsContent>
-
-            <TabsContent value="email-templates" className="m-0">
-              <EmailTemplateManager />
+            {/* Consolidated Settings Tab */}
+            <TabsContent value="settings" className="m-0">
+              <Tabs defaultValue="general" className="space-y-6">
+                <TabsList className="bg-muted/50 p-1">
+                  <TabsTrigger value="general">General</TabsTrigger>
+                  <TabsTrigger value="users">Users & Roles</TabsTrigger>
+                  <TabsTrigger value="payments">Payments</TabsTrigger>
+                  <TabsTrigger value="tracking">Tracking</TabsTrigger>
+                  <TabsTrigger value="api">API & Security</TabsTrigger>
+                  <TabsTrigger value="email">Email</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="general" className="m-0">
+                  <SiteSettingsManager />
+                </TabsContent>
+                
+                <TabsContent value="users" className="m-0">
+                  <UsersManager />
+                </TabsContent>
+                
+                <TabsContent value="payments" className="m-0">
+                  <PaymentSettingsManager />
+                </TabsContent>
+                
+                <TabsContent value="tracking" className="m-0">
+                  <TrackingPixelManager />
+                </TabsContent>
+                
+                <TabsContent value="api" className="m-0">
+                  <APISettingsManager />
+                </TabsContent>
+                
+                <TabsContent value="email" className="m-0">
+                  <EmailTemplateManager />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </div>
         </Tabs>

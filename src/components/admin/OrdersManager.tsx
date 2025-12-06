@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, Eye, FileText, Search, Download, Printer, Trash2, RefreshCw } from "lucide-react";
+import { Loader2, Plus, Eye, FileText, Search, Printer, Trash2, RefreshCw, Truck, Mail } from "lucide-react";
 import { ExportButtons } from "./ExportButtons";
 import { format } from "date-fns";
 
@@ -52,6 +52,7 @@ export const OrdersManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   
   const [newOrder, setNewOrder] = useState({
     customer_name: "",
@@ -64,6 +65,10 @@ export const OrdersManager = () => {
     payment_method: "cash",
     notes: "",
   });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -104,30 +109,67 @@ export const OrdersManager = () => {
     return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
+  const sendOrderEmail = async (order: Order, type: 'order_confirmation' | 'status_update', previousStatus?: string) => {
+    try {
+      setSendingEmail(order.id);
+      
+      const { data, error } = await supabase.functions.invoke('send-order-email', {
+        body: {
+          type,
+          order,
+          previous_status: previousStatus
+        }
+      });
+
+      if (error) throw error;
+      
+      toast.success('Email sent successfully!');
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast.error('Failed to send email');
+    } finally {
+      setSendingEmail(null);
+    }
+  };
+
   const createOrder = async () => {
     try {
       const subtotal = calculateSubtotal(newOrder.items);
       const total = subtotal + newOrder.tax + newOrder.shipping;
+      const orderNumber = generateOrderNumber();
 
-      const { error } = await supabase
+      const orderData = {
+        order_number: orderNumber,
+        customer_name: newOrder.customer_name,
+        customer_email: newOrder.customer_email,
+        customer_phone: newOrder.customer_phone || null,
+        customer_address: newOrder.customer_address || null,
+        items: JSON.parse(JSON.stringify(newOrder.items)),
+        subtotal,
+        tax: newOrder.tax,
+        shipping: newOrder.shipping,
+        total,
+        payment_method: newOrder.payment_method,
+        notes: newOrder.notes || null,
+        status: 'pending',
+      };
+
+      const { data, error } = await supabase
         .from('orders')
-        .insert([{
-          order_number: generateOrderNumber(),
-          customer_name: newOrder.customer_name,
-          customer_email: newOrder.customer_email,
-          customer_phone: newOrder.customer_phone || null,
-          customer_address: newOrder.customer_address || null,
-          items: JSON.parse(JSON.stringify(newOrder.items)),
-          subtotal,
-          tax: newOrder.tax,
-          shipping: newOrder.shipping,
-          total,
-          payment_method: newOrder.payment_method,
-          notes: newOrder.notes || null,
-          status: 'pending',
-        }]);
+        .insert([orderData])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send confirmation email
+      if (data) {
+        const orderWithItems = {
+          ...data,
+          items: newOrder.items
+        };
+        await sendOrderEmail(orderWithItems as Order, 'order_confirmation');
+      }
 
       toast.success('Order created successfully');
       setShowCreateDialog(false);
@@ -149,14 +191,24 @@ export const OrdersManager = () => {
     }
   };
 
-  const updateOrderStatus = async (orderId: string, status: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      
+      const previousStatus = order.status;
+
       const { error } = await supabase
         .from('orders')
-        .update({ status })
+        .update({ status: newStatus })
         .eq('id', orderId);
 
       if (error) throw error;
+      
+      // Send status update email
+      const updatedOrder = { ...order, status: newStatus };
+      await sendOrderEmail(updatedOrder, 'status_update', previousStatus);
+      
       toast.success('Order status updated');
       fetchOrders();
     } catch (error) {
@@ -278,10 +330,101 @@ export const OrdersManager = () => {
     invoiceWindow.print();
   };
 
+  const printDeliverySlip = (order: Order) => {
+    const slipWindow = window.open('', '_blank');
+    if (!slipWindow) return;
+
+    const slipHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Delivery Slip - ${order.order_number}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 30px; max-width: 600px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 25px; border-bottom: 3px solid #2d5a3d; padding-bottom: 15px; }
+          .header h1 { color: #2d5a3d; margin: 0; font-size: 22px; }
+          .header p { color: #666; margin: 5px 0; font-size: 12px; }
+          .badge { display: inline-block; padding: 6px 15px; background: #2d5a3d; color: white; border-radius: 15px; font-size: 12px; margin-top: 10px; }
+          .delivery-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+          .delivery-info h2 { margin: 0 0 15px 0; font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+          .delivery-info p { margin: 5px 0; font-size: 14px; }
+          .items-list { margin-bottom: 20px; }
+          .items-list h2 { font-size: 16px; margin: 0 0 15px 0; color: #333; }
+          .item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #ddd; }
+          .item:last-child { border-bottom: none; }
+          .checkbox { width: 20px; height: 20px; border: 2px solid #2d5a3d; border-radius: 3px; margin-right: 10px; }
+          .signature-box { border: 2px dashed #ccc; padding: 40px; margin-top: 30px; text-align: center; }
+          .signature-box p { color: #999; font-size: 12px; }
+          .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #999; }
+          @media print { body { padding: 15px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🚚 DELIVERY SLIP</h1>
+          <p>GREEN GRASS STORE</p>
+          <span class="badge">Order #${order.order_number}</span>
+        </div>
+
+        <div class="delivery-info">
+          <h2>📍 Delivery Address</h2>
+          <p><strong>${order.customer_name}</strong></p>
+          <p>${order.customer_address || 'Address not provided'}</p>
+          <p>📞 ${order.customer_phone || 'No phone'}</p>
+          <p>📧 ${order.customer_email}</p>
+        </div>
+
+        <div class="items-list">
+          <h2>📦 Items to Deliver (${order.items.length})</h2>
+          ${order.items.map(item => `
+            <div class="item">
+              <div style="display: flex; align-items: center;">
+                <div class="checkbox"></div>
+                <span>${item.name}</span>
+              </div>
+              <span>× ${item.quantity}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+          <p style="margin: 0; font-weight: bold; color: #2d5a3d;">
+            💰 Amount to Collect: AED ${order.total.toFixed(2)}
+          </p>
+          <p style="margin: 5px 0 0; font-size: 12px; color: #666;">
+            Payment: ${order.payment_method || 'Cash on Delivery'}
+          </p>
+        </div>
+
+        <div class="signature-box">
+          <p>Customer Signature</p>
+          <p style="margin-top: 30px; font-size: 11px;">Date: ________________</p>
+        </div>
+
+        <div class="footer">
+          <p>Thank you for choosing Green Grass Store!</p>
+          <p>+971 54 775 1901 | www.greengrassstore.com</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    slipWindow.document.write(slipHTML);
+    slipWindow.document.close();
+    slipWindow.print();
+  };
+
   const filteredOrders = orders.filter(order =>
     order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.customer_email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -293,7 +436,7 @@ export const OrdersManager = () => {
               <FileText className="w-5 h-5" />
               Orders & Invoices
             </CardTitle>
-            <CardDescription>Manage orders and generate invoices</CardDescription>
+            <CardDescription>Manage orders, invoices, and delivery slips</CardDescription>
           </div>
           
           <div className="flex gap-2 flex-wrap">
@@ -441,7 +584,7 @@ export const OrdersManager = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="cash">Cash on Delivery</SelectItem>
                         <SelectItem value="card">Card</SelectItem>
                         <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
                         <SelectItem value="whatsapp">WhatsApp Order</SelectItem>
@@ -479,7 +622,7 @@ export const OrdersManager = () => {
                   className="w-full"
                   disabled={!newOrder.customer_name || !newOrder.customer_email || newOrder.items.every(i => !i.name)}
                 >
-                  Create Order & Generate Invoice
+                  Create Order & Send Invoice
                 </Button>
                 </div>
               </DialogContent>
@@ -488,8 +631,9 @@ export const OrdersManager = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
-          <div className="relative">
+        {/* Search and Pagination Controls */}
+        <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search orders..."
@@ -497,6 +641,20 @@ export const OrdersManager = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Show:</span>
+            <Select value={String(itemsPerPage)} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -510,85 +668,138 @@ export const OrdersManager = () => {
             <p>No orders found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-mono text-sm">{order.order_number}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{order.customer_name}</p>
-                        <p className="text-xs text-muted-foreground">{order.customer_email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-semibold">AED {order.total.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={order.status}
-                        onValueChange={(value) => updateOrderStatus(order.id, value)}
-                      >
-                        <SelectTrigger className="w-28">
-                          <Badge className={statusColors[order.status] || "bg-gray-100"}>
-                            {order.status}
-                          </Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="processing">Processing</SelectItem>
-                          <SelectItem value="shipped">Shipped</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {format(new Date(order.created_at), 'MMM dd, yyyy')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setSelectedOrder(order)}
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => printInvoice(order)}
-                          title="Print Invoice"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteOrder(order.id)}
-                          title="Delete Order"
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order #</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {paginatedOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-mono text-sm">{order.order_number}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{order.customer_name}</p>
+                          <p className="text-xs text-muted-foreground">{order.customer_email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold">AED {order.total.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={order.status}
+                          onValueChange={(value) => updateOrderStatus(order.id, value)}
+                        >
+                          <SelectTrigger className="w-28">
+                            <Badge className={statusColors[order.status] || "bg-gray-100"}>
+                              {order.status}
+                            </Badge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="processing">Processing</SelectItem>
+                            <SelectItem value="shipped">Shipped</SelectItem>
+                            <SelectItem value="delivered">Delivered</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {format(new Date(order.created_at), 'MMM dd, yyyy')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSelectedOrder(order)}
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => printInvoice(order)}
+                            title="Print Invoice"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => printDeliverySlip(order)}
+                            title="Print Delivery Slip"
+                          >
+                            <Truck className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => sendOrderEmail(order, 'order_confirmation')}
+                            title="Resend Invoice Email"
+                            disabled={sendingEmail === order.id}
+                          >
+                            {sendingEmail === order.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Mail className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteOrder(order.id)}
+                            title="Delete Order"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} orders
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm px-2">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Order Details Dialog */}
@@ -651,10 +862,16 @@ export const OrdersManager = () => {
                   </div>
                 )}
 
-                <Button onClick={() => printInvoice(selectedOrder)} className="w-full">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print Invoice
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={() => printInvoice(selectedOrder)} className="flex-1">
+                    <Printer className="w-4 h-4 mr-2" />
+                    Invoice
+                  </Button>
+                  <Button variant="outline" onClick={() => printDeliverySlip(selectedOrder)} className="flex-1">
+                    <Truck className="w-4 h-4 mr-2" />
+                    Delivery Slip
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
