@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -29,6 +31,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Customer {
   id: string;
@@ -51,6 +61,13 @@ export const CustomerManager = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Bulk Selection
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
   // Add customer dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -142,6 +159,13 @@ export const CustomerManager = () => {
     (c.city?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
+  // Pagination
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const handleViewCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     fetchCustomerOrders(customer.user_id);
@@ -155,7 +179,6 @@ export const CustomerManager = () => {
 
     setAddLoading(true);
     try {
-      // Create a new profile with a placeholder user_id
       const tempUserId = crypto.randomUUID();
       
       const { error } = await supabase
@@ -204,6 +227,37 @@ export const CustomerManager = () => {
       toast.error("Failed to delete customer");
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} customers?`)) return;
+    
+    try {
+      const { error } = await supabase.from('profiles').delete().in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} customers deleted`);
+      setSelectedIds([]);
+      fetchCustomers();
+    } catch (error) {
+      toast.error('Failed to delete customers');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedCustomers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedCustomers.map(c => c.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
     }
   };
 
@@ -331,22 +385,56 @@ export const CustomerManager = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Search */}
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, phone, or city..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
+            <div className="relative max-w-sm w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, phone, or city..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-muted-foreground">Show:</span>
+              <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Table */}
+          {/* Bulk Actions */}
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg mb-4">
+              <span className="text-sm font-medium">{selectedIds.length} selected</span>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+                Clear
+              </Button>
+            </div>
+          )}
+
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedIds.length === paginatedCustomers.length && paginatedCustomers.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Location</TableHead>
@@ -357,16 +445,22 @@ export const CustomerManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCustomers.length === 0 ? (
+                {paginatedCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <Users className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-muted-foreground">No customers found</p>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCustomers.map((customer) => (
+                  paginatedCustomers.map((customer) => (
                     <TableRow key={customer.id}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedIds.includes(customer.id)}
+                          onCheckedChange={() => toggleSelectOne(customer.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="font-medium">{customer.full_name || 'No name'}</div>
                       </TableCell>
@@ -421,6 +515,54 @@ export const CustomerManager = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} of {filteredCustomers.length}
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(pageNum)}
+                          isActive={currentPage === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -494,29 +636,73 @@ export const CustomerManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Import CSV Dialog */}
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent>
+      {/* View Customer Dialog */}
+      <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5" />
-              Import Customers from CSV
+              <Eye className="w-5 h-5" />
+              Customer Details
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Upload a CSV file with customer data. The file should have columns for: 
-              full_name (or name), phone, address, city, country
-            </p>
-            <div className="border-2 border-dashed rounded-lg p-6 text-center">
-              <Input
-                type="file"
-                accept=".csv"
-                onChange={handleImportCSV}
-                className="cursor-pointer"
-              />
+          {selectedCustomer && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Name</Label>
+                  <p className="font-medium">{selectedCustomer.full_name || 'No name'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Phone</Label>
+                  <p className="font-medium">{selectedCustomer.phone || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Address</Label>
+                  <p className="font-medium">{selectedCustomer.address || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">City</Label>
+                  <p className="font-medium">{selectedCustomer.city || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Country</Label>
+                  <p className="font-medium">{selectedCustomer.country || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Joined</Label>
+                  <p className="font-medium">{new Date(selectedCustomer.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-3">Order History ({customerOrders.length})</h4>
+                {ordersLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  </div>
+                ) : customerOrders.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No orders found</p>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {customerOrders.map(order => (
+                      <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{order.order_number}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <Badge>{order.status}</Badge>
+                          <p className="font-medium mt-1">AED {order.total?.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -526,15 +712,15 @@ export const CustomerManager = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Customer</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{customerToDelete?.full_name}"? This action cannot be undone.
+              Are you sure you want to delete {customerToDelete?.full_name}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteCustomer}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteLoading}
+              className="bg-destructive hover:bg-destructive/90"
             >
               {deleteLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Delete
@@ -543,98 +729,22 @@ export const CustomerManager = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Customer Detail Dialog */}
-      <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      {/* Import Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Customer Details
-            </DialogTitle>
+            <DialogTitle>Import Customers from CSV</DialogTitle>
           </DialogHeader>
-          
-          {selectedCustomer && (
-            <div className="space-y-6">
-              {/* Customer Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">Full Name</Label>
-                  <p className="font-medium">{selectedCustomer.full_name || 'Not provided'}</p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">Phone</Label>
-                  <p className="font-medium flex items-center gap-1">
-                    <Phone className="w-4 h-4" />
-                    {selectedCustomer.phone || 'Not provided'}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">Address</Label>
-                  <p className="font-medium flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {selectedCustomer.address || 'Not provided'}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">City / Country</Label>
-                  <p className="font-medium">
-                    {[selectedCustomer.city, selectedCustomer.country].filter(Boolean).join(', ') || 'Not provided'}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">Member Since</Label>
-                  <p className="font-medium flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(selectedCustomer.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground">Total Spent</Label>
-                  <p className="font-medium text-green-600">
-                    AED {(selectedCustomer.total_spent || 0).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Order History */}
-              <div>
-                <h3 className="font-semibold flex items-center gap-2 mb-3">
-                  <ShoppingBag className="w-4 h-4" />
-                  Order History ({customerOrders.length})
-                </h3>
-                
-                {ordersLoading ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  </div>
-                ) : customerOrders.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">No orders yet</p>
-                ) : (
-                  <div className="space-y-2">
-                    {customerOrders.map((order) => (
-                      <div key={order.id} className="p-3 bg-muted/50 rounded-lg flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{order.order_number}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(order.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">AED {Number(order.total).toFixed(2)}</p>
-                          <Badge variant={
-                            order.status === 'completed' ? 'default' :
-                            order.status === 'pending' ? 'secondary' : 'outline'
-                          }>
-                            {order.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Upload a CSV file with columns: full_name, phone, address, city, country
+            </p>
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleImportCSV}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

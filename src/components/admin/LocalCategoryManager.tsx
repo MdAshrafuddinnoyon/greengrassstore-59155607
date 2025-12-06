@@ -5,13 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, FolderTree, Plus, Pencil, Trash2, Save, RefreshCw } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
 import { ExportButtons } from "./ExportButtons";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Category {
   id: string;
@@ -33,6 +43,13 @@ export const LocalCategoryManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Bulk Selection
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -67,7 +84,6 @@ export const LocalCategoryManager = () => {
       const slug = editingCategory.slug || editingCategory.name.toLowerCase().replace(/\s+/g, '-');
       
       if (editingCategory.id) {
-        // Update
         const { error } = await supabase
           .from('categories')
           .update({
@@ -85,7 +101,6 @@ export const LocalCategoryManager = () => {
         if (error) throw error;
         toast.success('Category updated');
       } else {
-        // Insert
         const { error } = await supabase
           .from('categories')
           .insert({
@@ -132,6 +147,38 @@ export const LocalCategoryManager = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} categories?`)) return;
+    
+    try {
+      const { error } = await supabase.from('categories').delete().in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} categories deleted`);
+      setSelectedIds([]);
+      fetchCategories();
+    } catch (error) {
+      toast.error('Failed to delete categories');
+    }
+  };
+
+  const handleBulkActivate = async (activate: boolean) => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({ is_active: activate })
+        .in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} categories ${activate ? 'activated' : 'deactivated'}`);
+      setSelectedIds([]);
+      fetchCategories();
+    } catch (error) {
+      toast.error('Failed to update categories');
+    }
+  };
+
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
     setIsDialogOpen(true);
@@ -150,9 +197,32 @@ export const LocalCategoryManager = () => {
     setIsDialogOpen(true);
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedCategories.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedCategories.map(c => c.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
   const filteredCategories = categories.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.slug.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+  const paginatedCategories = filteredCategories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   if (loading) {
@@ -194,20 +264,59 @@ export const LocalCategoryManager = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Search */}
-          <div className="mb-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
             <Input
               placeholder="Search categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
             />
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-muted-foreground">Show:</span>
+              <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Table */}
+          {/* Bulk Actions */}
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg mb-4">
+              <span className="text-sm font-medium">{selectedIds.length} selected</span>
+              <Button size="sm" variant="outline" onClick={() => handleBulkActivate(true)}>
+                Activate
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleBulkActivate(false)}>
+                Deactivate
+              </Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+                Clear
+              </Button>
+            </div>
+          )}
+
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedIds.length === paginatedCategories.length && paginatedCategories.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Order</TableHead>
                   <TableHead>Image</TableHead>
                   <TableHead>Name</TableHead>
@@ -217,16 +326,22 @@ export const LocalCategoryManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCategories.length === 0 ? (
+                {paginatedCategories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={7} className="text-center py-8">
                       <FolderTree className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-muted-foreground">No categories found</p>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCategories.map((category) => (
+                  paginatedCategories.map((category) => (
                     <TableRow key={category.id}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedIds.includes(category.id)}
+                          onCheckedChange={() => toggleSelectOne(category.id)}
+                        />
+                      </TableCell>
                       <TableCell>{category.display_order}</TableCell>
                       <TableCell>
                         {category.image ? (
@@ -282,6 +397,54 @@ export const LocalCategoryManager = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredCategories.length)} of {filteredCategories.length}
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(pageNum)}
+                          isActive={currentPage === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
 

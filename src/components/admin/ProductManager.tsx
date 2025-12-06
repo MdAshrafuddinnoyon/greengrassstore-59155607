@@ -7,15 +7,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw, X, Copy, Eye, Upload } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Package, RefreshCw, X, Copy, Eye, Upload, CheckSquare, Square } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
 import { ExportButtons } from "./ExportButtons";
 import { ProductCSVImporter } from "./ProductCSVImporter";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface ProductVariant {
   id?: string;
@@ -84,6 +93,13 @@ export const ProductManager = () => {
   const [newOptionValue, setNewOptionValue] = useState({ opt1: "", opt2: "", opt3: "" });
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Bulk Selection
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const fetchCategories = async () => {
     const { data } = await supabase.from('categories').select('*').eq('is_active', true).order('display_order');
     setCategories(data || []);
@@ -99,7 +115,6 @@ export const ProductManager = () => {
       
       if (error) throw error;
       
-      // Fetch variants for variable products
       const productsWithVariants = await Promise.all((data || []).map(async (product) => {
         const typedProduct = {
           ...product,
@@ -191,12 +206,9 @@ export const ProductManager = () => {
         productId = data.id;
       }
 
-      // Handle variants for variable products
       if (editingProduct.product_type === 'variable' && productId) {
-        // Delete existing variants
         await supabase.from('product_variants').delete().eq('product_id', productId);
         
-        // Insert new variants
         if (editingProduct.variants && editingProduct.variants.length > 0) {
           const variantsToInsert = editingProduct.variants.map(v => ({
             product_id: productId,
@@ -244,6 +256,55 @@ export const ProductManager = () => {
       fetchProducts();
     } catch (error) {
       toast.error('Failed to delete product');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} products?`)) return;
+    
+    try {
+      const { error } = await supabase.from('products').delete().in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} products deleted`);
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to delete products');
+    }
+  };
+
+  const handleBulkActivate = async (activate: boolean) => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: activate })
+        .in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} products ${activate ? 'activated' : 'deactivated'}`);
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update products');
+    }
+  };
+
+  const handleBulkFeatured = async (featured: boolean) => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_featured: featured })
+        .in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} products ${featured ? 'marked as featured' : 'unmarked'}`);
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update products');
     }
   };
 
@@ -372,9 +433,32 @@ export const ProductManager = () => {
     });
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedProducts.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedProducts.map(p => p.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
   const filtered = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedProducts = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   if (loading) {
@@ -388,7 +472,7 @@ export const ProductManager = () => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
             Products ({products.length})
@@ -436,16 +520,62 @@ export const ProductManager = () => {
           </TabsList>
 
           <TabsContent value="products" className="space-y-4">
-            <Input 
-              placeholder="Search products..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-            />
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <Input 
+                placeholder="Search products..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-muted-foreground">Show:</span>
+                <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Bulk Actions */}
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm font-medium">{selectedIds.length} selected</span>
+                <Button size="sm" variant="outline" onClick={() => handleBulkActivate(true)}>
+                  Activate
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => handleBulkActivate(false)}>
+                  Deactivate
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => handleBulkFeatured(true)}>
+                  Mark Featured
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+                  Clear
+                </Button>
+              </div>
+            )}
             
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox 
+                        checked={selectedIds.length === paginatedProducts.length && paginatedProducts.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Image</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Type</TableHead>
@@ -458,13 +588,19 @@ export const ProductManager = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(p => {
+                  {paginatedProducts.map(p => {
                     const discountPct = p.compare_at_price && p.compare_at_price > p.price 
                       ? Math.round((1 - p.price / p.compare_at_price) * 100)
                       : 0;
                     
                     return (
                       <TableRow key={p.id}>
+                        <TableCell>
+                          <Checkbox 
+                            checked={selectedIds.includes(p.id)}
+                            onCheckedChange={() => toggleSelectOne(p.id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           {p.featured_image ? (
                             <img src={p.featured_image} alt={p.name} className="w-12 h-12 object-cover rounded" />
@@ -490,21 +626,21 @@ export const ProductManager = () => {
                         <TableCell>{p.stock_quantity}</TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
-                            {p.is_active && <Badge className="bg-green-100 text-green-800">Active</Badge>}
-                            {p.is_on_sale && <Badge className="bg-red-100 text-red-800">Sale</Badge>}
-                            {p.is_new && <Badge className="bg-blue-100 text-blue-800">New</Badge>}
+                            <Badge variant={p.is_active ? "default" : "secondary"}>
+                              {p.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
                             {p.is_featured && <Badge className="bg-amber-100 text-amber-800">Featured</Badge>}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(p); setActiveTab("general"); setDiscountPercentage(discountPct); setIsDialogOpen(true); }}>
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingProduct(p); setIsDialogOpen(true); setActiveTab("general"); }}>
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDuplicate(p)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDuplicate(p)}>
                               <Copy className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)} className="text-destructive">
+                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(p.id)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -516,9 +652,51 @@ export const ProductManager = () => {
               </Table>
             </div>
 
-            {filtered.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                No products found. Add your first product!
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length}
+                </p>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(pageNum)}
+                            isActive={currentPage === pageNum}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </TabsContent>
@@ -529,471 +707,315 @@ export const ProductManager = () => {
         </Tabs>
       </CardContent>
 
-      {/* Product Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingProduct?.id ? 'Edit' : 'Add'} Product</DialogTitle>
+            <DialogTitle>{editingProduct?.id ? 'Edit Product' : 'Add Product'}</DialogTitle>
           </DialogHeader>
           
-          {editingProduct && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-              <TabsList className="grid grid-cols-4 w-full">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="images">Images</TabsTrigger>
-                <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                <TabsTrigger value="variants" disabled={editingProduct.product_type !== 'variable'}>
-                  Variants
-                </TabsTrigger>
-              </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-4 w-full">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
+              <TabsTrigger value="pricing">Pricing</TabsTrigger>
+              <TabsTrigger value="variants">Variants</TabsTrigger>
+            </TabsList>
 
-              <div className="flex-1 overflow-y-auto p-1">
-                {/* General Tab */}
-                <TabsContent value="general" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Product Name (EN) *</Label>
-                      <Input 
-                        value={editingProduct.name || ''} 
-                        onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
-                        placeholder="Enter product name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Product Name (AR)</Label>
-                      <Input 
-                        value={editingProduct.name_ar || ''} 
-                        onChange={e => setEditingProduct({...editingProduct, name_ar: e.target.value})}
-                        placeholder="أدخل اسم المنتج"
-                        dir="rtl"
-                      />
-                    </div>
-                  </div>
+            <TabsContent value="general" className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Product Name *</Label>
+                  <Input
+                    value={editingProduct?.name || ''}
+                    onChange={(e) => setEditingProduct(p => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Name (Arabic)</Label>
+                  <Input
+                    value={editingProduct?.name_ar || ''}
+                    onChange={(e) => setEditingProduct(p => ({ ...p, name_ar: e.target.value }))}
+                    dir="rtl"
+                  />
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Category</Label>
-                      <Select 
-                        value={editingProduct.category} 
-                        onValueChange={v => setEditingProduct({...editingProduct, category: v})}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select
+                    value={editingProduct?.category || ''}
+                    onValueChange={(v) => setEditingProduct(p => ({ ...p, category: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(c => (
+                        <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>SKU</Label>
+                  <Input
+                    value={editingProduct?.sku || ''}
+                    onChange={(e) => setEditingProduct(p => ({ ...p, sku: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={editingProduct?.description || ''}
+                  onChange={(e) => setEditingProduct(p => ({ ...p, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description (Arabic)</Label>
+                <Textarea
+                  value={editingProduct?.description_ar || ''}
+                  onChange={(e) => setEditingProduct(p => ({ ...p, description_ar: e.target.value }))}
+                  rows={3}
+                  dir="rtl"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editingProduct?.is_active ?? true}
+                    onCheckedChange={(v) => setEditingProduct(p => ({ ...p, is_active: v }))}
+                  />
+                  <Label>Active</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editingProduct?.is_featured || false}
+                    onCheckedChange={(v) => setEditingProduct(p => ({ ...p, is_featured: v }))}
+                  />
+                  <Label>Featured</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editingProduct?.is_new || false}
+                    onCheckedChange={(v) => setEditingProduct(p => ({ ...p, is_new: v }))}
+                  />
+                  <Label>New</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editingProduct?.is_on_sale || false}
+                    onCheckedChange={(v) => setEditingProduct(p => ({ ...p, is_on_sale: v }))}
+                  />
+                  <Label>On Sale</Label>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="images" className="space-y-4 mt-4">
+              <MediaPicker
+                label="Featured Image"
+                value={editingProduct?.featured_image || ''}
+                onChange={(url) => setEditingProduct(p => ({ ...p, featured_image: url }))}
+              />
+
+              <div className="space-y-2">
+                <Label>Gallery Images</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {(editingProduct?.images || []).map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={img} alt="" className="w-full aspect-square object-cover rounded" />
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeGalleryImage(img)}
                       >
-                        <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                        <SelectContent>
-                          {categories.map(c => (
-                            <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Product Type</Label>
-                      <Select 
-                        value={editingProduct.product_type} 
-                        onValueChange={v => setEditingProduct({...editingProduct, product_type: v as 'simple' | 'variable'})}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="simple">Simple Product</SelectItem>
-                          <SelectItem value="variable">Variable Product</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Description (EN)</Label>
-                    <Textarea 
-                      value={editingProduct.description || ''} 
-                      onChange={e => setEditingProduct({...editingProduct, description: e.target.value})}
-                      rows={3}
-                      placeholder="Product description..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description (AR)</Label>
-                    <Textarea 
-                      value={editingProduct.description_ar || ''} 
-                      onChange={e => setEditingProduct({...editingProduct, description_ar: e.target.value})}
-                      rows={3}
-                      dir="rtl"
-                      placeholder="وصف المنتج..."
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>SKU</Label>
-                      <Input 
-                        value={editingProduct.sku || ''} 
-                        onChange={e => setEditingProduct({...editingProduct, sku: e.target.value})}
-                        placeholder="SKU-001"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Stock Quantity</Label>
-                      <Input 
-                        type="number" 
-                        value={editingProduct.stock_quantity || 0} 
-                        onChange={e => setEditingProduct({...editingProduct, stock_quantity: parseInt(e.target.value)})}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-6 pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                      <Switch 
-                        checked={editingProduct.is_active} 
-                        onCheckedChange={c => setEditingProduct({...editingProduct, is_active: c})} 
-                      />
-                      <Label>Active</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch 
-                        checked={editingProduct.is_featured} 
-                        onCheckedChange={c => setEditingProduct({...editingProduct, is_featured: c})} 
-                      />
-                      <Label>Featured</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch 
-                        checked={editingProduct.is_new} 
-                        onCheckedChange={c => setEditingProduct({...editingProduct, is_new: c})} 
-                      />
-                      <Label>New</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch 
-                        checked={editingProduct.is_on_sale} 
-                        onCheckedChange={c => setEditingProduct({...editingProduct, is_on_sale: c})} 
-                      />
-                      <Label>On Sale</Label>
-                    </div>
-                  </div>
-
-                  {/* Options for Variable Products */}
-                  {editingProduct.product_type === 'variable' && (
-                    <div className="space-y-4 pt-4 border-t">
-                      <h4 className="font-medium">Product Options (for variants)</h4>
-                      
-                      {/* Option 1 */}
-                      <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Option 1 Name</Label>
-                            <Input 
-                              value={editingProduct.option1_name || ''} 
-                              onChange={e => setEditingProduct({...editingProduct, option1_name: e.target.value})}
-                              placeholder="e.g. Size"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Add Value</Label>
-                            <div className="flex gap-2">
-                              <Input 
-                                value={newOptionValue.opt1}
-                                onChange={e => setNewOptionValue({...newOptionValue, opt1: e.target.value})}
-                                placeholder="e.g. Small"
-                                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOptionValue(1))}
-                              />
-                              <Button type="button" onClick={() => addOptionValue(1)}>Add</Button>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {(editingProduct.option1_values || []).map(v => (
-                            <Badge key={v} variant="secondary" className="gap-1">
-                              {v}
-                              <button onClick={() => removeOptionValue(1, v)}><X className="w-3 h-3" /></button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Option 2 */}
-                      <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Option 2 Name</Label>
-                            <Input 
-                              value={editingProduct.option2_name || ''} 
-                              onChange={e => setEditingProduct({...editingProduct, option2_name: e.target.value})}
-                              placeholder="e.g. Color"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Add Value</Label>
-                            <div className="flex gap-2">
-                              <Input 
-                                value={newOptionValue.opt2}
-                                onChange={e => setNewOptionValue({...newOptionValue, opt2: e.target.value})}
-                                placeholder="e.g. Red"
-                                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOptionValue(2))}
-                              />
-                              <Button type="button" onClick={() => addOptionValue(2)}>Add</Button>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {(editingProduct.option2_values || []).map(v => (
-                            <Badge key={v} variant="secondary" className="gap-1">
-                              {v}
-                              <button onClick={() => removeOptionValue(2, v)}><X className="w-3 h-3" /></button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Option 3 */}
-                      <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Option 3 Name</Label>
-                            <Input 
-                              value={editingProduct.option3_name || ''} 
-                              onChange={e => setEditingProduct({...editingProduct, option3_name: e.target.value})}
-                              placeholder="e.g. Material"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Add Value</Label>
-                            <div className="flex gap-2">
-                              <Input 
-                                value={newOptionValue.opt3}
-                                onChange={e => setNewOptionValue({...newOptionValue, opt3: e.target.value})}
-                                placeholder="e.g. Cotton"
-                                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addOptionValue(3))}
-                              />
-                              <Button type="button" onClick={() => addOptionValue(3)}>Add</Button>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {(editingProduct.option3_values || []).map(v => (
-                            <Badge key={v} variant="secondary" className="gap-1">
-                              {v}
-                              <button onClick={() => removeOptionValue(3, v)}><X className="w-3 h-3" /></button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      <Button type="button" onClick={generateVariants} className="w-full">
-                        Generate Variants from Options
+                        <X className="w-3 h-3" />
                       </Button>
                     </div>
-                  )}
-                </TabsContent>
+                  ))}
+                </div>
+                <MediaPicker
+                  label="Add Gallery Image"
+                  value=""
+                  onChange={addGalleryImage}
+                />
+              </div>
+            </TabsContent>
 
-                {/* Images Tab */}
-                <TabsContent value="images" className="space-y-4 mt-4">
-                  <MediaPicker 
-                    label="Featured Image" 
-                    value={editingProduct.featured_image || ''} 
-                    onChange={(url) => setEditingProduct({...editingProduct, featured_image: url})}
-                    placeholder="Select main product image"
+            <TabsContent value="pricing" className="space-y-4 mt-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Price *</Label>
+                  <Input
+                    type="number"
+                    value={editingProduct?.price || 0}
+                    onChange={(e) => setEditingProduct(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Compare at Price</Label>
+                  <Input
+                    type="number"
+                    value={editingProduct?.compare_at_price || ''}
+                    onChange={(e) => setEditingProduct(p => ({ ...p, compare_at_price: parseFloat(e.target.value) || undefined }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Stock Quantity</Label>
+                  <Input
+                    type="number"
+                    value={editingProduct?.stock_quantity || 0}
+                    onChange={(e) => setEditingProduct(p => ({ ...p, stock_quantity: parseInt(e.target.value) || 0 }))}
+                  />
+                </div>
+              </div>
+            </TabsContent>
 
-                  <div className="space-y-2">
-                    <Label>Gallery Images</Label>
-                    <div className="grid grid-cols-4 gap-4">
-                      {(editingProduct.images || []).map((img, idx) => (
-                        <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border">
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                          <button 
-                            onClick={() => removeGalleryImage(img)}
-                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                      <div className="aspect-square">
-                        <MediaPicker 
-                          label="" 
-                          value="" 
-                          onChange={addGalleryImage}
-                          placeholder="Add gallery image"
+            <TabsContent value="variants" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Product Type</Label>
+                <Select
+                  value={editingProduct?.product_type || 'simple'}
+                  onValueChange={(v) => setEditingProduct(p => ({ ...p, product_type: v as 'simple' | 'variable' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="simple">Simple Product</SelectItem>
+                    <SelectItem value="variable">Variable Product</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {editingProduct?.product_type === 'variable' && (
+                <>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Option 1 Name</Label>
+                      <Input
+                        value={editingProduct?.option1_name || ''}
+                        onChange={(e) => setEditingProduct(p => ({ ...p, option1_name: e.target.value }))}
+                        placeholder="e.g., Size"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={newOptionValue.opt1}
+                          onChange={(e) => setNewOptionValue(p => ({ ...p, opt1: e.target.value }))}
+                          placeholder="Add value"
                         />
+                        <Button size="sm" onClick={() => addOptionValue(1)}>+</Button>
                       </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Pricing Tab */}
-                <TabsContent value="pricing" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Price *</Label>
-                      <Input 
-                        type="number" 
-                        value={editingProduct.price || 0} 
-                        onChange={e => {
-                          const price = parseFloat(e.target.value) || 0;
-                          setEditingProduct({...editingProduct, price});
-                          // Recalculate compare price if discount is set
-                          if (discountPercentage > 0) {
-                            setEditingProduct({...editingProduct, price, compare_at_price: price / (1 - discountPercentage / 100)});
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Discount %</Label>
-                      <Input 
-                        type="number" 
-                        value={discountPercentage || ''} 
-                        onChange={e => {
-                          const discount = parseFloat(e.target.value) || 0;
-                          setDiscountPercentage(discount);
-                          if (discount > 0 && discount < 100 && editingProduct.price) {
-                            const comparePrice = editingProduct.price / (1 - discount / 100);
-                            setEditingProduct({...editingProduct, compare_at_price: Math.round(comparePrice * 100) / 100, is_on_sale: true});
-                          } else {
-                            setEditingProduct({...editingProduct, compare_at_price: undefined});
-                          }
-                        }}
-                        placeholder="e.g., 10"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Compare at Price</Label>
-                      <Input 
-                        type="number" 
-                        value={editingProduct.compare_at_price || ''} 
-                        onChange={e => {
-                          const comparePrice = parseFloat(e.target.value) || undefined;
-                          setEditingProduct({...editingProduct, compare_at_price: comparePrice});
-                          if (comparePrice && editingProduct.price && comparePrice > editingProduct.price) {
-                            setDiscountPercentage(Math.round((1 - editingProduct.price / comparePrice) * 100));
-                          }
-                        }}
-                        placeholder="Original price"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Currency</Label>
-                      <Select 
-                        value={editingProduct.currency} 
-                        onValueChange={v => setEditingProduct({...editingProduct, currency: v})}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="AED">AED</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="GBP">GBP</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {editingProduct.compare_at_price && editingProduct.price && editingProduct.compare_at_price > editingProduct.price && (
-                    <div className="p-4 bg-green-50 rounded-lg flex items-center gap-3">
-                      <Badge className="bg-red-500 text-white text-lg px-3 py-1">
-                        {Math.round((1 - editingProduct.price / editingProduct.compare_at_price) * 100)}% OFF
-                      </Badge>
-                      <div>
-                        <p className="text-green-800 font-medium">
-                          Save {editingProduct.currency} {(editingProduct.compare_at_price - editingProduct.price).toFixed(2)}
-                        </p>
-                        <p className="text-sm text-green-600">
-                          Original: {editingProduct.currency} {editingProduct.compare_at_price} → Now: {editingProduct.currency} {editingProduct.price}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Variants Tab */}
-                <TabsContent value="variants" className="space-y-4 mt-4">
-                  {editingProduct.variants && editingProduct.variants.length > 0 ? (
-                    <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        {editingProduct.variants.length} variant(s)
-                      </p>
-                      
-                      <div className="space-y-3">
-                        {editingProduct.variants.map((variant, idx) => (
-                          <div key={idx} className="p-4 border rounded-lg space-y-3">
-                            <div className="flex justify-between items-start">
-                              <div className="font-medium">
-                                {[variant.option1_value, variant.option2_value, variant.option3_value]
-                                  .filter(Boolean)
-                                  .join(' / ') || `Variant ${idx + 1}`}
-                              </div>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => removeVariant(idx)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            
-                            <div className="grid grid-cols-4 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs">Price</Label>
-                                <Input 
-                                  type="number"
-                                  value={variant.price}
-                                  onChange={e => updateVariant(idx, 'price', parseFloat(e.target.value) || 0)}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">Compare Price</Label>
-                                <Input 
-                                  type="number"
-                                  value={variant.compare_at_price || ''}
-                                  onChange={e => updateVariant(idx, 'compare_at_price', parseFloat(e.target.value) || undefined)}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">Stock</Label>
-                                <Input 
-                                  type="number"
-                                  value={variant.stock_quantity}
-                                  onChange={e => updateVariant(idx, 'stock_quantity', parseInt(e.target.value) || 0)}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">SKU</Label>
-                                <Input 
-                                  value={variant.sku || ''}
-                                  onChange={e => updateVariant(idx, 'sku', e.target.value)}
-                                />
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Switch 
-                                checked={variant.is_active}
-                                onCheckedChange={c => updateVariant(idx, 'is_active', c)}
-                              />
-                              <Label className="text-sm">Active</Label>
-                            </div>
-                          </div>
+                      <div className="flex flex-wrap gap-1">
+                        {(editingProduct?.option1_values || []).map(v => (
+                          <Badge key={v} variant="secondary" className="cursor-pointer" onClick={() => removeOptionValue(1, v)}>
+                            {v} ×
+                          </Badge>
                         ))}
                       </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>No variants yet.</p>
-                      <p className="text-sm">Add options in the General tab and click "Generate Variants"</p>
+
+                    <div className="space-y-2">
+                      <Label>Option 2 Name</Label>
+                      <Input
+                        value={editingProduct?.option2_name || ''}
+                        onChange={(e) => setEditingProduct(p => ({ ...p, option2_name: e.target.value }))}
+                        placeholder="e.g., Color"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={newOptionValue.opt2}
+                          onChange={(e) => setNewOptionValue(p => ({ ...p, opt2: e.target.value }))}
+                          placeholder="Add value"
+                        />
+                        <Button size="sm" onClick={() => addOptionValue(2)}>+</Button>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {(editingProduct?.option2_values || []).map(v => (
+                          <Badge key={v} variant="secondary" className="cursor-pointer" onClick={() => removeOptionValue(2, v)}>
+                            {v} ×
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Option 3 Name</Label>
+                      <Input
+                        value={editingProduct?.option3_name || ''}
+                        onChange={(e) => setEditingProduct(p => ({ ...p, option3_name: e.target.value }))}
+                        placeholder="e.g., Material"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={newOptionValue.opt3}
+                          onChange={(e) => setNewOptionValue(p => ({ ...p, opt3: e.target.value }))}
+                          placeholder="Add value"
+                        />
+                        <Button size="sm" onClick={() => addOptionValue(3)}>+</Button>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {(editingProduct?.option3_values || []).map(v => (
+                          <Badge key={v} variant="secondary" className="cursor-pointer" onClick={() => removeOptionValue(3, v)}>
+                            {v} ×
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button onClick={generateVariants} variant="outline">
+                    Generate Variants
+                  </Button>
+
+                  {(editingProduct?.variants || []).length > 0 && (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {editingProduct?.variants?.map((v, i) => (
+                        <div key={i} className="flex items-center gap-2 p-2 border rounded">
+                          <span className="text-sm min-w-20">
+                            {[v.option1_value, v.option2_value, v.option3_value].filter(Boolean).join(' / ')}
+                          </span>
+                          <Input
+                            type="number"
+                            value={v.price}
+                            onChange={(e) => updateVariant(i, 'price', parseFloat(e.target.value) || 0)}
+                            className="w-24"
+                            placeholder="Price"
+                          />
+                          <Input
+                            type="number"
+                            value={v.stock_quantity}
+                            onChange={(e) => updateVariant(i, 'stock_quantity', parseInt(e.target.value) || 0)}
+                            className="w-20"
+                            placeholder="Stock"
+                          />
+                          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => removeVariant(i)}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   )}
-                </TabsContent>
-              </div>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
 
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Save Product
-                </Button>
-              </div>
-            </Tabs>
-          )}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save Product
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>

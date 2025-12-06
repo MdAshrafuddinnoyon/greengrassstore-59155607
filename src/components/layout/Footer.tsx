@@ -231,10 +231,10 @@ export const Footer = () => {
               <span>www.greengrassstore.com</span>
             </div>
           </div>
-          {/* Developer Credit */}
+          {/* Developer Credit - PERMANENT - Cannot be changed by admin */}
           <div className="mt-4 pt-4 border-t border-white/10 text-center">
             <p className="text-xs text-gray-500">
-              {t("footer.developedBy")}{" "}
+              Developed by{" "}
               <a
                 href="https://www.websearchbd.com"
                 target="_blank"
@@ -243,6 +243,10 @@ export const Footer = () => {
               >
                 Web Search BD
               </a>
+              {" "}- Where Ideas Meet Innovation
+            </p>
+            <p className="text-xs text-gray-600 mt-1">
+              📧 info@websearchbd.com | 📞 +880 1XXX-XXXXXX
             </p>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -69,6 +70,9 @@ export const OrdersManager = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Bulk Selection
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -231,6 +235,56 @@ export const OrdersManager = () => {
       fetchOrders();
     } catch (error) {
       console.error('Error deleting order:', error);
+      toast.error('Failed to delete order');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} orders?`)) return;
+    
+    try {
+      const { error } = await supabase.from('orders').delete().in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} orders deleted`);
+      setSelectedIds([]);
+      fetchOrders();
+    } catch (error) {
+      toast.error('Failed to delete orders');
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status: string) => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} orders updated to ${status}`);
+      setSelectedIds([]);
+      fetchOrders();
+    } catch (error) {
+      toast.error('Failed to update orders');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedOrders.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedOrders.map(o => o.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
       toast.error('Failed to delete order');
     }
   };
