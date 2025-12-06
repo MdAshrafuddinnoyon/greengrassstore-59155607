@@ -1,73 +1,61 @@
-# Welcome to your Lovable project
+# Green Grass Store
 
-## Project info
+Premium home and garden e-commerce storefront for UAE market.
 
-**URL**: https://lovable.dev/projects/6dac9e9c-42ab-4d84-95f2-f59b38555abb
+## About
 
-## How can I edit this code?
+Green Grass Store is a modern e-commerce platform specializing in plants, pots, vases, and home décor products. Built with React and integrated with Shopify for seamless product management and checkout.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- 🌿 Dynamic product catalog from Shopify
+- 🛒 Full shopping cart functionality
+- 💬 WhatsApp order support
+- 🌍 Multi-language support (English & Arabic)
+- 📱 Fully responsive design
+- ❤️ Wishlist functionality
+- 👤 Customer accounts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6dac9e9c-42ab-4d84-95f2-f59b38555abb) and start prompting.
+## Technology Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- React 18 with TypeScript
+- Tailwind CSS for styling
+- Shopify Storefront API
+- Supabase for backend
+- Framer Motion for animations
+- Zustand for state management
 
-**Use your preferred IDE**
+## Development
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+This project was developed by:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Web Search BD**  
+Software Company  
+Web Design & Development Agency  
+*"Where Ideas Meet Innovation"*
 
-Follow these steps:
+Website: [www.websearchbd.com](https://www.websearchbd.com)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Getting Started
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start development server: `npm run dev`
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Shopify Integration
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+The store connects to Shopify Storefront API for:
+- Product catalog
+- Inventory management
+- Checkout processing
+- Order management
 
-**Edit a file directly in GitHub**
+## Contact
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+For development inquiries:
+- Website: www.websearchbd.com
+- Company: Web Search BD
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/6dac9e9c-42ab-4d84-95f2-f59b38555abb) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+© 2024 Green Grass Store. Developed by Web Search BD.

@@ -1,163 +1,82 @@
 import { motion } from "framer-motion";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { ArrowRight, Leaf, Truck, Shield } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 
 export const HeroSection = () => {
-  const { t } = useLanguage();
-
   return (
-    <section className="relative overflow-hidden bg-[#1a1a1a]">
-      {/* Mobile Hero - App Style */}
-      <div className="md:hidden relative min-h-[85vh]">
-        <div className="absolute inset-0">
-          <img
-            src={heroBg}
-            alt="Plants"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-        </div>
-        
-        <div className="relative z-10 flex flex-col justify-end min-h-[85vh] px-5 pb-8">
+    <section className="relative min-h-[70vh] md:min-h-[85vh] flex items-center overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={heroBg}
+          alt="Premium plants collection"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+      </div>
+
+      {/* Content */}
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-2xl">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-block text-white/80 text-sm md:text-base uppercase tracking-[0.3em] mb-4 font-medium"
+          >
+            Green Grass Store
+          </motion.span>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-display text-4xl md:text-6xl lg:text-7xl text-white font-light leading-[1.1] mb-6"
+          >
+            Bring Nature
+            <br />
+            <span className="text-[#c9a87c]">Into Your Home</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-white/80 text-lg md:text-xl mb-8 max-w-lg font-light"
+          >
+            Discover our premium collection of plants, pots, and home décor designed for UAE homes.
+          </motion.p>
+
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4"
           >
-            <span className="inline-block px-3 py-1 bg-[#2d5a3d] text-white text-xs font-medium rounded-full mb-4">
-              {t("hero.newCollection")}
-            </span>
-            <h1 className="text-4xl font-bold text-white mb-3 leading-tight">
-              {t("hero.beautifulPlants")}
-              <br />
-              <span className="text-[#c9a87c]">{t("hero.forYourHome")}</span>
-            </h1>
-            <p className="text-white/70 text-sm mb-6 max-w-xs">
-              {t("hero.mobileDesc")}
-            </p>
-            
-            <div className="flex gap-3">
-              <Link
-                to="/shop?category=plants"
-                className="flex-1 bg-white text-gray-900 px-6 py-3.5 text-sm font-semibold text-center rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
-              >
-                {t("cta.shopNow")}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/shop"
-                className="px-6 py-3.5 text-sm font-medium text-white border border-white/30 rounded-xl hover:bg-white/10 transition-colors"
-              >
-                {t("cta.explore")}
-              </Link>
-            </div>
-          </motion.div>
-          
-          {/* Quick Features - Mobile */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex justify-between mt-6 pt-6 border-t border-white/10"
-          >
-            <div className="flex items-center gap-2 text-white/70">
-              <Truck className="w-4 h-4" />
-              <span className="text-xs">{t("common.freeDelivery")}</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/70">
-              <Shield className="w-4 h-4" />
-              <span className="text-xs">{t("common.qualityAssured")}</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/70">
-              <Leaf className="w-4 h-4" />
-              <span className="text-xs">{t("common.freshPlants")}</span>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Desktop Hero */}
-      <div className="hidden md:block relative min-h-[500px] lg:min-h-[600px]">
-        <div className="absolute inset-0">
-          <img
-            src={heroBg}
-            alt="Ficus plant"
-            className="w-full h-full object-cover object-right"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1a1a1a] via-[#1a1a1a]/80 to-transparent" />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex items-center min-h-[500px] lg:min-h-[600px]">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="max-w-xl py-12"
+            <Button
+              asChild
+              size="lg"
+              className="bg-white hover:bg-white/90 text-gray-900 px-8 py-6 text-base font-medium rounded-lg"
             >
-              <motion.span
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="inline-block px-4 py-2 bg-[#2d5a3d] text-white text-xs font-medium rounded-full mb-6"
-              >
-                ✨ {t("hero.newCollection")}
-              </motion.span>
-              
-              <p className="text-base lg:text-lg text-[#c9a87c] italic mb-4">
-                {t("hero.tagline")}
-              </p>
-              
-              <h1 className="text-5xl lg:text-7xl font-bold text-white mb-8 tracking-tight">
-                {t("section.plants").toUpperCase()}
-              </h1>
-              
-              <div className="flex gap-4">
-                <Link
-                  to="/shop?category=plants"
-                  className="inline-flex items-center gap-2 bg-white text-gray-900 px-8 py-4 text-sm font-semibold hover:bg-gray-100 transition-colors rounded-lg"
-                >
-                  {t("hero.shopPlants")}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  to="/shop"
-                  className="inline-flex items-center gap-2 bg-transparent text-white px-8 py-4 text-sm font-medium border border-white/30 hover:bg-white/10 transition-colors rounded-lg"
-                >
-                  {t("cta.viewAll")}
-                </Link>
-              </div>
-
-              {/* Desktop Features */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex gap-8 mt-12 pt-8 border-t border-white/10"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                    <Truck className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-medium">{t("common.freeDelivery")}</p>
-                    <p className="text-white/50 text-xs">{t("hero.onOrdersOver")}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-medium">{t("common.qualityAssured")}</p>
-                    <p className="text-white/50 text-xs">{t("hero.premiumOnly")}</p>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
+              <Link to="/shop" className="flex items-center gap-2">
+                Shop Now
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </Button>
+            
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="border-white/30 bg-transparent text-white hover:bg-white/10 px-8 py-6 text-base rounded-lg"
+            >
+              <Link to="/shop?collection=sale">
+                View Sale
+              </Link>
+            </Button>
+          </motion.div>
         </div>
       </div>
     </section>

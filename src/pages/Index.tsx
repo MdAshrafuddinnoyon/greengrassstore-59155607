@@ -2,12 +2,6 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
 import { ShopifyProductGrid } from "@/components/products/ShopifyProductGrid";
-import { DynamicCategoryBanners } from "@/components/home/DynamicCategoryBanners";
-import { PromoSection } from "@/components/home/PromoSection";
-import { GiftSection } from "@/components/home/GiftSection";
-import { InstagramSection } from "@/components/home/InstagramSection";
-import { BlogSection } from "@/components/home/BlogSection";
-import { CategoriesGrid } from "@/components/home/CategoriesGrid";
 
 const Index = () => {
   return (
@@ -17,26 +11,16 @@ const Index = () => {
         {/* Hero Section */}
         <HeroSection />
 
-        {/* Categories Grid - Dynamic from Shopify Collections */}
-        <CategoriesGrid />
-
         {/* Shopify Products - Featured Products */}
-        <ShopifyProductGrid title="Featured Products" subtitle="Our Best Sellers" limit={8} />
-
-        {/* Dynamic Category Banners from Shopify Collections */}
-        <DynamicCategoryBanners limit={4} excludeHandles={["sale"]} />
-
-        {/* Sale Banner */}
-        <PromoSection />
-
-        {/* Gift Garden Section */}
-        <GiftSection />
-
-        {/* Blog Section */}
-        <BlogSection />
-
-        {/* Instagram Feed */}
-        <InstagramSection />
+        <section className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4">
+            <ShopifyProductGrid 
+              title="Our Collection" 
+              subtitle="Discover our curated selection of premium plants and home décor" 
+              limit={12} 
+            />
+          </div>
+        </section>
       </main>
       <Footer />
     </div>
