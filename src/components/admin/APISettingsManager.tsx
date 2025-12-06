@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Key, Shield, Lock, Save, RefreshCw, ExternalLink, AlertTriangle } from "lucide-react";
+import { Loader2, Key, Shield, Lock, Save, RefreshCw, ExternalLink, AlertTriangle, Sparkles, Bot } from "lucide-react";
 
 interface GoogleSettings {
   enabled: boolean;
@@ -27,6 +28,17 @@ interface IntegrationSettings {
   mailchimpApiKey: string;
   sendgridApiKey: string;
   cloudinaryCloudName: string;
+}
+
+interface AISettings {
+  enabled: boolean;
+  provider: 'lovable' | 'openai' | 'google';
+  openaiApiKey: string;
+  googleApiKey: string;
+  defaultModel: string;
+  enableBlogGeneration: boolean;
+  enableProductGeneration: boolean;
+  enableImageGeneration: boolean;
 }
 
 export const APISettingsManager = () => {
@@ -52,6 +64,17 @@ export const APISettingsManager = () => {
     cloudinaryCloudName: ""
   });
 
+  const [aiSettings, setAiSettings] = useState<AISettings>({
+    enabled: true,
+    provider: 'lovable',
+    openaiApiKey: "",
+    googleApiKey: "",
+    defaultModel: "google/gemini-2.5-flash",
+    enableBlogGeneration: true,
+    enableProductGeneration: true,
+    enableImageGeneration: true
+  });
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -69,6 +92,8 @@ export const APISettingsManager = () => {
           setSecuritySettings(value as unknown as SecuritySettings);
         } else if (setting.setting_key === 'integration_settings') {
           setIntegrationSettings(value as unknown as IntegrationSettings);
+        } else if (setting.setting_key === 'ai_settings') {
+          setAiSettings(value as unknown as AISettings);
         }
       });
     } catch (error) {
@@ -123,8 +148,12 @@ export const APISettingsManager = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="google" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+      <Tabs defaultValue="ai" className="space-y-4">
+        <TabsList className="grid grid-cols-4 w-full max-w-lg">
+          <TabsTrigger value="ai" className="gap-2">
+            <Sparkles className="w-4 h-4" />
+            AI
+          </TabsTrigger>
           <TabsTrigger value="google" className="gap-2">
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -140,9 +169,190 @@ export const APISettingsManager = () => {
           </TabsTrigger>
           <TabsTrigger value="integrations" className="gap-2">
             <Key className="w-4 h-4" />
-            Integrations
+            Other
           </TabsTrigger>
         </TabsList>
+
+        {/* AI Settings */}
+        <TabsContent value="ai">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                AI Integration Settings
+              </CardTitle>
+              <CardDescription>
+                Configure AI for generating blog posts, product descriptions, and images
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
+                <div>
+                  <Label>Enable AI Features</Label>
+                  <p className="text-sm text-muted-foreground">Use AI for content generation</p>
+                </div>
+                <Switch
+                  checked={aiSettings.enabled}
+                  onCheckedChange={(checked) => 
+                    setAiSettings(prev => ({ ...prev, enabled: checked }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>AI Provider</Label>
+                  <Select 
+                    value={aiSettings.provider} 
+                    onValueChange={(v) => setAiSettings(prev => ({ ...prev, provider: v as 'lovable' | 'openai' | 'google' }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lovable">
+                        <span className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-purple-500" />
+                          Lovable AI (Recommended - No API Key Required)
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="google">
+                        <span className="flex items-center gap-2">
+                          <Bot className="w-4 h-4 text-blue-500" />
+                          Google AI (Gemini)
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="openai">
+                        <span className="flex items-center gap-2">
+                          <Bot className="w-4 h-4 text-green-500" />
+                          OpenAI (GPT)
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Lovable AI is pre-configured and ready to use. Other providers require API keys.
+                  </p>
+                </div>
+
+                {aiSettings.provider === 'google' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="google-ai-key">Google AI API Key</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="google-ai-key"
+                        value={aiSettings.googleApiKey}
+                        onChange={(e) => 
+                          setAiSettings(prev => ({ ...prev, googleApiKey: e.target.value }))
+                        }
+                        placeholder="AIza..."
+                        type="password"
+                      />
+                      <Button variant="outline" size="icon" asChild>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {aiSettings.provider === 'openai' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="openai-key">OpenAI API Key</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="openai-key"
+                        value={aiSettings.openaiApiKey}
+                        onChange={(e) => 
+                          setAiSettings(prev => ({ ...prev, openaiApiKey: e.target.value }))
+                        }
+                        placeholder="sk-..."
+                        type="password"
+                      />
+                      <Button variant="outline" size="icon" asChild>
+                        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Default AI Model</Label>
+                  <Select 
+                    value={aiSettings.defaultModel} 
+                    onValueChange={(v) => setAiSettings(prev => ({ ...prev, defaultModel: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (Fast & Balanced)</SelectItem>
+                      <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (Most Capable)</SelectItem>
+                      <SelectItem value="google/gemini-2.5-flash-lite">Gemini Flash Lite (Fastest)</SelectItem>
+                      <SelectItem value="openai/gpt-5">GPT-5 (Premium)</SelectItem>
+                      <SelectItem value="openai/gpt-5-mini">GPT-5 Mini (Balanced)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="border rounded-lg p-4 space-y-4">
+                  <h4 className="font-medium">AI Feature Toggles</h4>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Blog Content Generation</Label>
+                      <p className="text-xs text-muted-foreground">Generate blog post titles, content, and excerpts</p>
+                    </div>
+                    <Switch
+                      checked={aiSettings.enableBlogGeneration}
+                      onCheckedChange={(checked) => 
+                        setAiSettings(prev => ({ ...prev, enableBlogGeneration: checked }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Product Content Generation</Label>
+                      <p className="text-xs text-muted-foreground">Generate product titles, descriptions, and tags</p>
+                    </div>
+                    <Switch
+                      checked={aiSettings.enableProductGeneration}
+                      onCheckedChange={(checked) => 
+                        setAiSettings(prev => ({ ...prev, enableProductGeneration: checked }))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Image Generation</Label>
+                      <p className="text-xs text-muted-foreground">Generate product and blog images with AI</p>
+                    </div>
+                    <Switch
+                      checked={aiSettings.enableImageGeneration}
+                      onCheckedChange={(checked) => 
+                        setAiSettings(prev => ({ ...prev, enableImageGeneration: checked }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => saveSettings('ai_settings', aiSettings)}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save AI Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Google Settings */}
         <TabsContent value="google">

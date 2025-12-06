@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MessageSquare, Bot, Store, Save, RefreshCw } from "lucide-react";
+import { Loader2, MessageSquare, Bot, Store, Save, RefreshCw, Truck, RotateCcw, CreditCard, MapPin, Plus, Trash2, Percent } from "lucide-react";
 
 interface WhatsAppSettings {
   phone: string;
@@ -28,6 +29,31 @@ interface StoreInfo {
   phone: string;
   address: string;
 }
+
+interface FooterFeature {
+  id: string;
+  icon: string;
+  title: string;
+  titleAr: string;
+  description: string;
+  descriptionAr: string;
+  enabled: boolean;
+}
+
+interface TaxSettings {
+  enabled: boolean;
+  rate: number;
+  label: string;
+  includedInPrice: boolean;
+}
+
+const iconOptions = [
+  { value: 'truck', label: 'Truck (Delivery)', icon: Truck },
+  { value: 'rotate', label: 'Rotate (Returns)', icon: RotateCcw },
+  { value: 'credit-card', label: 'Credit Card (Payment)', icon: CreditCard },
+  { value: 'map-pin', label: 'Map Pin (Location)', icon: MapPin },
+  { value: 'percent', label: 'Percent (Discount)', icon: Percent },
+];
 
 export const SiteSettingsManager = () => {
   const [loading, setLoading] = useState(true);
@@ -52,6 +78,20 @@ export const SiteSettingsManager = () => {
     address: "Dubai, UAE"
   });
 
+  const [footerFeatures, setFooterFeatures] = useState<FooterFeature[]>([
+    { id: '1', icon: 'truck', title: 'Free Delivery', titleAr: 'توصيل مجاني', description: 'Free Delivery On Orders Over 300 AED', descriptionAr: 'توصيل مجاني للطلبات فوق 300 درهم', enabled: true },
+    { id: '2', icon: 'rotate', title: 'Hassle-Free Returns', titleAr: 'إرجاع سهل', description: 'Within 7 days of delivery.', descriptionAr: 'خلال 7 أيام من التسليم', enabled: true },
+    { id: '3', icon: 'credit-card', title: 'Easy Installments', titleAr: 'أقساط سهلة', description: 'Pay Later with tabby.', descriptionAr: 'ادفع لاحقاً مع تابي', enabled: true },
+    { id: '4', icon: 'map-pin', title: 'Visit Us In-Store', titleAr: 'زورنا في المتجر', description: 'In Abu Dhabi and Dubai.', descriptionAr: 'في أبوظبي ودبي', enabled: true },
+  ]);
+
+  const [taxSettings, setTaxSettings] = useState<TaxSettings>({
+    enabled: false,
+    rate: 5,
+    label: "VAT",
+    includedInPrice: true
+  });
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -69,6 +109,10 @@ export const SiteSettingsManager = () => {
           setSalesAgentSettings(value as unknown as SalesAgentSettings);
         } else if (setting.setting_key === 'store_info') {
           setStoreInfo(value as unknown as StoreInfo);
+        } else if (setting.setting_key === 'footer_features') {
+          setFooterFeatures(value as unknown as FooterFeature[]);
+        } else if (setting.setting_key === 'tax_settings') {
+          setTaxSettings(value as unknown as TaxSettings);
         }
       });
     } catch (error) {
@@ -86,12 +130,24 @@ export const SiteSettingsManager = () => {
   const saveSettings = async (key: string, value: object) => {
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { data: existing } = await supabase
         .from('site_settings')
-        .update({ setting_value: JSON.parse(JSON.stringify(value)) })
-        .eq('setting_key', key);
+        .select('id')
+        .eq('setting_key', key)
+        .single();
 
-      if (error) throw error;
+      if (existing) {
+        const { error } = await supabase
+          .from('site_settings')
+          .update({ setting_value: JSON.parse(JSON.stringify(value)) })
+          .eq('setting_key', key);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('site_settings')
+          .insert({ setting_key: key, setting_value: JSON.parse(JSON.stringify(value)) });
+        if (error) throw error;
+      }
       toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -99,6 +155,26 @@ export const SiteSettingsManager = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const addFooterFeature = () => {
+    setFooterFeatures([...footerFeatures, {
+      id: Date.now().toString(),
+      icon: 'truck',
+      title: 'New Feature',
+      titleAr: 'ميزة جديدة',
+      description: 'Feature description',
+      descriptionAr: 'وصف الميزة',
+      enabled: true
+    }]);
+  };
+
+  const removeFooterFeature = (id: string) => {
+    setFooterFeatures(footerFeatures.filter(f => f.id !== id));
+  };
+
+  const updateFooterFeature = (id: string, field: keyof FooterFeature, value: string | boolean) => {
+    setFooterFeatures(footerFeatures.map(f => f.id === id ? { ...f, [field]: value } : f));
   };
 
   if (loading) {
@@ -112,7 +188,7 @@ export const SiteSettingsManager = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="whatsapp" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
           <TabsTrigger value="whatsapp" className="gap-2">
             <MessageSquare className="w-4 h-4" />
             WhatsApp
@@ -124,6 +200,14 @@ export const SiteSettingsManager = () => {
           <TabsTrigger value="store" className="gap-2">
             <Store className="w-4 h-4" />
             Store Info
+          </TabsTrigger>
+          <TabsTrigger value="footer" className="gap-2">
+            <Truck className="w-4 h-4" />
+            Footer Features
+          </TabsTrigger>
+          <TabsTrigger value="tax" className="gap-2">
+            <Percent className="w-4 h-4" />
+            Tax
           </TabsTrigger>
         </TabsList>
 
@@ -357,6 +441,183 @@ export const SiteSettingsManager = () => {
               >
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Store Info
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Footer Features */}
+        <TabsContent value="footer">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="w-5 h-5 text-primary" />
+                Footer Features
+              </CardTitle>
+              <CardDescription>
+                Manage footer feature icons and text (Free Delivery, Returns, etc.)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {footerFeatures.map((feature, index) => (
+                <div key={feature.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Feature #{index + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={feature.enabled}
+                        onCheckedChange={(c) => updateFooterFeature(feature.id, 'enabled', c)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => removeFooterFeature(feature.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Icon</Label>
+                      <Select 
+                        value={feature.icon} 
+                        onValueChange={(v) => updateFooterFeature(feature.id, 'icon', v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {iconOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              <span className="flex items-center gap-2">
+                                <opt.icon className="w-4 h-4" />
+                                {opt.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Title (EN)</Label>
+                      <Input
+                        value={feature.title}
+                        onChange={(e) => updateFooterFeature(feature.id, 'title', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Title (AR)</Label>
+                      <Input
+                        value={feature.titleAr}
+                        onChange={(e) => updateFooterFeature(feature.id, 'titleAr', e.target.value)}
+                        dir="rtl"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description (EN)</Label>
+                      <Input
+                        value={feature.description}
+                        onChange={(e) => updateFooterFeature(feature.id, 'description', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Description (AR)</Label>
+                      <Input
+                        value={feature.descriptionAr}
+                        onChange={(e) => updateFooterFeature(feature.id, 'descriptionAr', e.target.value)}
+                        dir="rtl"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <Button variant="outline" onClick={addFooterFeature} className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Feature
+              </Button>
+
+              <Button 
+                onClick={() => saveSettings('footer_features', footerFeatures)}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Footer Features
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tax Settings */}
+        <TabsContent value="tax">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Percent className="w-5 h-5 text-primary" />
+                Tax Settings
+              </CardTitle>
+              <CardDescription>
+                Configure VAT and tax settings for checkout
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <Label>Enable Tax</Label>
+                  <p className="text-sm text-muted-foreground">Apply tax to orders</p>
+                </div>
+                <Switch
+                  checked={taxSettings.enabled}
+                  onCheckedChange={(checked) => 
+                    setTaxSettings(prev => ({ ...prev, enabled: checked }))
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tax Label</Label>
+                  <Input
+                    value={taxSettings.label}
+                    onChange={(e) => setTaxSettings(prev => ({ ...prev, label: e.target.value }))}
+                    placeholder="VAT"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tax Rate (%)</Label>
+                  <Input
+                    type="number"
+                    value={taxSettings.rate}
+                    onChange={(e) => setTaxSettings(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))}
+                    placeholder="5"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <Label>Tax Included in Price</Label>
+                  <p className="text-sm text-muted-foreground">Prices already include tax</p>
+                </div>
+                <Switch
+                  checked={taxSettings.includedInPrice}
+                  onCheckedChange={(checked) => 
+                    setTaxSettings(prev => ({ ...prev, includedInPrice: checked }))
+                  }
+                />
+              </div>
+
+              <Button 
+                onClick={() => saveSettings('tax_settings', taxSettings)}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Tax Settings
               </Button>
             </CardContent>
           </Card>
