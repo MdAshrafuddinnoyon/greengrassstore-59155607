@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3 } from "lucide-react";
+import { Loader2, LayoutDashboard, FileText, Users, Settings, ShoppingBag, MessageSquare, BarChart3, Image, Upload, FolderOpen, FileSpreadsheet } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +15,10 @@ import { BlogManager } from "@/components/admin/BlogManager";
 import { CustomRequestsManager } from "@/components/admin/CustomRequestsManager";
 import { UsersManager } from "@/components/admin/UsersManager";
 import { DashboardOverview } from "@/components/admin/DashboardOverview";
+import { MediaLibrary } from "@/components/admin/MediaLibrary";
+import { ProductImporter } from "@/components/admin/ProductImporter";
+import { BlogImporter } from "@/components/admin/BlogImporter";
+import { FileManager } from "@/components/admin/FileManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -80,26 +84,42 @@ const Admin = () => {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 h-auto p-1 bg-muted/50">
-            <TabsTrigger value="overview" className="gap-2 py-3">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden md:inline">Overview</span>
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1 h-auto p-1 bg-muted/50">
+            <TabsTrigger value="overview" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="blog" className="gap-2 py-3">
-              <FileText className="w-4 h-4" />
-              <span className="hidden md:inline">Blog</span>
+            <TabsTrigger value="blog" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Blog</span>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-2 py-3">
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden md:inline">Requests</span>
+            <TabsTrigger value="requests" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Requests</span>
             </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2 py-3">
-              <Users className="w-4 h-4" />
-              <span className="hidden md:inline">Users</span>
+            <TabsTrigger value="media" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <Image className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Media</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2 py-3">
-              <Settings className="w-4 h-4" />
-              <span className="hidden md:inline">Settings</span>
+            <TabsTrigger value="files" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Files</span>
+            </TabsTrigger>
+            <TabsTrigger value="import-products" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden lg:inline">Products</span>
+            </TabsTrigger>
+            <TabsTrigger value="import-blog" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden lg:inline">Import</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-1.5 py-2 px-2 text-xs sm:text-sm">
+              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -116,6 +136,26 @@ const Admin = () => {
           {/* Custom Requests Tab */}
           <TabsContent value="requests">
             <CustomRequestsManager />
+          </TabsContent>
+
+          {/* Media Library Tab */}
+          <TabsContent value="media">
+            <MediaLibrary />
+          </TabsContent>
+
+          {/* File Manager Tab */}
+          <TabsContent value="files">
+            <FileManager />
+          </TabsContent>
+
+          {/* Product Import Tab */}
+          <TabsContent value="import-products">
+            <ProductImporter />
+          </TabsContent>
+
+          {/* Blog Import Tab */}
+          <TabsContent value="import-blog">
+            <BlogImporter />
           </TabsContent>
 
           {/* Users Tab */}
