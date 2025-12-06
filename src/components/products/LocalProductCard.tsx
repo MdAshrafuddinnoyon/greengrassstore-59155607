@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShoppingCart, Heart, Eye, Tag, Sparkles, Percent } from "lucide-react";
+import { ShoppingCart, Heart, Eye, Tag, Sparkles, Percent, GitCompare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { useCompareStore } from "@/stores/compareStore";
 import { toast } from "sonner";
+import { LocalQuickViewModal } from "./LocalQuickViewModal";
 
 export interface LocalProduct {
   id: string;
@@ -35,10 +37,13 @@ interface LocalProductCardProps {
 
 export const LocalProductCard = ({ product, isArabic = false }: LocalProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [showQuickView, setShowQuickView] = useState(false);
   const addItem = useCartStore(state => state.addItem);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
+  const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompareStore();
   
   const isWishlisted = isInWishlist(product.id);
+  const isCompared = isInCompare(product.id);
   const discountPercentage = product.compare_at_price 
     ? Math.round((1 - product.price / product.compare_at_price) * 100)
     : 0;
@@ -121,7 +126,50 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
     }
   };
 
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowQuickView(true);
+  };
+
+  const handleToggleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isCompared) {
+      removeFromCompare(product.id);
+      toast.success(isArabic ? 'تمت الإزالة من المقارنة' : 'Removed from compare');
+    } else {
+      const shopifyLikeProduct = {
+        node: {
+          id: product.id,
+          title: product.name,
+          description: product.description || '',
+          handle: product.slug,
+          priceRange: {
+            minVariantPrice: {
+              amount: product.price.toString(),
+              currencyCode: product.currency
+            }
+          },
+          images: {
+            edges: [{ node: { url: displayImage, altText: product.name } }]
+          },
+          variants: { edges: [] },
+          options: []
+        }
+      };
+      const added = addToCompare(shopifyLikeProduct);
+      if (added) {
+        toast.success(isArabic ? 'تمت الإضافة للمقارنة' : 'Added to compare');
+      } else {
+        toast.error(isArabic ? 'قائمة المقارنة ممتلئة (4 كحد أقصى)' : 'Compare list is full (max 4)');
+      }
+    }
+  };
+
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -198,19 +246,32 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
               <Heart className={cn("w-5 h-5", isWishlisted && "fill-current")} />
             </motion.button>
 
-            <motion.div
+            <motion.button
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
               transition={{ duration: 0.2, delay: 0.15 }}
+              onClick={handleQuickView}
+              className="p-3 bg-white rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
+              aria-label="Quick view"
             >
-              <Link
-                to={`/product/${product.slug}`}
-                className="p-3 bg-white rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors block"
-                aria-label="Quick view"
-              >
-                <Eye className="w-5 h-5" />
-              </Link>
-            </motion.div>
+              <Eye className="w-5 h-5" />
+            </motion.button>
+            
+            <motion.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
+              onClick={handleToggleCompare}
+              className={cn(
+                "p-3 rounded-full shadow-lg transition-colors",
+                isCompared 
+                  ? "bg-primary text-white" 
+                  : "bg-white hover:bg-primary hover:text-white"
+              )}
+              aria-label="Compare"
+            >
+              <GitCompare className="w-5 h-5" />
+            </motion.button>
           </motion.div>
         </div>
 
@@ -243,5 +304,12 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
         </div>
       </Link>
     </motion.div>
+    
+    <LocalQuickViewModal
+      isOpen={showQuickView}
+      onClose={() => setShowQuickView(false)}
+      product={product}
+    />
+    </>
   );
 };

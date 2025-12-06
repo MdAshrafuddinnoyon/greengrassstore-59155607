@@ -8,7 +8,7 @@ import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FloatingActionMenu } from "@/components/FloatingActionMenu";
-import { CompareDrawer } from "@/components/compare/CompareDrawer";
+import { LocalCompareDrawer } from "@/components/compare/LocalCompareDrawer";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import ProductDetail from "./pages/ProductDetail";
@@ -59,7 +59,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <FloatingActionMenu />
-            <CompareDrawer />
+            <LocalCompareDrawer />
             <MobileBottomNav />
           </BrowserRouter>
         </TooltipProvider>

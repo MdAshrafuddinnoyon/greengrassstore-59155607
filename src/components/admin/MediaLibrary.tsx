@@ -34,6 +34,11 @@ export const MediaLibrary = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
   const [folders, setFolders] = useState<string[]>([]);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [uploadFolder, setUploadFolder] = useState("uploads");
+
+  // Predefined folders for organization
+  const predefinedFolders = ['uploads', 'products', 'blog', 'categories', 'banners', 'logos'];
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -55,9 +60,10 @@ export const MediaLibrary = () => {
 
       setFiles(filesWithUrls);
 
-      // Extract unique folders
-      const uniqueFolders = [...new Set((data || []).map((f: MediaFile) => f.folder))];
-      setFolders(uniqueFolders);
+      // Extract unique folders and merge with predefined
+      const dbFolders = [...new Set((data || []).map((f: MediaFile) => f.folder))];
+      const allFolders = [...new Set([...predefinedFolders, ...dbFolders])].sort();
+      setFolders(allFolders);
     } catch (error) {
       console.error('Error fetching files:', error);
       toast.error('Failed to fetch media files');
@@ -86,7 +92,7 @@ export const MediaLibrary = () => {
       for (const file of Array.from(uploadFiles)) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `uploads/${fileName}`;
+        const filePath = `${uploadFolder}/${fileName}`;
 
         // Upload to storage
         const { error: uploadError } = await supabase.storage
@@ -104,7 +110,7 @@ export const MediaLibrary = () => {
             file_path: filePath,
             file_type: file.type,
             file_size: file.size,
-            folder: 'uploads'
+            folder: uploadFolder
           });
 
         if (dbError) throw dbError;
@@ -183,11 +189,22 @@ export const MediaLibrary = () => {
             {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
           </Button>
           
+          {/* Folder selector for upload */}
+          <select
+            value={uploadFolder}
+            onChange={(e) => setUploadFolder(e.target.value)}
+            className="px-3 py-2 border rounded-lg bg-background text-sm"
+          >
+            {folders.map(folder => (
+              <option key={folder} value={folder}>📁 {folder}</option>
+            ))}
+          </select>
+          
           <label>
             <Button size="sm" disabled={uploading} asChild>
               <span className="cursor-pointer">
                 {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                Upload
+                Upload to {uploadFolder}
               </span>
             </Button>
             <input
@@ -201,28 +218,39 @@ export const MediaLibrary = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search files..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <select
-          value={selectedFolder}
-          onChange={(e) => setSelectedFolder(e.target.value)}
-          className="px-3 py-2 border rounded-lg bg-background text-sm"
+      {/* Folder Quick Access */}
+      <div className="flex flex-wrap gap-2">
+        <Button 
+          variant={selectedFolder === 'all' ? 'default' : 'outline'} 
+          size="sm"
+          onClick={() => setSelectedFolder('all')}
         >
-          <option value="all">All Folders</option>
-          {folders.map(folder => (
-            <option key={folder} value={folder}>{folder}</option>
-          ))}
-        </select>
+          All Files
+        </Button>
+        {folders.map(folder => (
+          <Button
+            key={folder}
+            variant={selectedFolder === folder ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSelectedFolder(folder)}
+          >
+            📁 {folder}
+            <span className="ml-1 text-xs opacity-70">
+              ({files.filter(f => f.folder === folder).length})
+            </span>
+          </Button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search files..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       {/* Files Grid/List */}
