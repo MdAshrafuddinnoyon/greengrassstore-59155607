@@ -190,7 +190,7 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-muted rounded-xl mb-3">
+        <div className="relative aspect-square overflow-hidden bg-muted rounded-lg sm:rounded-xl mb-2 sm:mb-3">
           {firstImage ? (
             <>
               <img
@@ -213,70 +213,80 @@ export const ShopifyProductCard = ({ product, compact = false }: ShopifyProductC
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs sm:text-sm">
               No image
             </div>
           )}
 
           {/* Top Right Actions */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2">
             {/* Wishlist Button */}
             <button
               onClick={handleWishlist}
               className={cn(
-                "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
+                "w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
                 isWishlisted
                   ? "bg-red-500 text-white"
-                  : "bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100"
+                  : "bg-white/90 hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
               )}
             >
-              <Heart className={cn("w-4 h-4", isWishlisted && "fill-current")} />
+              <Heart className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", isWishlisted && "fill-current")} />
             </button>
 
             {/* Compare Button */}
             <button
               onClick={handleCompare}
               className={cn(
-                "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
+                "w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
                 isCompared
                   ? "bg-primary text-primary-foreground"
-                  : "bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100"
+                  : "bg-white/90 hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
               )}
             >
-              <Scale className="w-4 h-4" />
+              <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions - Desktop only hover */}
           <div
             className={cn(
-              "absolute bottom-0 left-0 right-0 p-3 flex gap-2 transition-all duration-300",
+              "absolute bottom-0 left-0 right-0 p-2 sm:p-3 flex gap-2 transition-all duration-300",
+              "hidden sm:flex",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}
           >
             <button
               onClick={handleAddToCart}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-foreground text-background text-xs uppercase tracking-wider font-medium hover:bg-foreground/90 transition-colors rounded-lg"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 bg-foreground text-background text-[10px] sm:text-xs uppercase tracking-wider font-medium hover:bg-foreground/90 transition-colors rounded-lg"
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              {t("product.addToCart")}
+              <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden sm:inline">{t("product.addToCart")}</span>
+              <span className="sm:hidden">Add</span>
             </button>
             <button 
               onClick={handleQuickView}
-              className="w-10 h-10 flex items-center justify-center bg-white hover:bg-gray-100 transition-colors rounded-lg shadow-md"
+              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white hover:bg-gray-100 transition-colors rounded-lg shadow-md"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
+
+          {/* Mobile Add to Cart Button */}
+          <button
+            onClick={handleAddToCart}
+            className="sm:hidden absolute bottom-2 right-2 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
         
         {/* Product Info */}
         <div>
-          <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+          <h3 className="text-xs sm:text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2 sm:line-clamp-1">
             {node.title}
           </h3>
-          <p className="text-base font-bold text-foreground mt-1">
-            {price.currencyCode} {parseFloat(price.amount).toFixed(2)}
+          <p className="text-sm sm:text-base font-bold text-foreground mt-0.5 sm:mt-1">
+            {price.currencyCode} {parseFloat(price.amount).toFixed(0)}
           </p>
         </div>
       </Link>

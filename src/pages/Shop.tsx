@@ -426,30 +426,30 @@ export default function Shop() {
 
               {/* Products Grid */}
               {loading ? (
-                <div className={`grid gap-6 ${
+                <div className={`grid gap-3 sm:gap-4 md:gap-6 ${
                   gridView === "large" 
-                    ? "grid-cols-2 md:grid-cols-3" 
-                    : "grid-cols-3 md:grid-cols-4"
+                    ? "grid-cols-2 lg:grid-cols-3" 
+                    : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
                 }`}>
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="bg-white rounded-xl overflow-hidden animate-pulse">
                       <div className="aspect-square bg-gray-200" />
-                      <div className="p-4 space-y-3">
-                        <div className="h-4 bg-gray-200 rounded w-3/4" />
-                        <div className="h-4 bg-gray-200 rounded w-1/2" />
+                      <div className="p-3 md:p-4 space-y-2 md:space-y-3">
+                        <div className="h-3 md:h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 md:h-4 bg-gray-200 rounded w-1/2" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : filteredAndSortedProducts.length > 0 ? (
                 <>
-                  <div className={`grid gap-6 ${
+                  <div className={`grid gap-3 sm:gap-4 md:gap-6 ${
                     gridView === "large" 
-                      ? "grid-cols-2 md:grid-cols-3" 
-                      : "grid-cols-3 md:grid-cols-4"
+                      ? "grid-cols-2 lg:grid-cols-3" 
+                      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
                   }`}>
                     {paginatedProducts.map((product) => (
-                      <ShopifyProductCard key={product.node.id} product={product} />
+                      <ShopifyProductCard key={product.node.id} product={product} compact={gridView === "small"} />
                     ))}
                   </div>
 

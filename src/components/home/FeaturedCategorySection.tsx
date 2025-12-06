@@ -114,10 +114,10 @@ const CategoryBannerSlider = ({ collection, products, reverse }: CategoryBannerS
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
       viewport={{ once: true }}
-      className={`grid md:grid-cols-2 gap-6 md:gap-8 items-stretch ${reverse ? "md:flex-row-reverse" : ""}`}
+      className={`grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-stretch ${reverse ? "md:flex-row-reverse" : ""}`}
     >
       {/* Banner Side */}
-      <div className={`relative rounded-2xl overflow-hidden min-h-[300px] md:min-h-[400px] ${reverse ? "md:order-2" : ""}`}>
+      <div className={`relative rounded-xl sm:rounded-2xl overflow-hidden min-h-[220px] sm:min-h-[280px] md:min-h-[400px] ${reverse ? "md:order-2" : ""}`}>
         <img
           src={bannerImage}
           alt={collection.node.title}
@@ -126,25 +126,26 @@ const CategoryBannerSlider = ({ collection, products, reverse }: CategoryBannerS
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         
         {/* Banner Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-          <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full mb-3">
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8">
+          <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 bg-white/20 backdrop-blur-sm text-white text-[10px] sm:text-xs font-medium rounded-full mb-2 sm:mb-3">
             Featured Collection
           </span>
-          <h3 className="text-2xl md:text-3xl lg:text-4xl font-display font-light text-white mb-2">
+          <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-display font-light text-white mb-1 sm:mb-2">
             {collection.node.title}
           </h3>
           {collection.node.description && (
-            <p className="text-white/80 text-sm md:text-base mb-4 max-w-md line-clamp-2">
+            <p className="text-white/80 text-xs sm:text-sm md:text-base mb-3 sm:mb-4 max-w-md line-clamp-2">
               {collection.node.description}
             </p>
           )}
           <Button
             asChild
-            className="bg-white text-foreground hover:bg-white/90"
+            size="sm"
+            className="bg-white text-foreground hover:bg-white/90 text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"
           >
-            <Link to={`/shop?category=${handle}`} className="inline-flex items-center gap-2">
+            <Link to={`/shop?category=${handle}`} className="inline-flex items-center gap-1.5 sm:gap-2">
               Shop {collection.node.title}
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Link>
           </Button>
         </div>
@@ -152,43 +153,43 @@ const CategoryBannerSlider = ({ collection, products, reverse }: CategoryBannerS
 
       {/* Products Slider Side */}
       <div className={`relative ${reverse ? "md:order-1" : ""}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-medium text-foreground">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h4 className="text-sm sm:text-base md:text-lg font-medium text-foreground">
             Popular in {collection.node.title}
           </h4>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2">
             <button
               onClick={scrollPrev}
-              className="p-2 rounded-full bg-white border border-border/50 hover:bg-primary/10 hover:border-primary/30 transition-all"
+              className="p-1.5 sm:p-2 rounded-full bg-white border border-border/50 hover:bg-primary/10 hover:border-primary/30 transition-all"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={scrollNext}
-              className="p-2 rounded-full bg-white border border-border/50 hover:bg-primary/10 hover:border-primary/30 transition-all"
+              className="p-1.5 sm:p-2 rounded-full bg-white border border-border/50 hover:bg-primary/10 hover:border-primary/30 transition-all"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
 
         {/* Products Carousel */}
         <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex gap-4">
+          <div className="flex gap-3 sm:gap-4">
             {products.slice(0, 6).map((product) => (
-              <div key={product.node.id} className="flex-none w-[160px] md:w-[200px]">
+              <div key={product.node.id} className="flex-none w-[130px] sm:w-[150px] md:w-[200px]">
                 <Link to={`/product/${product.node.handle}`} className="group block">
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-white mb-3">
+                  <div className="relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-white mb-2 sm:mb-3">
                     <img
                       src={product.node.images.edges[0]?.node.url || ficusPlant}
                       alt={product.node.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  <h5 className="font-medium text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                  <h5 className="font-medium text-xs sm:text-sm text-foreground line-clamp-2 sm:line-clamp-1 group-hover:text-primary transition-colors">
                     {product.node.title}
                   </h5>
-                  <p className="text-sm text-primary font-semibold mt-1">
+                  <p className="text-xs sm:text-sm text-primary font-semibold mt-0.5 sm:mt-1">
                     {product.node.priceRange.minVariantPrice.currencyCode}{" "}
                     {parseFloat(product.node.priceRange.minVariantPrice.amount).toFixed(0)}
                   </p>
@@ -201,10 +202,10 @@ const CategoryBannerSlider = ({ collection, products, reverse }: CategoryBannerS
         {/* View All Link */}
         <Link
           to={`/shop?category=${handle}`}
-          className="inline-flex items-center gap-1 text-sm text-primary font-medium mt-4 hover:gap-2 transition-all"
+          className="inline-flex items-center gap-1 text-xs sm:text-sm text-primary font-medium mt-3 sm:mt-4 hover:gap-2 transition-all"
         >
           View All {collection.node.title}
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </Link>
       </div>
     </motion.div>

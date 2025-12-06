@@ -117,17 +117,16 @@ export const ShopifyProductGrid = ({
           </motion.div>
         )}
 
-        {/* Mobile Horizontal Scroll */}
-        <div className="md:hidden -mx-4 px-4">
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-            {products.map((product, index) => (
+        {/* Mobile Grid (2 columns) */}
+        <div className="md:hidden">
+          <div className="grid grid-cols-2 gap-3 pb-4">
+            {products.slice(0, 6).map((product, index) => (
               <motion.div 
                 key={product.node.id}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 viewport={{ once: true }}
-                className="snap-start flex-shrink-0 w-[160px]"
               >
                 <ShopifyProductCard product={product} compact />
               </motion.div>
