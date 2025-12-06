@@ -93,7 +93,7 @@ const Admin = () => {
       case "overview":
         return (
           <div className="space-y-8">
-            <DashboardOverview />
+            <DashboardOverview onNavigate={setActiveTab} />
             <AnalyticsReport />
           </div>
         );

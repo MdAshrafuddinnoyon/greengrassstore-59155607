@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,135 +9,97 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { HelpCircle, Truck, RefreshCw, CreditCard, ShieldCheck, Phone } from "lucide-react";
+import { HelpCircle, Truck, RefreshCw, CreditCard, ShieldCheck, Phone, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+interface FAQItem {
+  id: string;
+  question: string;
+  questionAr: string;
+  answer: string;
+  answerAr: string;
+  category: string;
+  order: number;
+}
+
+interface FAQCategory {
+  id: string;
+  name: string;
+  nameAr: string;
+  icon: string;
+  order: number;
+}
+
+const defaultCategories: FAQCategory[] = [
+  { id: '1', name: 'Shipping & Delivery', nameAr: 'الشحن والتوصيل', icon: 'truck', order: 1 },
+  { id: '2', name: 'Returns & Exchange', nameAr: 'الإرجاع والاستبدال', icon: 'refresh', order: 2 },
+  { id: '3', name: 'Payment', nameAr: 'الدفع', icon: 'credit-card', order: 3 },
+  { id: '4', name: 'Product Quality', nameAr: 'جودة المنتجات', icon: 'shield', order: 4 },
+  { id: '5', name: 'Support & Contact', nameAr: 'الدعم والتواصل', icon: 'phone', order: 5 },
+];
+
+const defaultFaqs: FAQItem[] = [
+  { id: '1', question: 'What areas do you deliver to?', questionAr: 'ما هي مناطق التوصيل؟', answer: 'We deliver across all UAE including Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah, and Umm Al Quwain.', answerAr: 'نقوم بالتوصيل إلى جميع أنحاء الإمارات العربية المتحدة.', category: '1', order: 1 },
+  { id: '2', question: 'How long does delivery take?', questionAr: 'كم تستغرق عملية التوصيل؟', answer: 'Delivery typically takes 2-5 business days within Dubai and 3-7 business days for other Emirates.', answerAr: 'عادة ما يستغرق التوصيل 2-5 أيام عمل داخل دبي.', category: '1', order: 2 },
+  { id: '3', question: 'What is your return policy?', questionAr: 'ما هي سياسة الإرجاع؟', answer: 'You can return products within 14 days of receiving your order. Products must be in their original condition.', answerAr: 'يمكنك إرجاع المنتجات خلال 14 يومًا من تاريخ الاستلام.', category: '2', order: 1 },
+  { id: '4', question: 'What payment methods do you accept?', questionAr: 'ما هي طرق الدفع المتاحة؟', answer: 'We accept Credit/Debit cards, Cash on Delivery, Apple Pay, and Tabby for installments.', answerAr: 'نقبل بطاقات الائتمان/الخصم والدفع عند الاستلام.', category: '3', order: 1 },
+  { id: '5', question: 'Are the plants real or artificial?', questionAr: 'هل النباتات حقيقية أم اصطناعية؟', answer: 'We offer high-quality artificial plants that look like real ones.', answerAr: 'نقدم نباتات اصطناعية عالية الجودة تبدو وكأنها حقيقية.', category: '4', order: 1 },
+  { id: '6', question: 'How can I contact you?', questionAr: 'كيف يمكنني التواصل معكم؟', answer: 'You can contact us via WhatsApp at +971547751901 or through our Contact Us page.', answerAr: 'يمكنك التواصل معنا عبر واتساب على +971547751901.', category: '5', order: 1 },
+];
+
+const categoryIcons: Record<string, React.ReactNode> = {
+  'truck': <Truck className="w-5 h-5" />,
+  'refresh': <RefreshCw className="w-5 h-5" />,
+  'credit-card': <CreditCard className="w-5 h-5" />,
+  'shield': <ShieldCheck className="w-5 h-5" />,
+  'phone': <Phone className="w-5 h-5" />,
+};
 
 const FAQ = () => {
   const { language } = useLanguage();
   const isArabic = language === "ar";
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<FAQCategory[]>(defaultCategories);
+  const [faqs, setFaqs] = useState<FAQItem[]>(defaultFaqs);
 
-  const faqCategories = [
-    {
-      icon: <Truck className="w-5 h-5" />,
-      title: isArabic ? "الشحن والتوصيل" : "Shipping & Delivery",
-      faqs: [
-        {
-          question: isArabic ? "ما هي مناطق التوصيل؟" : "What areas do you deliver to?",
-          answer: isArabic 
-            ? "نقوم بالتوصيل إلى جميع أنحاء الإمارات العربية المتحدة بما في ذلك دبي وأبوظبي والشارقة وعجمان ورأس الخيمة والفجيرة وأم القيوين."
-            : "We deliver across all UAE including Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah, and Umm Al Quwain."
-        },
-        {
-          question: isArabic ? "كم تستغرق عملية التوصيل؟" : "How long does delivery take?",
-          answer: isArabic
-            ? "عادة ما يستغرق التوصيل 2-5 أيام عمل داخل دبي و 3-7 أيام عمل للإمارات الأخرى."
-            : "Delivery typically takes 2-5 business days within Dubai and 3-7 business days for other Emirates."
-        },
-        {
-          question: isArabic ? "هل يوجد توصيل مجاني؟" : "Is there free shipping?",
-          answer: isArabic
-            ? "نعم! نقدم توصيل مجاني للطلبات التي تزيد قيمتها عن 200 درهم إماراتي."
-            : "Yes! We offer free shipping on orders above AED 200."
-        },
-      ]
-    },
-    {
-      icon: <RefreshCw className="w-5 h-5" />,
-      title: isArabic ? "الإرجاع والاستبدال" : "Returns & Exchange",
-      faqs: [
-        {
-          question: isArabic ? "ما هي سياسة الإرجاع؟" : "What is your return policy?",
-          answer: isArabic
-            ? "يمكنك إرجاع المنتجات خلال 14 يومًا من تاريخ الاستلام. يجب أن تكون المنتجات في حالتها الأصلية وغير مستخدمة."
-            : "You can return products within 14 days of receiving your order. Products must be in their original condition and unused."
-        },
-        {
-          question: isArabic ? "كيف يمكنني طلب الإرجاع؟" : "How do I request a return?",
-          answer: isArabic
-            ? "يمكنك التواصل معنا عبر واتساب على الرقم +971547751901 أو إرسال بريد إلكتروني إلينا لطلب الإرجاع."
-            : "You can contact us via WhatsApp at +971547751901 or send us an email to request a return."
-        },
-        {
-          question: isArabic ? "هل يمكنني استبدال منتج؟" : "Can I exchange a product?",
-          answer: isArabic
-            ? "نعم، نقدم خدمة الاستبدال. يرجى التواصل معنا خلال 14 يومًا من استلام الطلب."
-            : "Yes, we offer exchanges. Please contact us within 14 days of receiving your order."
-        },
-      ]
-    },
-    {
-      icon: <CreditCard className="w-5 h-5" />,
-      title: isArabic ? "الدفع" : "Payment",
-      faqs: [
-        {
-          question: isArabic ? "ما هي طرق الدفع المتاحة؟" : "What payment methods do you accept?",
-          answer: isArabic
-            ? "نقبل بطاقات الائتمان/الخصم (Visa, Mastercard)، الدفع عند الاستلام، Apple Pay، وTabby للتقسيط."
-            : "We accept Credit/Debit cards (Visa, Mastercard), Cash on Delivery, Apple Pay, and Tabby for installments."
-        },
-        {
-          question: isArabic ? "هل يمكنني الدفع بالتقسيط؟" : "Can I pay in installments?",
-          answer: isArabic
-            ? "نعم! نقدم خدمة التقسيط عبر Tabby. يمكنك تقسيم دفعتك على 4 أقساط بدون فوائد."
-            : "Yes! We offer installment payments through Tabby. You can split your payment into 4 interest-free installments."
-        },
-        {
-          question: isArabic ? "هل الدفع آمن؟" : "Is payment secure?",
-          answer: isArabic
-            ? "نعم، جميع المعاملات مشفرة وآمنة 100%. نستخدم بوابات دفع معتمدة ومرخصة."
-            : "Yes, all transactions are 100% encrypted and secure. We use certified and licensed payment gateways."
-        },
-      ]
-    },
-    {
-      icon: <ShieldCheck className="w-5 h-5" />,
-      title: isArabic ? "جودة المنتجات" : "Product Quality",
-      faqs: [
-        {
-          question: isArabic ? "هل النباتات حقيقية أم اصطناعية؟" : "Are the plants real or artificial?",
-          answer: isArabic
-            ? "نقدم نباتات اصطناعية عالية الجودة تبدو وكأنها حقيقية. جميع منتجاتنا مصنوعة من مواد متينة ومقاومة للأشعة فوق البنفسجية."
-            : "We offer high-quality artificial plants that look like real ones. All our products are made from durable and UV-resistant materials."
-        },
-        {
-          question: isArabic ? "كيف أعتني بالنباتات الاصطناعية؟" : "How do I care for artificial plants?",
-          answer: isArabic
-            ? "النباتات الاصطناعية تحتاج فقط إلى تنظيف دوري بقطعة قماش ناعمة لإزالة الغبار. لا تحتاج إلى ماء أو ضوء شمس."
-            : "Artificial plants only need periodic cleaning with a soft cloth to remove dust. They don't need water or sunlight."
-        },
-        {
-          question: isArabic ? "هل المنتجات مناسبة للاستخدام الخارجي؟" : "Are the products suitable for outdoor use?",
-          answer: isArabic
-            ? "معظم منتجاتنا مقاومة للأشعة فوق البنفسجية ومناسبة للاستخدام الخارجي. يرجى التحقق من وصف المنتج للتفاصيل."
-            : "Most of our products are UV-resistant and suitable for outdoor use. Please check the product description for details."
-        },
-      ]
-    },
-    {
-      icon: <Phone className="w-5 h-5" />,
-      title: isArabic ? "الدعم والتواصل" : "Support & Contact",
-      faqs: [
-        {
-          question: isArabic ? "كيف يمكنني التواصل معكم؟" : "How can I contact you?",
-          answer: isArabic
-            ? "يمكنك التواصل معنا عبر واتساب على +971547751901، أو من خلال صفحة اتصل بنا، أو عبر وسائل التواصل الاجتماعي."
-            : "You can contact us via WhatsApp at +971547751901, through our Contact Us page, or via social media."
-        },
-        {
-          question: isArabic ? "ما هي ساعات العمل؟" : "What are your working hours?",
-          answer: isArabic
-            ? "نحن متاحون من السبت إلى الخميس من 9 صباحًا حتى 9 مساءً. الجمعة من 2 ظهرًا حتى 9 مساءً."
-            : "We are available Saturday to Thursday from 9 AM to 9 PM. Friday from 2 PM to 9 PM."
-        },
-        {
-          question: isArabic ? "هل يمكنني طلب منتج مخصص؟" : "Can I request a custom product?",
-          answer: isArabic
-            ? "نعم! نقدم خدمة الطلبات المخصصة. يمكنك إرسال طلبك عبر زر 'طلب مخصص' أو التواصل معنا مباشرة."
-            : "Yes! We offer custom order service. You can submit your request via the 'Custom Request' button or contact us directly."
-        },
-      ]
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('*')
+          .in('setting_key', ['faq_categories', 'faq_items']);
+
+        if (error) throw error;
+
+        data?.forEach((setting) => {
+          if (setting.setting_key === 'faq_categories') {
+            const cats = setting.setting_value as unknown as FAQCategory[];
+            if (Array.isArray(cats) && cats.length > 0) {
+              setCategories(cats);
+            }
+          } else if (setting.setting_key === 'faq_items') {
+            const items = setting.setting_value as unknown as FAQItem[];
+            if (Array.isArray(items) && items.length > 0) {
+              setFaqs(items);
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching FAQ data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const groupedFaqs = categories.map(cat => ({
+    ...cat,
+    faqs: faqs.filter(faq => faq.category === cat.id).sort((a, b) => a.order - b.order)
+  })).filter(cat => cat.faqs.length > 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-white" dir={isArabic ? "rtl" : "ltr"}>
@@ -170,47 +133,53 @@ const FAQ = () => {
         {/* FAQ Content */}
         <section className="py-12 md:py-20">
           <div className="container mx-auto px-4 max-w-4xl">
-            <div className="space-y-8">
-              {faqCategories.map((category, categoryIndex) => (
-                <motion.div
-                  key={categoryIndex}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: categoryIndex * 0.1 }}
-                  className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
-                >
-                  {/* Category Header */}
-                  <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#2d5a3d]/10 rounded-lg flex items-center justify-center text-[#2d5a3d]">
-                        {category.icon}
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {groupedFaqs.map((category, categoryIndex) => (
+                  <motion.div
+                    key={category.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: categoryIndex * 0.1 }}
+                    className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+                  >
+                    {/* Category Header */}
+                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#2d5a3d]/10 rounded-lg flex items-center justify-center text-[#2d5a3d]">
+                          {categoryIcons[category.icon] || <HelpCircle className="w-5 h-5" />}
+                        </div>
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {isArabic ? category.nameAr : category.name}
+                        </h2>
                       </div>
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        {category.title}
-                      </h2>
                     </div>
-                  </div>
 
-                  {/* FAQs */}
-                  <Accordion type="single" collapsible className="px-2">
-                    {category.faqs.map((faq, faqIndex) => (
-                      <AccordionItem key={faqIndex} value={`item-${categoryIndex}-${faqIndex}`}>
-                        <AccordionTrigger className="px-4 py-4 text-left hover:no-underline">
-                          <span className="font-medium text-gray-900 text-sm md:text-base">
-                            {faq.question}
-                          </span>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-4">
-                          <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                            {faq.answer}
-                          </p>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </motion.div>
-              ))}
-            </div>
+                    {/* FAQs */}
+                    <Accordion type="single" collapsible className="px-2">
+                      {category.faqs.map((faq, faqIndex) => (
+                        <AccordionItem key={faq.id} value={`item-${categoryIndex}-${faqIndex}`}>
+                          <AccordionTrigger className="px-4 py-4 text-left hover:no-underline">
+                            <span className="font-medium text-gray-900 text-sm md:text-base">
+                              {isArabic ? faq.questionAr : faq.question}
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-4">
+                            <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+                              {isArabic ? faq.answerAr : faq.answer}
+                            </p>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </motion.div>
+                ))}
+              </div>
+            )}
 
             {/* Contact CTA */}
             <motion.div
@@ -235,9 +204,6 @@ const FAQ = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                  </svg>
                   {isArabic ? "واتساب" : "WhatsApp"}
                 </a>
                 <Link
