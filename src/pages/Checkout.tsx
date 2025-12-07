@@ -119,10 +119,14 @@ Please confirm my order. Thank you!`;
       }));
 
       const { supabase } = await import('@/integrations/supabase/client');
+      
+      // Get current user for linking order
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase.from('orders').insert({
         order_number: orderNumber,
         customer_name: customerInfo.name,
-        customer_email: customerInfo.email || '',
+        customer_email: customerInfo.email || user?.email || '',
         customer_phone: customerInfo.phone,
         customer_address: `${customerInfo.address}, ${customerInfo.city}`,
         items: orderItems,
@@ -132,7 +136,8 @@ Please confirm my order. Thank you!`;
         total: total,
         payment_method: 'home_delivery',
         notes: customerInfo.notes,
-        status: 'pending'
+        status: 'pending',
+        user_id: user?.id || null
       });
 
       if (error) throw error;

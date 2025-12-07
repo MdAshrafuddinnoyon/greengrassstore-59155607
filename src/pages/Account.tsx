@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus } from "lucide-react";
+import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useWishlistStore, WishlistItem } from "@/stores/wishlistStore";
@@ -10,6 +10,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CustomRequestModal } from "@/components/custom-request/CustomRequestModal";
 import { toast } from "sonner";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import type { Json } from "@/integrations/supabase/types";
 
 interface CustomRequest {
   id: string;
@@ -20,6 +21,32 @@ interface CustomRequest {
   created_at: string;
   budget: string | null;
   timeline: string | null;
+}
+
+interface OrderItem {
+  name: string;
+  options?: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+interface Order {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  customer_address: string | null;
+  items: OrderItem[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  payment_method: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
 }
 
 interface Profile {
@@ -44,6 +71,9 @@ const Account = () => {
   const [customRequests, setCustomRequests] = useState<CustomRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const isArabic = language === "ar";
@@ -170,17 +200,48 @@ const Account = () => {
     }
   };
 
+  const fetchOrders = async () => {
+    if (!user) return;
+    setOrdersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      // Parse items from JSON
+      const parsedOrders: Order[] = (data || []).map(order => ({
+        ...order,
+        items: Array.isArray(order.items) ? order.items as unknown as OrderItem[] : []
+      }));
+      
+      setOrders(parsedOrders);
+    } catch (error: any) {
+      console.error("Error fetching orders:", error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "requests" && user) {
       fetchCustomRequests();
+    }
+    if (activeTab === "orders" && user) {
+      fetchOrders();
     }
   }, [activeTab, user]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
+      case "delivered":
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case "processing":
+      case "shipped":
         return <Clock className="w-4 h-4 text-amber-500" />;
       case "cancelled":
         return <AlertCircle className="w-4 h-4 text-red-500" />;
@@ -190,12 +251,15 @@ const Account = () => {
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "completed": return t("account.requestCompleted");
-      case "processing": return t("account.requestProcessing");
-      case "cancelled": return t("account.requestCancelled");
-      default: return t("account.requestPending");
-    }
+    const statusLabels: Record<string, { en: string; ar: string }> = {
+      pending: { en: "Pending", ar: "قيد الانتظار" },
+      processing: { en: "Processing", ar: "جاري المعالجة" },
+      shipped: { en: "Shipped", ar: "تم الشحن" },
+      delivered: { en: "Delivered", ar: "تم التوصيل" },
+      completed: { en: "Completed", ar: "مكتمل" },
+      cancelled: { en: "Cancelled", ar: "ملغى" },
+    };
+    return statusLabels[status]?.[isArabic ? "ar" : "en"] || status;
   };
 
   const getTypeLabel = (type: string) => {
@@ -208,6 +272,118 @@ const Account = () => {
       other: { en: "Other", ar: "أخرى" },
     };
     return types[type]?.[isArabic ? "ar" : "en"] || type;
+  };
+
+  const downloadInvoice = (order: Order) => {
+    const invoiceHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Invoice - ${order.order_number}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; border-bottom: 2px solid #2d5a3d; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { color: #2d5a3d; margin: 0; }
+          .header p { color: #666; margin: 5px 0; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+          .info-box h3 { color: #2d5a3d; margin: 0 0 10px 0; font-size: 14px; }
+          .info-box p { margin: 5px 0; color: #333; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+          th { background: #f5f5f5; font-weight: 600; }
+          .total-row { font-weight: bold; background: #f0f7f3; }
+          .footer { text-align: center; color: #666; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+          .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+          .status-pending { background: #fef3c7; color: #92400e; }
+          .status-completed, .status-delivered { background: #d1fae5; color: #065f46; }
+          .status-processing, .status-shipped { background: #dbeafe; color: #1e40af; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>GREEN GRASS</h1>
+          <p>www.greengrassstore.com</p>
+          <p>Dubai, UAE</p>
+        </div>
+        
+        <div class="info-grid">
+          <div class="info-box">
+            <h3>INVOICE TO</h3>
+            <p><strong>${order.customer_name}</strong></p>
+            <p>${order.customer_email}</p>
+            <p>${order.customer_phone || ''}</p>
+            <p>${order.customer_address || ''}</p>
+          </div>
+          <div class="info-box" style="text-align: right;">
+            <h3>INVOICE DETAILS</h3>
+            <p><strong>Order #:</strong> ${order.order_number}</p>
+            <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
+            <p><strong>Payment:</strong> ${order.payment_method || 'N/A'}</p>
+            <p><strong>Status:</strong> <span class="status status-${order.status}">${order.status.toUpperCase()}</span></p>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Options</th>
+              <th style="text-align: center;">Qty</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items.map(item => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.options || '-'}</td>
+                <td style="text-align: center;">${item.quantity}</td>
+                <td style="text-align: right;">AED ${item.price.toFixed(2)}</td>
+                <td style="text-align: right;">AED ${item.total.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+            <tr>
+              <td colspan="4" style="text-align: right;"><strong>Subtotal</strong></td>
+              <td style="text-align: right;">AED ${order.subtotal.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="4" style="text-align: right;"><strong>Shipping</strong></td>
+              <td style="text-align: right;">${order.shipping === 0 ? 'FREE' : `AED ${order.shipping.toFixed(2)}`}</td>
+            </tr>
+            ${order.tax > 0 ? `
+              <tr>
+                <td colspan="4" style="text-align: right;"><strong>Tax</strong></td>
+                <td style="text-align: right;">AED ${order.tax.toFixed(2)}</td>
+              </tr>
+            ` : ''}
+            <tr class="total-row">
+              <td colspan="4" style="text-align: right;"><strong>TOTAL</strong></td>
+              <td style="text-align: right;"><strong>AED ${order.total.toFixed(2)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        
+        ${order.notes ? `<p><strong>Notes:</strong> ${order.notes}</p>` : ''}
+        
+        <div class="footer">
+          <p>Thank you for shopping with Green Grass!</p>
+          <p>For any queries, contact us at: +971 54 775 1901</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([invoiceHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const printWindow = window.open(url, '_blank');
+    
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
   };
 
   if (loading) {
@@ -455,15 +631,199 @@ const Account = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-card rounded-2xl border border-border p-6"
+                  className="bg-card rounded-2xl border border-border p-4 sm:p-6"
                 >
                   <h2 className="text-lg font-semibold text-foreground mb-6">
                     {t("account.myOrders")}
                   </h2>
-                  <div className="text-center py-12">
-                    <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">{t("account.noOrders")}</p>
-                  </div>
+                  
+                  {ordersLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">{t("account.noOrders")}</p>
+                      <Link 
+                        to="/shop"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        {isArabic ? "تسوق الآن" : "Start Shopping"}
+                      </Link>
+                    </div>
+                  ) : selectedOrder ? (
+                    // Order Detail View
+                    <div>
+                      <button
+                        onClick={() => setSelectedOrder(null)}
+                        className="flex items-center gap-2 text-sm text-primary hover:underline mb-6"
+                      >
+                        <ChevronRight className={`w-4 h-4 ${isArabic ? '' : 'rotate-180'}`} />
+                        {isArabic ? "العودة للطلبات" : "Back to Orders"}
+                      </button>
+                      
+                      <div className="space-y-6">
+                        {/* Order Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+                          <div>
+                            <h3 className="text-lg font-semibold">{selectedOrder.order_number}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(selectedOrder.created_at).toLocaleDateString(isArabic ? 'ar-AE' : 'en-AE', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                              selectedOrder.status === 'delivered' || selectedOrder.status === 'completed' 
+                                ? 'bg-green-100 text-green-700' 
+                                : selectedOrder.status === 'cancelled' 
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {getStatusIcon(selectedOrder.status)}
+                              {getStatusLabel(selectedOrder.status)}
+                            </span>
+                            <button
+                              onClick={() => downloadInvoice(selectedOrder)}
+                              className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              {isArabic ? "تحميل الفاتورة" : "Download Invoice"}
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Order Items */}
+                        <div>
+                          <h4 className="font-medium mb-3">{isArabic ? "المنتجات" : "Items"}</h4>
+                          <div className="space-y-3">
+                            {selectedOrder.items.map((item, idx) => (
+                              <div key={idx} className="flex justify-between items-start p-3 bg-muted rounded-xl">
+                                <div>
+                                  <p className="font-medium text-foreground">{item.name}</p>
+                                  {item.options && (
+                                    <p className="text-xs text-muted-foreground">{item.options}</p>
+                                  )}
+                                  <p className="text-sm text-muted-foreground">
+                                    {item.quantity} × AED {item.price.toFixed(2)}
+                                  </p>
+                                </div>
+                                <p className="font-semibold text-primary">AED {item.total.toFixed(2)}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Order Summary */}
+                        <div className="bg-muted rounded-xl p-4 space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{isArabic ? "المجموع الفرعي" : "Subtotal"}</span>
+                            <span>AED {selectedOrder.subtotal.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{isArabic ? "الشحن" : "Shipping"}</span>
+                            <span>{selectedOrder.shipping === 0 ? (isArabic ? "مجاني" : "FREE") : `AED ${selectedOrder.shipping.toFixed(2)}`}</span>
+                          </div>
+                          {selectedOrder.tax > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{isArabic ? "الضريبة" : "Tax"}</span>
+                              <span>AED {selectedOrder.tax.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <hr className="border-border" />
+                          <div className="flex justify-between font-semibold">
+                            <span>{isArabic ? "الإجمالي" : "Total"}</span>
+                            <span className="text-primary">AED {selectedOrder.total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Shipping Info */}
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div className="p-4 bg-muted rounded-xl">
+                            <h4 className="font-medium mb-2 text-sm">{isArabic ? "عنوان التوصيل" : "Shipping Address"}</h4>
+                            <p className="text-sm text-muted-foreground">{selectedOrder.customer_name}</p>
+                            <p className="text-sm text-muted-foreground">{selectedOrder.customer_address || '-'}</p>
+                            <p className="text-sm text-muted-foreground">{selectedOrder.customer_phone || '-'}</p>
+                          </div>
+                          <div className="p-4 bg-muted rounded-xl">
+                            <h4 className="font-medium mb-2 text-sm">{isArabic ? "طريقة الدفع" : "Payment Method"}</h4>
+                            <p className="text-sm text-muted-foreground capitalize">{selectedOrder.payment_method?.replace('_', ' ') || '-'}</p>
+                            {selectedOrder.notes && (
+                              <>
+                                <h4 className="font-medium mb-1 mt-3 text-sm">{isArabic ? "ملاحظات" : "Notes"}</h4>
+                                <p className="text-sm text-muted-foreground">{selectedOrder.notes}</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Orders List
+                    <div className="space-y-3">
+                      {orders.map((order) => (
+                        <motion.div
+                          key={order.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border border-border rounded-xl p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="font-semibold text-foreground">{order.order_number}</span>
+                                <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  order.status === 'delivered' || order.status === 'completed' 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : order.status === 'cancelled' 
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {getStatusIcon(order.status)}
+                                  {getStatusLabel(order.status)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(order.created_at).toLocaleDateString(isArabic ? 'ar-AE' : 'en-AE')} • {order.items.length} {isArabic ? "منتجات" : "items"}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="font-bold text-primary">AED {order.total.toFixed(2)}</span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    downloadInvoice(order);
+                                  }}
+                                  className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                  title={isArabic ? "تحميل الفاتورة" : "Download Invoice"}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedOrder(order);
+                                  }}
+                                  className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                  title={isArabic ? "عرض التفاصيل" : "View Details"}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <ChevronRight className={`w-5 h-5 text-muted-foreground ${isArabic ? 'rotate-180' : ''}`} />
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
 
