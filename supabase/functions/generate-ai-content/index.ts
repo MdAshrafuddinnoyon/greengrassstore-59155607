@@ -6,6 +6,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation
+function validateInput(data: unknown): { systemPrompt: string; userPrompt: string; type: string } {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid request body');
+  }
+
+  const { systemPrompt, userPrompt, type } = data as Record<string, unknown>;
+
+  // Validate systemPrompt
+  if (typeof systemPrompt !== 'string' || systemPrompt.length === 0 || systemPrompt.length > 2000) {
+    throw new Error('systemPrompt must be a string between 1 and 2000 characters');
+  }
+
+  // Validate userPrompt
+  if (typeof userPrompt !== 'string' || userPrompt.length === 0 || userPrompt.length > 2000) {
+    throw new Error('userPrompt must be a string between 1 and 2000 characters');
+  }
+
+  // Validate type
+  const allowedTypes = ['title', 'description', 'full', 'excerpt', 'content'];
+  if (typeof type !== 'string' || !allowedTypes.includes(type)) {
+    throw new Error(`type must be one of: ${allowedTypes.join(', ')}`);
+  }
+
+  return { systemPrompt, userPrompt, type };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,7 +48,20 @@ serve(async (req) => {
       );
     }
 
-    const { systemPrompt, userPrompt, type } = await req.json();
+    // Parse and validate input
+    let validatedInput;
+    try {
+      const rawData = await req.json();
+      validatedInput = validateInput(rawData);
+    } catch (validationError) {
+      console.error('Input validation error:', validationError);
+      return new Response(
+        JSON.stringify({ error: validationError instanceof Error ? validationError.message : 'Invalid input' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { systemPrompt, userPrompt, type } = validatedInput;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

@@ -5,6 +5,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation
+function validateInput(data: unknown): { prompt: string; type: 'product' | 'blog' } {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid request body');
+  }
+
+  const { prompt, type } = data as Record<string, unknown>;
+
+  // Validate prompt
+  if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+    throw new Error('Prompt is required and must be a non-empty string');
+  }
+
+  if (prompt.length > 2000) {
+    throw new Error('Prompt must be 2000 characters or less');
+  }
+
+  // Validate type
+  const allowedTypes = ['product', 'blog'];
+  if (typeof type !== 'string' || !allowedTypes.includes(type)) {
+    throw new Error(`type must be one of: ${allowedTypes.join(', ')}`);
+  }
+
+  return { prompt: prompt.trim(), type: type as 'product' | 'blog' };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -17,16 +43,22 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const { prompt, type } = await req.json();
-
-    if (!prompt) {
+    // Parse and validate input
+    let validatedInput;
+    try {
+      const rawData = await req.json();
+      validatedInput = validateInput(rawData);
+    } catch (validationError) {
+      console.error('Input validation error:', validationError);
       return new Response(
-        JSON.stringify({ error: 'Prompt is required' }),
+        JSON.stringify({ error: validationError instanceof Error ? validationError.message : 'Invalid input' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Generating ${type} image with prompt:`, prompt);
+    const { prompt, type } = validatedInput;
+
+    console.log(`Generating ${type} image with prompt:`, prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''));
 
     const systemPrompt = type === 'product' 
       ? "Generate a high-quality product photo. The image should be professional, clean background, well-lit, suitable for e-commerce."
