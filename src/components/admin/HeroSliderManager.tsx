@@ -245,6 +245,7 @@ export const HeroSliderManager = () => {
                     value={slide.backgroundImage}
                     onChange={(url) => updateSlide(slide.id, 'backgroundImage', url)}
                     placeholder="Select or enter image URL"
+                    folder="sliders"
                   />
 
                   {/* Titles */}

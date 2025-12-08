@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Minus, Plus, ShoppingCart, Heart, Share2, Truck, Shield, RotateCcw, ChevronRight, Check } from "lucide-react";
+import { Loader2, Minus, Plus, ShoppingCart, Heart, Share2, Truck, Shield, RotateCcw, ChevronRight, Check, Ticket, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -59,6 +59,15 @@ interface ProductVariant {
   image_url?: string;
 }
 
+interface ActiveCoupon {
+  id: string;
+  code: string;
+  description?: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  min_order_amount: number;
+}
+
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const { language } = useLanguage();
@@ -70,6 +79,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeCoupons, setActiveCoupons] = useState<ActiveCoupon[]>([]);
   const addItem = useCartStore((state) => state.addItem);
   const { addToWishlist, removeFromWishlist, isInWishlist, fetchWishlist } = useWishlistStore();
 
@@ -83,6 +93,27 @@ const ProductDetail = () => {
     };
     checkAuth();
   }, [fetchWishlist]);
+
+  // Fetch active coupons
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const now = new Date().toISOString();
+        const { data } = await supabase
+          .from('discount_coupons')
+          .select('id, code, description, discount_type, discount_value, min_order_amount')
+          .eq('is_active', true)
+          .or(`expires_at.is.null,expires_at.gte.${now}`)
+          .order('discount_value', { ascending: false })
+          .limit(3);
+        
+        setActiveCoupons((data || []) as ActiveCoupon[]);
+      } catch (error) {
+        console.error('Error fetching coupons:', error);
+      }
+    };
+    fetchCoupons();
+  }, []);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -328,6 +359,54 @@ const ProductDetail = () => {
                   </>
                 )}
               </div>
+
+              {/* Active Coupons Banner */}
+              {activeCoupons.length > 0 && (
+                <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-primary font-semibold">
+                    <Ticket className="w-5 h-5" />
+                    <span>{isArabic ? 'عروض خاصة متاحة!' : 'Special Offers Available!'}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {activeCoupons.map((coupon) => (
+                      <div 
+                        key={coupon.id} 
+                        className="flex items-center justify-between bg-background rounded-lg p-3 border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Badge className="bg-primary text-primary-foreground font-mono font-bold">
+                            {coupon.code}
+                          </Badge>
+                          <div className="text-sm">
+                            <span className="font-semibold text-primary">
+                              {coupon.discount_type === 'percentage' 
+                                ? `${coupon.discount_value}% OFF` 
+                                : `AED ${coupon.discount_value} OFF`}
+                            </span>
+                            {coupon.min_order_amount > 0 && (
+                              <span className="text-muted-foreground ml-1">
+                                ({isArabic ? 'الحد الأدنى' : 'Min.'} AED {coupon.min_order_amount})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(coupon.code);
+                            toast.success(isArabic ? 'تم نسخ الكود!' : 'Coupon code copied!');
+                          }}
+                          className="text-primary hover:bg-primary/10"
+                        >
+                          <Copy className="w-4 h-4 mr-1" />
+                          {isArabic ? 'نسخ' : 'Copy'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Availability */}
               <div className="flex items-center gap-2">

@@ -823,6 +823,7 @@ export const ProductManager = () => {
                 label="Featured Image"
                 value={editingProduct?.featured_image || ''}
                 onChange={(url) => setEditingProduct(p => ({ ...p, featured_image: url }))}
+                folder="products"
               />
 
               <div className="space-y-2">
@@ -846,6 +847,7 @@ export const ProductManager = () => {
                   label="Add Gallery Image"
                   value=""
                   onChange={addGalleryImage}
+                  folder="products"
                 />
               </div>
             </TabsContent>

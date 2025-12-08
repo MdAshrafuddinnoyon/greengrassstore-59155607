@@ -462,6 +462,7 @@ export const LocalCategoryManager = () => {
               label="Category Image"
               value={editingCategory?.image || ''}
               onChange={(url) => setEditingCategory(prev => ({ ...prev, image: url }))}
+              folder="categories"
             />
 
             <div className="grid grid-cols-2 gap-4">
