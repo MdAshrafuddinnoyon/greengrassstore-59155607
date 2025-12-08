@@ -286,6 +286,7 @@ export const BlogManager = () => {
                   value={formData.featured_image}
                   onChange={(url) => setFormData({ ...formData, featured_image: url })}
                   placeholder="Select or enter image URL"
+                  folder="blog"
                 />
 
                 <div className="flex justify-end gap-2 pt-4">

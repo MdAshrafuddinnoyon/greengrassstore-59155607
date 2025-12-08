@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Image, Upload, Link as LinkIcon, Check, X } from "lucide-react";
+import { Loader2, Image, Upload, Link as LinkIcon, Check, X, Folder } from "lucide-react";
 
 interface MediaFile {
   id: string;
   file_name: string;
   file_path: string;
   file_type: string;
+  folder?: string;
   publicUrl?: string;
 }
 
@@ -21,15 +23,36 @@ interface MediaPickerProps {
   onChange: (url: string) => void;
   label?: string;
   placeholder?: string;
+  folder?: string; // Default folder for uploads
 }
 
-export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "Select or enter image URL" }: MediaPickerProps) => {
+// Folder configuration for different content types
+export const MEDIA_FOLDERS = {
+  products: 'products',
+  blog: 'blog',
+  categories: 'categories',
+  banners: 'banners',
+  logos: 'logos',
+  sliders: 'sliders',
+  uploads: 'uploads',
+} as const;
+
+export const MediaPicker = ({ 
+  value, 
+  onChange, 
+  label = "Image", 
+  placeholder = "Select or enter image URL",
+  folder = 'uploads'
+}: MediaPickerProps) => {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [urlInput, setUrlInput] = useState(value || "");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState<string>("all");
+  const [uploadFolder, setUploadFolder] = useState(folder);
+  const [availableFolders, setAvailableFolders] = useState<string[]>([]);
 
   const fetchFiles = async () => {
     setLoading(true);
@@ -40,6 +63,10 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Extract unique folders
+      const folders = [...new Set((data || []).map(f => f.folder).filter(Boolean))] as string[];
+      setAvailableFolders(folders);
 
       const filesWithUrls = await Promise.all(
         (data || []).map(async (file) => {
@@ -79,7 +106,7 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
       if (!user) throw new Error('Not authenticated');
 
       const fileName = `${Date.now()}-${file.name}`;
-      const filePath = `uploads/${fileName}`;
+      const filePath = `${uploadFolder}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('media')
@@ -95,7 +122,7 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
           file_type: file.type,
           file_size: file.size,
           user_id: user.id,
-          folder: 'uploads'
+          folder: uploadFolder
         });
 
       if (dbError) throw dbError;
@@ -106,7 +133,7 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
 
       onChange(urlData.publicUrl);
       setUrlInput(urlData.publicUrl);
-      toast.success('Image uploaded');
+      toast.success(`Image uploaded to ${uploadFolder} folder`);
       setOpen(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -131,9 +158,11 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
     }
   };
 
-  const filteredFiles = files.filter(f =>
-    f.file_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFiles = files.filter(f => {
+    const matchesSearch = f.file_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFolder = selectedFolder === 'all' || f.folder === selectedFolder;
+    return matchesSearch && matchesFolder;
+  });
 
   return (
     <div className="space-y-2">
@@ -151,7 +180,7 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
               <Image className="w-4 h-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Select Image</DialogTitle>
             </DialogHeader>
@@ -164,12 +193,25 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
               </TabsList>
 
               <TabsContent value="library" className="flex-1 overflow-hidden mt-4">
-                <div className="mb-4">
+                <div className="flex gap-2 mb-4">
                   <Input
                     placeholder="Search images..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
                   />
+                  <Select value={selectedFolder} onValueChange={setSelectedFolder}>
+                    <SelectTrigger className="w-40">
+                      <Folder className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="All Folders" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Folders</SelectItem>
+                      {availableFolders.map(f => (
+                        <SelectItem key={f} value={f} className="capitalize">{f}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 {loading ? (
@@ -181,12 +223,12 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
                     No images found
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 gap-3 overflow-y-auto max-h-[400px] p-1">
+                  <div className="grid grid-cols-4 md:grid-cols-5 gap-3 overflow-y-auto max-h-[400px] p-1">
                     {filteredFiles.map((file) => (
                       <div
                         key={file.id}
                         onClick={() => handleSelectFile(file)}
-                        className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all hover:border-primary ${
+                        className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all hover:border-primary group ${
                           value === file.publicUrl ? 'border-primary ring-2 ring-primary/30' : 'border-transparent'
                         }`}
                       >
@@ -195,6 +237,9 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
                           alt={file.file_name}
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                          <span className="text-white text-xs truncate capitalize">{file.folder}</span>
+                        </div>
                         {value === file.publicUrl && (
                           <div className="absolute top-1 right-1 bg-primary text-white rounded-full p-1">
                             <Check className="w-3 h-3" />
@@ -207,34 +252,54 @@ export const MediaPicker = ({ value, onChange, label = "Image", placeholder = "S
               </TabsContent>
 
               <TabsContent value="upload" className="mt-4">
-                <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                  <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Click to upload or drag and drop
-                  </p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="media-picker-upload"
-                    disabled={uploading}
-                  />
-                  <Button asChild disabled={uploading}>
-                    <label htmlFor="media-picker-upload" className="cursor-pointer">
-                      {uploading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 mr-2" />
-                          Select Image
-                        </>
-                      )}
-                    </label>
-                  </Button>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Upload to Folder</Label>
+                    <Select value={uploadFolder} onValueChange={setUploadFolder}>
+                      <SelectTrigger>
+                        <Folder className="w-4 h-4 mr-2" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(MEDIA_FOLDERS).map(([key, value]) => (
+                          <SelectItem key={key} value={value} className="capitalize">{key}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                    <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-2">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Will be saved to: <span className="font-medium text-primary capitalize">{uploadFolder}</span> folder
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="media-picker-upload"
+                      disabled={uploading}
+                    />
+                    <Button asChild disabled={uploading}>
+                      <label htmlFor="media-picker-upload" className="cursor-pointer">
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Select Image
+                          </>
+                        )}
+                      </label>
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
 
