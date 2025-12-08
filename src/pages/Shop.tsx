@@ -480,8 +480,8 @@ export default function Shop() {
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     </div>
 
-                    {/* Grid View Toggle - Works on all devices */}
-                    <div className="flex items-center border border-border rounded-xl p-1 bg-muted/50">
+                    {/* Grid View Toggle - Desktop only */}
+                    <div className="hidden md:flex items-center border border-border rounded-xl p-1 bg-muted/50">
                       <button
                         onClick={() => setGridView("large")}
                         className={`p-2 rounded-lg transition-colors ${
