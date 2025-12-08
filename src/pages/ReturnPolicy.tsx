@@ -56,12 +56,12 @@ const ReturnPolicy = () => {
 
   const getIcon = (iconName: string) => {
     const icons: Record<string, React.ReactNode> = {
-      'check-circle': <CheckCircle className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" />,
-      'x-circle': <XCircle className="w-6 h-6 sm:w-7 sm:h-7 text-red-600" />,
-      'credit-card': <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 text-[#2d5a3d]" />,
-      'truck': <Truck className="w-6 h-6 sm:w-7 sm:h-7 text-[#2d5a3d]" />,
+      'check-circle': <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-green-600 flex-shrink-0" />,
+      'x-circle': <XCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-red-600 flex-shrink-0" />,
+      'credit-card': <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[#2d5a3d] flex-shrink-0" />,
+      'truck': <Truck className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[#2d5a3d] flex-shrink-0" />,
     };
-    return icons[iconName] || <CheckCircle className="w-6 h-6 sm:w-7 sm:h-7 text-[#2d5a3d]" />;
+    return icons[iconName] || <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[#2d5a3d] flex-shrink-0" />;
   };
 
   return (
@@ -70,21 +70,21 @@ const ReturnPolicy = () => {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <div className="bg-gradient-to-br from-[#2d5a3d] to-[#1a3d28] text-white py-12 sm:py-16 md:py-20">
+        <div className="bg-gradient-to-br from-[#2d5a3d] to-[#1a3d28] text-white py-10 sm:py-14 md:py-20">
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="max-w-3xl mx-auto text-center"
             >
-              <RotateCcw className="w-12 h-12 sm:w-14 md:w-16 sm:h-14 md:h-16 mx-auto mb-4 sm:mb-6 text-white/80" />
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-3 sm:mb-4">
+              <RotateCcw className="w-10 h-10 sm:w-12 md:w-16 sm:h-12 md:h-16 mx-auto mb-3 sm:mb-4 md:mb-6 text-white/80" />
+              <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-serif font-bold mb-2 sm:mb-3 md:mb-4 px-2">
                 {isArabic ? "سياسة الإرجاع والاسترداد" : "Return & Refund Policy"}
               </h1>
-              <p className="text-sm sm:text-base md:text-lg text-white/80 px-2">
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 px-4 max-w-xl mx-auto">
                 {isArabic 
-                  ? "نريدك أن تكون راضيًا تمامًا عن مشترياتك. إليك كل ما تحتاج معرفته عن الإرجاع."
-                  : "We want you to be completely satisfied with your purchase. Here's everything you need to know about returns."
+                  ? "نريدك أن تكون راضيًا تمامًا عن مشترياتك."
+                  : "We want you to be completely satisfied with your purchase."
                 }
               </p>
             </motion.div>
@@ -92,51 +92,51 @@ const ReturnPolicy = () => {
         </div>
 
         {/* Quick Info Cards */}
-        <section className="py-8 sm:py-10 md:py-12 -mt-6 sm:-mt-8">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+        <section className="py-6 sm:py-8 md:py-12 -mt-4 sm:-mt-6 md:-mt-8">
+          <div className="container mx-auto px-3 sm:px-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 max-w-4xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 text-center"
+                className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 text-center"
               >
-                <Clock className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 text-[#2d5a3d]" />
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base">{isArabic ? "7 أيام" : "7 Days"}</h3>
-                <p className="text-gray-600 text-xs sm:text-sm">{isArabic ? "فترة الإرجاع" : "Return Window"}</p>
+                <Clock className="w-6 h-6 sm:w-8 md:w-10 sm:h-8 md:h-10 mx-auto mb-1 sm:mb-2 md:mb-3 text-[#2d5a3d]" />
+                <h3 className="font-bold text-gray-900 text-xs sm:text-sm md:text-base">{isArabic ? "7 أيام" : "7 Days"}</h3>
+                <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm">{isArabic ? "فترة الإرجاع" : "Return Window"}</p>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 text-center"
+                className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 text-center"
               >
-                <Package className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 text-[#2d5a3d]" />
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base">{isArabic ? "التغليف الأصلي" : "Original Packaging"}</h3>
-                <p className="text-gray-600 text-xs sm:text-sm">{isArabic ? "مطلوب" : "Required"}</p>
+                <Package className="w-6 h-6 sm:w-8 md:w-10 sm:h-8 md:h-10 mx-auto mb-1 sm:mb-2 md:mb-3 text-[#2d5a3d]" />
+                <h3 className="font-bold text-gray-900 text-xs sm:text-sm md:text-base">{isArabic ? "التغليف الأصلي" : "Original"}</h3>
+                <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm">{isArabic ? "مطلوب" : "Packaging"}</p>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 text-center"
+                className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 text-center"
               >
-                <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 text-[#2d5a3d]" />
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base">{isArabic ? "5-7 أيام" : "5-7 Days"}</h3>
-                <p className="text-gray-600 text-xs sm:text-sm">{isArabic ? "معالجة الاسترداد" : "Refund Processing"}</p>
+                <CreditCard className="w-6 h-6 sm:w-8 md:w-10 sm:h-8 md:h-10 mx-auto mb-1 sm:mb-2 md:mb-3 text-[#2d5a3d]" />
+                <h3 className="font-bold text-gray-900 text-xs sm:text-sm md:text-base">{isArabic ? "5-7 أيام" : "5-7 Days"}</h3>
+                <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm">{isArabic ? "الاسترداد" : "Refund"}</p>
               </motion.div>
             </div>
           </div>
         </section>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8 sm:py-10 md:py-12">
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
           <div className="max-w-4xl mx-auto">
             {loading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="grid gap-8 sm:gap-10 md:gap-12">
+              <div className="grid gap-6 sm:gap-8 md:gap-10">
                 {/* Dynamic Sections */}
                 {sections.map((section) => (
                   <motion.section
@@ -144,14 +144,14 @@ const ReturnPolicy = () => {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="space-y-4 sm:space-y-6"
+                    className="space-y-3 sm:space-y-4"
                   >
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                    <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
                       {getIcon(section.icon)}
-                      {isArabic ? section.titleAr : section.title}
+                      <span>{isArabic ? section.titleAr : section.title}</span>
                     </h2>
-                    <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8">
-                      <p className="text-sm sm:text-base text-gray-700 whitespace-pre-line leading-relaxed">
+                    <div className="bg-gray-50 rounded-lg sm:rounded-xl md:rounded-2xl p-3 sm:p-5 md:p-8">
+                      <p className="text-xs sm:text-sm md:text-base text-gray-700 whitespace-pre-line leading-relaxed">
                         {isArabic ? section.contentAr : section.content}
                       </p>
                     </div>
@@ -163,29 +163,29 @@ const ReturnPolicy = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className="bg-[#2d5a3d] text-white rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 text-center"
+                  className="bg-[#2d5a3d] text-white rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 text-center"
                 >
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4">
+                  <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-2 sm:mb-3 md:mb-4">
                     {isArabic ? "تحتاج لإرجاع منتج؟" : "Need to Return an Item?"}
                   </h3>
-                  <p className="text-sm sm:text-base text-white/80 mb-4 sm:mb-6">
+                  <p className="text-xs sm:text-sm md:text-base text-white/80 mb-3 sm:mb-4 md:mb-6">
                     {isArabic 
                       ? "تواصل مع فريق خدمة العملاء لبدء عملية الإرجاع."
                       : "Contact our customer service team to initiate your return."
                     }
                   </p>
-                  <div className="flex flex-col gap-3 sm:gap-4 justify-center">
+                  <div className="flex flex-col gap-2 sm:gap-3 md:gap-4 justify-center max-w-md mx-auto">
                     <a
                       href="mailto:returns@greengrassstore.com"
-                      className="px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-[#2d5a3d] font-semibold rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors text-xs sm:text-sm md:text-base"
+                      className="px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-white text-[#2d5a3d] font-semibold rounded-lg hover:bg-gray-100 transition-colors text-xs sm:text-sm md:text-base truncate"
                     >
-                      {isArabic ? "البريد الإلكتروني" : "returns@greengrassstore.com"}
+                      returns@greengrassstore.com
                     </a>
                     <a
                       href="https://wa.me/971547751901"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#25D366] text-white font-semibold rounded-lg sm:rounded-xl hover:bg-[#20BD5A] transition-colors text-xs sm:text-sm md:text-base"
+                      className="px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-[#25D366] text-white font-semibold rounded-lg hover:bg-[#20BD5A] transition-colors text-xs sm:text-sm md:text-base"
                     >
                       WhatsApp: +971 54 775 1901
                     </a>
