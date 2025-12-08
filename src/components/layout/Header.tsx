@@ -112,23 +112,25 @@ export const Header = () => {
             color: announcementBar.textColor 
           }}
         >
-          <div className="container mx-auto px-4 flex items-center justify-between">
+          <div className="container mx-auto px-4 flex items-center justify-center">
+            {/* Navigation buttons - hidden on mobile */}
             <button 
               onClick={prevAnnouncement} 
-              className="p-1 hover:bg-white/10 rounded transition-colors" 
+              className="hidden md:block p-1 hover:bg-white/10 rounded transition-colors" 
               aria-label="Previous announcement"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <p className="text-sm font-medium text-center flex-1">
+            <p className="text-sm font-medium text-center flex-1 md:flex-none">
               {isArabic 
                 ? activeAnnouncements[currentAnnouncement]?.textAr 
                 : activeAnnouncements[currentAnnouncement]?.text
               }
             </p>
+            {/* Navigation buttons - hidden on mobile */}
             <button 
               onClick={nextAnnouncement} 
-              className="p-1 hover:bg-white/10 rounded transition-colors" 
+              className="hidden md:block p-1 hover:bg-white/10 rounded transition-colors" 
               aria-label="Next announcement"
             >
               <ChevronRight className="w-4 h-4" />
