@@ -38,6 +38,7 @@ import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
 import { FooterMenuManager } from "@/components/admin/FooterMenuManager";
 import { SMTPSettingsManager } from "@/components/admin/SMTPSettingsManager";
 import { SocialIntegrationManager } from "@/components/admin/SocialIntegrationManager";
+import { BrandingManager } from "@/components/admin/BrandingManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -128,7 +129,7 @@ const Admin = () => {
       case "pages":
         return <PagesContentManager />;
       case "content":
-        return <SiteContentManager />;
+        return <BrandingManager />;
       case "footer":
         return <FooterMenuManager />;
       case "popups":
