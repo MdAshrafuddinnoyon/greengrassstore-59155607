@@ -56,6 +56,22 @@ export const CouponManager = () => {
 
   useEffect(() => { 
     fetchCoupons(); 
+
+    // Real-time subscription for coupons
+    const channel = supabase
+      .channel('admin-coupons-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'discount_coupons' },
+        () => {
+          fetchCoupons();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const generateCode = () => {

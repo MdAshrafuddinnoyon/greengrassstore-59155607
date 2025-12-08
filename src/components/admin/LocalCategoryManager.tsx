@@ -71,6 +71,22 @@ export const LocalCategoryManager = () => {
 
   useEffect(() => {
     fetchCategories();
+
+    // Real-time subscription for categories
+    const channel = supabase
+      .channel('admin-categories-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'categories' },
+        () => {
+          fetchCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleSave = async () => {

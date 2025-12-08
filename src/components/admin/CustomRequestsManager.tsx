@@ -73,6 +73,22 @@ export const CustomRequestsManager = () => {
 
   useEffect(() => {
     fetchRequests();
+
+    // Real-time subscription for custom requests
+    const channel = supabase
+      .channel('admin-custom-requests-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'custom_requirements' },
+        () => {
+          fetchRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [statusFilter]);
 
   const updateStatus = async (id: string, status: string) => {

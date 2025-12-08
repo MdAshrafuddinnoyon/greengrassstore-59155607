@@ -151,6 +151,29 @@ export const CustomerManager = () => {
 
   useEffect(() => {
     fetchCustomers();
+
+    // Real-time subscription for customers
+    const channel = supabase
+      .channel('admin-customers-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          fetchCustomers();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          fetchCustomers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filteredCustomers = customers.filter(c =>

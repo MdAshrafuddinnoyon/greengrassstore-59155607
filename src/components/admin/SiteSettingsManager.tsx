@@ -143,6 +143,22 @@ export const SiteSettingsManager = () => {
 
   useEffect(() => {
     fetchSettings();
+
+    // Real-time subscription for site settings
+    const channel = supabase
+      .channel('admin-site-settings-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_settings' },
+        () => {
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const saveSettings = async (key: string, value: object) => {

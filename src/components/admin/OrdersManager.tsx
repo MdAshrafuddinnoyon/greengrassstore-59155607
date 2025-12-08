@@ -100,6 +100,22 @@ export const OrdersManager = () => {
 
   useEffect(() => {
     fetchOrders();
+
+    // Real-time subscription for orders
+    const channel = supabase
+      .channel('admin-orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const generateOrderNumber = () => {

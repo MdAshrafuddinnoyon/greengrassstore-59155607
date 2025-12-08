@@ -56,7 +56,25 @@ export const PopupManager = () => {
     }
   };
 
-  useEffect(() => { fetchPopups(); }, []);
+  useEffect(() => { 
+    fetchPopups(); 
+
+    // Real-time subscription for popups
+    const channel = supabase
+      .channel('admin-popups-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'popup_notifications' },
+        () => {
+          fetchPopups();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleSave = async () => {
     if (!editingPopup?.title) { 
