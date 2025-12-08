@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface BlogPost {
   id: string;
@@ -92,18 +93,33 @@ export default function BlogDetail() {
     const url = window.location.href;
     const title = post?.title || "";
     
+    let shareUrl = '';
+    
     switch (platform) {
       case 'facebook':
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
         break;
       case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
         break;
       case 'whatsapp':
-        window.open(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`, '_blank');
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
         break;
+      case 'copy':
+        try {
+          await navigator.clipboard.writeText(url);
+          toast.success(isArabic ? "تم نسخ الرابط" : "Link copied to clipboard");
+        } catch {
+          toast.error(isArabic ? "فشل نسخ الرابط" : "Failed to copy link");
+        }
+        return;
       default:
-        navigator.clipboard.writeText(url);
+        return;
+    }
+    
+    // Open share URL in new window
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
     }
   };
 

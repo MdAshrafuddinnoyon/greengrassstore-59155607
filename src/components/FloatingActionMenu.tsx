@@ -93,8 +93,8 @@ export const FloatingActionMenu = () => {
                 className="fixed inset-0 bg-black/20 -z-10"
               />
               
-              {/* Menu Items */}
-              <div className="absolute bottom-16 right-0 flex flex-col gap-3">
+              {/* Menu Items - Vertical aligned */}
+              <div className="absolute bottom-16 right-0 flex flex-col items-end gap-3">
                 {menuItems.map((item, index) => (
                   <motion.button
                     key={item.label}
@@ -103,9 +103,9 @@ export const FloatingActionMenu = () => {
                     exit={{ opacity: 0, y: 20, scale: 0.8 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={item.onClick}
-                    className="flex items-center gap-3 group"
+                    className="flex items-center gap-3"
                   >
-                    <span className="bg-background text-foreground text-sm font-medium px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    <span className="bg-background text-foreground text-sm font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
                       {item.label}
                     </span>
                     <div className={`w-12 h-12 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform`}>

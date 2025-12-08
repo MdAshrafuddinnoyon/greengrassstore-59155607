@@ -576,13 +576,24 @@ export default function Shop() {
                   {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="flex flex-col items-center gap-4 mt-10">
-                      <p className="text-sm text-muted-foreground">
+                      {/* Desktop pagination info */}
+                      <p className="hidden sm:block text-sm text-muted-foreground">
                         {isArabic 
                           ? `عرض ${((currentPage - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProducts.length)} من ${filteredAndSortedProducts.length} منتج`
                           : `Showing ${((currentPage - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProducts.length)} of ${filteredAndSortedProducts.length} products`
                         }
                       </p>
-                      <div className="flex items-center gap-2">
+                      
+                      {/* Mobile pagination - simple */}
+                      <p className="sm:hidden text-xs text-muted-foreground">
+                        {isArabic 
+                          ? `صفحة ${currentPage} من ${totalPages}`
+                          : `Page ${currentPage} of ${totalPages}`
+                        }
+                      </p>
+                      
+                      {/* Desktop: Full pagination */}
+                      <div className="hidden sm:flex items-center gap-2">
                         <button
                           onClick={() => {
                             setCurrentPage(prev => Math.max(1, prev - 1));
@@ -641,6 +652,32 @@ export default function Shop() {
                         >
                           {isArabic ? "التالي" : "Next"}
                         </button>
+                      </div>
+                      
+                      {/* Mobile: Load more button */}
+                      <div className="sm:hidden w-full space-y-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              setCurrentPage(prev => Math.max(1, prev - 1));
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            disabled={currentPage === 1}
+                            className="flex-1 py-2.5 text-sm font-medium bg-background border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isArabic ? "السابق" : "← Prev"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            disabled={currentPage === totalPages}
+                            className="flex-1 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isArabic ? "التالي" : "Next →"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
