@@ -92,13 +92,41 @@ export interface CollectionSectionSettings {
   showFeaturedOnly: boolean;
 }
 
+export interface FooterLink {
+  id: string;
+  label: string;
+  labelAr: string;
+  href: string;
+  order: number;
+}
+
+export interface FooterSection {
+  id: string;
+  title: string;
+  titleAr: string;
+  links: FooterLink[];
+  order: number;
+}
+
 export interface FooterSettings {
   description: string;
   descriptionAr: string;
+  websiteUrl: string;
+  copyrightText: string;
+  copyrightTextAr: string;
+  logoUrl: string;
+  sections: FooterSection[];
   socialLinks: {
     instagram: string;
     facebook: string;
     whatsapp: string;
+    twitter: string;
+    youtube: string;
+  };
+  developerCredit: {
+    enabled: boolean;
+    name: string;
+    url: string;
   };
 }
 
@@ -353,10 +381,69 @@ const defaultCollectionSection: CollectionSectionSettings = {
 const defaultFooter: FooterSettings = {
   description: "We craft timeless pieces that blend elegance and functionality, elevating every space into a masterpiece.",
   descriptionAr: "نصنع قطعًا خالدة تمزج بين الأناقة والوظائف، ترتقي بكل مساحة إلى تحفة فنية.",
+  websiteUrl: "www.greengrassstore.com",
+  copyrightText: "© 2025 Green Grass Store. All rights reserved.",
+  copyrightTextAr: "© 2025 متجر جرين جراس. جميع الحقوق محفوظة.",
+  logoUrl: "",
+  sections: [
+    {
+      id: "1",
+      title: "Plants & Flowers",
+      titleAr: "النباتات والزهور",
+      order: 1,
+      links: [
+        { id: "1-1", label: "Plants", labelAr: "النباتات", href: "/shop?category=plants", order: 1 },
+        { id: "1-2", label: "Flowers", labelAr: "الزهور", href: "/shop?category=flowers", order: 2 },
+        { id: "1-3", label: "Pots", labelAr: "الأواني", href: "/shop?category=pots", order: 3 },
+        { id: "1-4", label: "Greenery", labelAr: "الخضرة", href: "/shop?category=greenery", order: 4 },
+      ]
+    },
+    {
+      id: "2",
+      title: "Pots",
+      titleAr: "الأواني",
+      order: 2,
+      links: [
+        { id: "2-1", label: "Hanging", labelAr: "معلقات", href: "/shop?category=hanging", order: 1 },
+        { id: "2-2", label: "Gifts", labelAr: "هدايا", href: "/shop?category=gifts", order: 2 },
+        { id: "2-3", label: "Sale", labelAr: "تخفيضات", href: "/shop?category=sale", order: 3 },
+      ]
+    },
+    {
+      id: "3",
+      title: "Help",
+      titleAr: "المساعدة",
+      order: 3,
+      links: [
+        { id: "3-1", label: "Contact us", labelAr: "اتصل بنا", href: "/contact", order: 1 },
+        { id: "3-2", label: "FAQ", labelAr: "الأسئلة الشائعة", href: "/faq", order: 2 },
+        { id: "3-3", label: "Track Order", labelAr: "تتبع الطلب", href: "/track-order", order: 3 },
+        { id: "3-4", label: "Return Policy", labelAr: "سياسة الإرجاع", href: "/returns", order: 4 },
+      ]
+    },
+    {
+      id: "4",
+      title: "About",
+      titleAr: "عن المتجر",
+      order: 4,
+      links: [
+        { id: "4-1", label: "About Us", labelAr: "من نحن", href: "/about", order: 1 },
+        { id: "4-2", label: "Shop", labelAr: "المتجر", href: "/shop", order: 2 },
+        { id: "4-3", label: "Blog", labelAr: "المدونة", href: "/blog", order: 3 },
+      ]
+    }
+  ],
   socialLinks: {
     instagram: "https://www.instagram.com/greengrass_decor",
     facebook: "https://www.facebook.com/greengrassstore",
-    whatsapp: "+971547751901"
+    whatsapp: "+971547751901",
+    twitter: "",
+    youtube: ""
+  },
+  developerCredit: {
+    enabled: true,
+    name: "Web Search BD",
+    url: "https://www.websearchbd.com"
   }
 };
 
@@ -671,6 +758,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
             setCollectionSection(value as unknown as CollectionSectionSettings);
             break;
           case 'footer_content':
+          case 'footer_menu':
             setFooter(value as unknown as FooterSettings);
             break;
           case 'branding':
