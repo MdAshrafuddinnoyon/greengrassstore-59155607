@@ -480,21 +480,23 @@ export default function Shop() {
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     </div>
 
-                    {/* Grid View Toggle */}
-                    <div className="flex items-center border border-border rounded-xl p-1">
+                    {/* Grid View Toggle - Works on all devices */}
+                    <div className="flex items-center border border-border rounded-xl p-1 bg-muted/50">
                       <button
                         onClick={() => setGridView("large")}
                         className={`p-2 rounded-lg transition-colors ${
-                          gridView === "large" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                          gridView === "large" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-background"
                         }`}
+                        aria-label="Large grid view"
                       >
                         <LayoutGrid className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setGridView("small")}
                         className={`p-2 rounded-lg transition-colors ${
-                          gridView === "small" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                          gridView === "small" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-background"
                         }`}
+                        aria-label="Small grid view"
                       >
                         <Grid3X3 className="w-4 h-4" />
                       </button>
