@@ -49,20 +49,23 @@ export default function Shop() {
   useEffect(() => {
     const focusParam = searchParams.get("focus");
     if (focusParam === "search") {
-      // Focus on search input
+      // Focus on search input using ID
       setTimeout(() => {
-        const searchInput = document.querySelector('input[type="text"][placeholder*="Search"]') as HTMLInputElement;
+        const searchInput = document.getElementById('shop-search-input') as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();
+          searchInput.click();
         }
-      }, 100);
+      }, 300);
       // Remove the focus param from URL
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("focus");
       setSearchParams(newParams, { replace: true });
     } else if (focusParam === "filters") {
       // Open mobile filters drawer
-      setMobileFiltersOpen(true);
+      setTimeout(() => {
+        setMobileFiltersOpen(true);
+      }, 100);
       // Remove the focus param from URL
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("focus");
@@ -420,6 +423,7 @@ export default function Shop() {
                   <form onSubmit={handleSearch} className="flex-1 max-w-md">
                     <div className="relative">
                       <input
+                        id="shop-search-input"
                         type="text"
                         placeholder={isArabic ? "البحث حسب الاسم، الفئة..." : "Search by name, category..."}
                         value={searchQuery}
