@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
@@ -160,18 +161,18 @@ const About = () => {
                 Visit our stores in Dubai and Abu Dhabi or shop online for the best selection of plants and home decor.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="/shop"
-                  className="px-8 py-4 bg-white text-[#2d5a3d] font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+                <Link
+                  to="/shop"
+                  className="px-8 py-4 bg-white text-[#2d5a3d] font-semibold rounded-xl hover:bg-gray-100 transition-colors text-center"
                 >
                   Shop Now
-                </a>
-                <a
-                  href="/contact"
-                  className="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-xl hover:bg-white/10 transition-colors"
+                </Link>
+                <Link
+                  to="/contact"
+                  className="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-xl hover:bg-white/10 transition-colors text-center"
                 >
                   Contact Us
-                </a>
+                </Link>
               </div>
             </motion.div>
           </div>

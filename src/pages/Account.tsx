@@ -1236,11 +1236,28 @@ const Account = () => {
                   />
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                  {isArabic 
-                    ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
-                    : "Password must be at least 6 characters"}
-                </p>
+                <div className="text-xs text-muted-foreground space-y-1 bg-muted/50 p-3 rounded-lg">
+                  <p className="font-medium text-foreground mb-2">
+                    {isArabic ? "متطلبات كلمة المرور:" : "Password Requirements:"}
+                  </p>
+                  <ul className="space-y-1">
+                    <li className={`flex items-center gap-2 ${newPassword.length >= 8 ? 'text-green-600' : ''}`}>
+                      {newPassword.length >= 8 ? '✓' : '○'} {isArabic ? "8 أحرف على الأقل" : "At least 8 characters"}
+                    </li>
+                    <li className={`flex items-center gap-2 ${/[A-Z]/.test(newPassword) ? 'text-green-600' : ''}`}>
+                      {/[A-Z]/.test(newPassword) ? '✓' : '○'} {isArabic ? "حرف كبير واحد على الأقل" : "At least 1 uppercase letter"}
+                    </li>
+                    <li className={`flex items-center gap-2 ${/[a-z]/.test(newPassword) ? 'text-green-600' : ''}`}>
+                      {/[a-z]/.test(newPassword) ? '✓' : '○'} {isArabic ? "حرف صغير واحد على الأقل" : "At least 1 lowercase letter"}
+                    </li>
+                    <li className={`flex items-center gap-2 ${/[0-9]/.test(newPassword) ? 'text-green-600' : ''}`}>
+                      {/[0-9]/.test(newPassword) ? '✓' : '○'} {isArabic ? "رقم واحد على الأقل" : "At least 1 number"}
+                    </li>
+                    <li className={`flex items-center gap-2 ${/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 'text-green-600' : ''}`}>
+                      {/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? '✓' : '○'} {isArabic ? "رمز خاص واحد على الأقل" : "At least 1 special character"}
+                    </li>
+                  </ul>
+                </div>
 
                 <button
                   onClick={handlePasswordChange}

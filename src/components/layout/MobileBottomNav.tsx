@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, Search, ShoppingBag, User, Grid3X3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 
 export const MobileBottomNav = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
   const items = useCartStore((state) => state.items);
@@ -13,23 +14,34 @@ export const MobileBottomNav = () => {
 
   const navItems = [
     { icon: Home, label: t("common.home"), href: "/" },
-    { icon: Grid3X3, label: t("common.categories"), href: "/shop" },
-    { icon: Search, label: t("common.search"), href: "/shop?search=true" },
-    { icon: ShoppingBag, label: t("common.cart"), href: "/cart", isCart: true },
+    { icon: Grid3X3, label: t("common.categories"), href: "/shop", isCategories: true },
+    { icon: Search, label: t("common.search"), href: "/shop", isSearch: true },
+    { icon: ShoppingBag, label: t("common.cart"), href: "/checkout", isCart: true },
     { icon: User, label: t("common.account"), href: "/account" },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-background border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)] safe-area-bottom">
       <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => {
+        {navItems.map((item, index) => {
           const isActive = location.pathname === item.href || 
             (item.href === "/shop" && location.pathname === "/shop");
           
+          const handleClick = (e: React.MouseEvent) => {
+            if (item.isSearch) {
+              e.preventDefault();
+              navigate("/shop?focus=search");
+            } else if (item.isCategories) {
+              e.preventDefault();
+              navigate("/shop?focus=filters");
+            }
+          };
+          
           return (
             <Link
-              key={item.href}
+              key={`${item.href}-${index}`}
               to={item.href}
+              onClick={handleClick}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full relative transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"

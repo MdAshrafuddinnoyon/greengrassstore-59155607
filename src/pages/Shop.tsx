@@ -44,6 +44,31 @@ export default function Shop() {
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const { language } = useLanguage();
+  
+  // Handle focus params from mobile nav
+  useEffect(() => {
+    const focusParam = searchParams.get("focus");
+    if (focusParam === "search") {
+      // Focus on search input
+      setTimeout(() => {
+        const searchInput = document.querySelector('input[type="text"][placeholder*="Search"]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 100);
+      // Remove the focus param from URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("focus");
+      setSearchParams(newParams, { replace: true });
+    } else if (focusParam === "filters") {
+      // Open mobile filters drawer
+      setMobileFiltersOpen(true);
+      // Remove the focus param from URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("focus");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const isArabic = language === 'ar';
 
   // Build categories list
