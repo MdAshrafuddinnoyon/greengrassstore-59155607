@@ -158,12 +158,12 @@ export const FooterMenuManager = () => {
         .from('site_settings')
         .select('id')
         .eq('setting_key', 'footer_menu')
-        .single();
+        .maybeSingle();
 
       if (existing) {
         const { error } = await supabase
           .from('site_settings')
-          .update({ setting_value: JSON.parse(JSON.stringify(settings)) })
+          .update({ setting_value: JSON.parse(JSON.stringify(settings)), updated_at: new Date().toISOString() })
           .eq('setting_key', 'footer_menu');
         if (error) throw error;
       } else {

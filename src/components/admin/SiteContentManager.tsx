@@ -62,12 +62,12 @@ export const SiteContentManager = () => {
         .from('site_settings')
         .select('id')
         .eq('setting_key', 'branding')
-        .single();
+        .maybeSingle();
 
       if (existing) {
         const { error } = await supabase
           .from('site_settings')
-          .update({ setting_value: JSON.parse(JSON.stringify(branding)) })
+          .update({ setting_value: JSON.parse(JSON.stringify(branding)), updated_at: new Date().toISOString() })
           .eq('setting_key', 'branding');
         if (error) throw error;
       } else {
