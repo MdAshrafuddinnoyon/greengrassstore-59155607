@@ -120,6 +120,10 @@ const ProductDetail = () => {
       if (!handle) return;
       try {
         setLoading(true);
+        // Reset quantity and options when loading new product
+        setQuantity(1);
+        setSelectedOptions({});
+        setSelectedImageIndex(0);
         
         // Fetch product by slug
         const { data: productData, error: productError } = await supabase
@@ -139,15 +143,17 @@ const ProductDetail = () => {
           setProduct(typedProduct);
 
           // Initialize selected options
+          const newOptions: Record<string, string> = {};
           if (typedProduct.option1_values?.length) {
-            setSelectedOptions(prev => ({ ...prev, [typedProduct.option1_name || 'Option 1']: typedProduct.option1_values![0] }));
+            newOptions[typedProduct.option1_name || 'Option 1'] = typedProduct.option1_values[0];
           }
           if (typedProduct.option2_values?.length) {
-            setSelectedOptions(prev => ({ ...prev, [typedProduct.option2_name || 'Option 2']: typedProduct.option2_values![0] }));
+            newOptions[typedProduct.option2_name || 'Option 2'] = typedProduct.option2_values[0];
           }
           if (typedProduct.option3_values?.length) {
-            setSelectedOptions(prev => ({ ...prev, [typedProduct.option3_name || 'Option 3']: typedProduct.option3_values![0] }));
+            newOptions[typedProduct.option3_name || 'Option 3'] = typedProduct.option3_values[0];
           }
+          setSelectedOptions(newOptions);
 
           // Fetch variants if variable product
           if (typedProduct.product_type === 'variable') {
@@ -157,6 +163,8 @@ const ProductDetail = () => {
               .eq('product_id', productData.id)
               .eq('is_active', true);
             setVariants(variantsData || []);
+          } else {
+            setVariants([]);
           }
         }
       } catch (err) {
@@ -168,6 +176,45 @@ const ProductDetail = () => {
 
     loadProduct();
   }, [handle]);
+
+  // Real-time stock updates subscription
+  useEffect(() => {
+    if (!product?.id) return;
+
+    const channel = supabase
+      .channel(`product-stock-${product.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: `id=eq.${product.id}`
+        },
+        (payload) => {
+          setProduct(prev => prev ? { ...prev, stock_quantity: payload.new.stock_quantity } : prev);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'product_variants',
+          filter: `product_id=eq.${product.id}`
+        },
+        (payload) => {
+          setVariants(prev => prev.map(v => 
+            v.id === payload.new.id ? { ...v, stock_quantity: payload.new.stock_quantity } : v
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [product?.id]);
 
   // Find matching variant based on selected options
   const selectedVariant = variants.find(v => {

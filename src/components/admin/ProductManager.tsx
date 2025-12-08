@@ -142,6 +142,29 @@ export const ProductManager = () => {
   useEffect(() => { 
     fetchProducts(); 
     fetchCategories();
+
+    // Real-time subscription for products
+    const channel = supabase
+      .channel('admin-products-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          fetchProducts();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'product_variants' },
+        () => {
+          fetchProducts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const generateSlug = (name: string) => {

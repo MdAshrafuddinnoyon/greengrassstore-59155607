@@ -65,6 +65,22 @@ export const BlogManager = () => {
 
   useEffect(() => {
     fetchPosts();
+
+    // Real-time subscription for blog posts
+    const channel = supabase
+      .channel('admin-blog-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'blog_posts' },
+        () => {
+          fetchPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const generateSlug = (title: string) => {

@@ -99,6 +99,29 @@ export const UsersManager = () => {
   useEffect(() => {
     fetchUsers();
     fetchBlockedIPs();
+
+    // Real-time subscription for users and roles
+    const channel = supabase
+      .channel('admin-users-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          fetchUsers();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_roles' },
+        () => {
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const updateUserRole = async (userId: string, newRole: string) => {

@@ -43,6 +43,22 @@ export const SubscribersManager = () => {
 
   useEffect(() => {
     fetchSubscribers();
+
+    // Real-time subscription for newsletter subscribers
+    const channel = supabase
+      .channel('admin-subscribers-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'newsletter_subscribers' },
+        () => {
+          fetchSubscribers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
