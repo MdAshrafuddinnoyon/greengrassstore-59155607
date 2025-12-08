@@ -47,6 +47,14 @@ interface TaxSettings {
   includedInPrice: boolean;
 }
 
+interface ShippingSettings {
+  freeShippingEnabled: boolean;
+  freeShippingThreshold: number;
+  shippingCost: number;
+  shippingLabel: string;
+  shippingLabelAr: string;
+}
+
 const iconOptions = [
   { value: 'truck', label: 'Truck (Delivery)', icon: Truck },
   { value: 'rotate', label: 'Rotate (Returns)', icon: RotateCcw },
@@ -92,6 +100,14 @@ export const SiteSettingsManager = () => {
     includedInPrice: true
   });
 
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>({
+    freeShippingEnabled: true,
+    freeShippingThreshold: 200,
+    shippingCost: 25,
+    shippingLabel: "Shipping",
+    shippingLabelAr: "الشحن"
+  });
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -113,6 +129,8 @@ export const SiteSettingsManager = () => {
           setFooterFeatures(value as unknown as FooterFeature[]);
         } else if (setting.setting_key === 'tax_settings') {
           setTaxSettings(value as unknown as TaxSettings);
+        } else if (setting.setting_key === 'shipping_settings') {
+          setShippingSettings(value as unknown as ShippingSettings);
         }
       });
     } catch (error) {
@@ -208,6 +226,10 @@ export const SiteSettingsManager = () => {
           <TabsTrigger value="tax" className="gap-2">
             <Percent className="w-4 h-4" />
             Tax
+          </TabsTrigger>
+          <TabsTrigger value="shipping" className="gap-2">
+            <Truck className="w-4 h-4" />
+            Shipping
           </TabsTrigger>
         </TabsList>
 
@@ -618,6 +640,96 @@ export const SiteSettingsManager = () => {
               >
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Tax Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Shipping Settings */}
+        <TabsContent value="shipping">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="w-5 h-5 text-primary" />
+                Shipping Settings
+              </CardTitle>
+              <CardDescription>
+                Configure free shipping threshold and shipping costs
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <Label>Enable Free Shipping</Label>
+                  <p className="text-sm text-muted-foreground">Offer free shipping above threshold</p>
+                </div>
+                <Switch
+                  checked={shippingSettings.freeShippingEnabled}
+                  onCheckedChange={(checked) => 
+                    setShippingSettings(prev => ({ ...prev, freeShippingEnabled: checked }))
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Free Shipping Threshold (AED)</Label>
+                  <Input
+                    type="number"
+                    value={shippingSettings.freeShippingThreshold}
+                    onChange={(e) => setShippingSettings(prev => ({ ...prev, freeShippingThreshold: parseFloat(e.target.value) || 0 }))}
+                    placeholder="200"
+                  />
+                  <p className="text-xs text-muted-foreground">Orders above this amount get free shipping</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Shipping Cost (AED)</Label>
+                  <Input
+                    type="number"
+                    value={shippingSettings.shippingCost}
+                    onChange={(e) => setShippingSettings(prev => ({ ...prev, shippingCost: parseFloat(e.target.value) || 0 }))}
+                    placeholder="25"
+                  />
+                  <p className="text-xs text-muted-foreground">Shipping cost for orders below threshold</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Shipping Label (English)</Label>
+                  <Input
+                    value={shippingSettings.shippingLabel}
+                    onChange={(e) => setShippingSettings(prev => ({ ...prev, shippingLabel: e.target.value }))}
+                    placeholder="Shipping"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Shipping Label (Arabic)</Label>
+                  <Input
+                    value={shippingSettings.shippingLabelAr}
+                    onChange={(e) => setShippingSettings(prev => ({ ...prev, shippingLabelAr: e.target.value }))}
+                    placeholder="الشحن"
+                    dir="rtl"
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-700">
+                  <strong>Preview:</strong> {shippingSettings.freeShippingEnabled 
+                    ? `Free shipping for orders above AED ${shippingSettings.freeShippingThreshold}. Orders below will be charged AED ${shippingSettings.shippingCost}.`
+                    : `All orders will be charged AED ${shippingSettings.shippingCost} for shipping.`
+                  }
+                </p>
+              </div>
+
+              <Button 
+                onClick={() => saveSettings('shipping_settings', shippingSettings)}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Shipping Settings
               </Button>
             </CardContent>
           </Card>

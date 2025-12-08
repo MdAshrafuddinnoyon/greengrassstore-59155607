@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { useCartStore } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ const Checkout = () => {
   const { language } = useLanguage();
   const isArabic = language === "ar";
   const navigate = useNavigate();
+  const { shippingSettings } = useSiteSettings();
   const { items, updateQuantity, removeItem, clearCart, createCheckout, isLoading } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<"online" | "whatsapp" | "home_delivery">("online");
   const [customerInfo, setCustomerInfo] = useState({
@@ -42,7 +44,13 @@ const Checkout = () => {
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
-  const shipping = subtotal >= 200 ? 0 : 25;
+  
+  // Dynamic shipping calculation based on admin settings
+  const freeShippingThreshold = shippingSettings.freeShippingThreshold;
+  const shippingCost = shippingSettings.shippingCost;
+  const shipping = shippingSettings.freeShippingEnabled && subtotal >= freeShippingThreshold ? 0 : shippingCost;
+  const amountForFreeShipping = freeShippingThreshold - subtotal;
+  
   const total = subtotal + shipping;
   const currency = items[0]?.price.currencyCode || "AED";
 
@@ -424,11 +432,11 @@ Please confirm my order. Thank you!`;
                       {shipping === 0 ? (isArabic ? "مجاني" : "FREE") : `${currency} ${shipping.toFixed(2)}`}
                     </span>
                   </div>
-                  {shipping > 0 && (
+                  {shipping > 0 && shippingSettings.freeShippingEnabled && amountForFreeShipping > 0 && (
                     <p className="text-[10px] sm:text-xs text-amber-600 bg-amber-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg">
                       {isArabic 
-                        ? `أضف ${currency} ${(200 - subtotal).toFixed(2)} للحصول على شحن مجاني`
-                        : `Add ${currency} ${(200 - subtotal).toFixed(2)} more for free shipping`
+                        ? `أضف ${currency} ${amountForFreeShipping.toFixed(2)} للحصول على شحن مجاني`
+                        : `Add ${currency} ${amountForFreeShipping.toFixed(2)} more for free shipping`
                       }
                     </p>
                   )}

@@ -107,6 +107,14 @@ export interface StoreInfo {
   address: string;
 }
 
+export interface ShippingSettings {
+  freeShippingEnabled: boolean;
+  freeShippingThreshold: number;
+  shippingCost: number;
+  shippingLabel: string;
+  shippingLabelAr: string;
+}
+
 export interface SecuritySettings {
   recaptchaEnabled: boolean;
   adminUrlPath: string;
@@ -198,6 +206,7 @@ interface SiteSettingsContextType {
   whatsapp: WhatsAppSettings;
   salesAgent: SalesAgentSettings;
   storeInfo: StoreInfo;
+  shippingSettings: ShippingSettings;
   securitySettings: SecuritySettings;
   megaMenuCategories: MegaMenuCategory[];
   faqItems: FAQItem[];
@@ -309,6 +318,14 @@ const defaultStoreInfo: StoreInfo = {
   email: "info@greengrassstore.com",
   phone: "+971547751901",
   address: "Dubai, UAE"
+};
+
+const defaultShippingSettings: ShippingSettings = {
+  freeShippingEnabled: true,
+  freeShippingThreshold: 200,
+  shippingCost: 25,
+  shippingLabel: "Shipping",
+  shippingLabelAr: "الشحن"
 };
 
 const defaultMegaMenuCategories: MegaMenuCategory[] = [
@@ -494,6 +511,7 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   whatsapp: defaultWhatsApp,
   salesAgent: defaultSalesAgent,
   storeInfo: defaultStoreInfo,
+  shippingSettings: defaultShippingSettings,
   securitySettings: defaultSecuritySettings,
   megaMenuCategories: defaultMegaMenuCategories,
   faqItems: defaultFaqItems,
@@ -519,6 +537,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [whatsapp, setWhatsapp] = useState(defaultWhatsApp);
   const [salesAgent, setSalesAgent] = useState(defaultSalesAgent);
   const [storeInfo, setStoreInfo] = useState(defaultStoreInfo);
+  const [shippingSettings, setShippingSettings] = useState(defaultShippingSettings);
   const [securitySettings, setSecuritySettings] = useState(defaultSecuritySettings);
   const [megaMenuCategories, setMegaMenuCategories] = useState(defaultMegaMenuCategories);
   const [faqItems, setFaqItems] = useState(defaultFaqItems);
@@ -565,6 +584,9 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
             break;
           case 'store_info':
             setStoreInfo(value as unknown as StoreInfo);
+            break;
+          case 'shipping_settings':
+            setShippingSettings(value as unknown as ShippingSettings);
             break;
           case 'mega_menu_categories':
             setMegaMenuCategories(value as unknown as MegaMenuCategory[]);
@@ -615,6 +637,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         whatsapp,
         salesAgent,
         storeInfo,
+        shippingSettings,
         securitySettings,
         megaMenuCategories,
         faqItems,
