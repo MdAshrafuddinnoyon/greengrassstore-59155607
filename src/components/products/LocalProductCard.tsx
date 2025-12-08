@@ -179,8 +179,8 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link to={`/product/${product.slug}`}>
-        {/* Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-muted/30">
+        {/* Image Container - Fixed height */}
+        <div className="relative aspect-[4/5] overflow-hidden bg-muted/30">
           <img
             src={displayImage}
             alt={displayName}
@@ -272,16 +272,20 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-3 sm:p-4">
-          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-0.5 sm:mb-1">
+        {/* Content - Fixed height for consistent cards */}
+        <div className="p-3 sm:p-4 flex flex-col h-[140px] sm:h-[160px]">
+          <Link 
+            to={`/shop?category=${product.category.toLowerCase()}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-0.5 sm:mb-1 hover:text-primary transition-colors"
+          >
             {product.category}
-          </p>
-          <h3 className="font-medium text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-colors min-h-[2rem] sm:min-h-[2.5rem]">
+          </Link>
+          <h3 className="font-medium text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-colors flex-shrink-0">
             {displayName}
           </h3>
           
-          <div className="mt-2 sm:mt-3 flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
+          <div className="mt-auto pt-2 flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
             <span className="text-sm sm:text-lg font-bold text-primary">
               {product.currency} {product.price.toFixed(2)}
             </span>
@@ -294,7 +298,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
 
           {/* Stock Status */}
           {product.stock_quantity !== undefined && product.stock_quantity <= 5 && product.stock_quantity > 0 && (
-            <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-amber-600 font-medium">
+            <p className="mt-1 text-[10px] sm:text-xs text-amber-600 font-medium">
               {isArabic ? `${product.stock_quantity} فقط متبقي` : `Only ${product.stock_quantity} left`}
             </p>
           )}

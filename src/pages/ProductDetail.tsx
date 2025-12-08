@@ -290,11 +290,18 @@ const ProductDetail = () => {
             >
               {/* Badges */}
               <div className="flex items-center gap-2 flex-wrap">
-                <Link to={`/shop?category=${product.category}`}>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 capitalize">
+                <Link to={`/shop?category=${product.category.toLowerCase()}`}>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 capitalize cursor-pointer">
                     {product.category}
                   </Badge>
                 </Link>
+                {product.subcategory && (
+                  <Link to={`/shop?category=${product.subcategory.toLowerCase()}`}>
+                    <Badge variant="outline" className="hover:bg-primary/10 capitalize cursor-pointer">
+                      {product.subcategory}
+                    </Badge>
+                  </Link>
+                )}
                 {product.is_new && <Badge className="bg-blue-500">New</Badge>}
                 {product.is_on_sale && <Badge className="bg-red-500">Sale</Badge>}
                 {product.is_featured && <Badge className="bg-amber-500">Featured</Badge>}
