@@ -37,6 +37,7 @@ import { AnalyticsReport } from "@/components/admin/AnalyticsReport";
 import { EmailTemplateManager } from "@/components/admin/EmailTemplateManager";
 import { FooterMenuManager } from "@/components/admin/FooterMenuManager";
 import { SMTPSettingsManager } from "@/components/admin/SMTPSettingsManager";
+import { SocialIntegrationManager } from "@/components/admin/SocialIntegrationManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -134,6 +135,8 @@ const Admin = () => {
         return <PopupManager />;
       case "coupons":
         return <CouponManager />;
+      case "social":
+        return <SocialIntegrationManager />;
       case "settings":
         return (
           <Tabs defaultValue="general" className="space-y-6">
@@ -200,6 +203,7 @@ const Admin = () => {
       footer: "Footer Menu",
       popups: "Popup Notifications",
       coupons: "Discount Coupons",
+      social: "Social Integration",
       settings: "Settings",
     };
     return titles[activeTab] || "Dashboard";

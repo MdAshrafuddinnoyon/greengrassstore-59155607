@@ -21,9 +21,9 @@ import {
   Bell,
   Ticket,
   Settings,
-  ChevronRight,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  Share2
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -50,10 +50,10 @@ const mainNavItems: NavItem[] = [
 ];
 
 const contentNavItems: NavItem[] = [
-  { id: "media", label: "Media Library", icon: Image },
+  { id: "media", label: "Media", icon: Image },
   { id: "announcements", label: "Top Bar", icon: Megaphone },
   { id: "homepage", label: "Homepage", icon: LayoutTemplate },
-  { id: "megamenu", label: "Mega Menu", icon: Menu },
+  { id: "megamenu", label: "Menu", icon: Menu },
   { id: "pages", label: "Pages", icon: BookOpen },
   { id: "content", label: "Branding", icon: Palette },
   { id: "footer", label: "Footer", icon: Menu },
@@ -62,6 +62,7 @@ const contentNavItems: NavItem[] = [
 ];
 
 const settingsNavItems: NavItem[] = [
+  { id: "social", label: "Social", icon: Share2 },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -70,13 +71,13 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const NavSection = ({ title, items }: { title: string; items: NavItem[] }) => (
-    <div className="mb-6">
+    <div className="mb-4 lg:mb-6">
       {!isCollapsed && (
-        <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <h3 className="px-3 mb-2 text-[10px] lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {title}
         </h3>
       )}
-      <div className="space-y-1">
+      <div className="space-y-0.5 lg:space-y-1">
         {items.map((item) => (
           <button
             key={item.id}
@@ -85,8 +86,8 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
               setMobileOpen(false);
             }}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-              "hover:bg-primary/10 hover:text-primary",
+              "w-full flex items-center gap-2 lg:gap-3 px-2 lg:px-3 py-2 lg:py-2.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200",
+              "hover:bg-primary/10 hover:text-primary active:scale-[0.98]",
               activeTab === item.id
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground",
@@ -94,12 +95,12 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
             )}
             title={isCollapsed ? item.label : undefined}
           >
-            <item.icon className={cn("w-5 h-5 flex-shrink-0", isCollapsed && "w-6 h-6")} />
+            <item.icon className={cn("w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0", isCollapsed && "w-5 h-5 lg:w-6 lg:h-6")} />
             {!isCollapsed && (
               <>
-                <span className="flex-1 text-left">{item.label}</span>
+                <span className="flex-1 text-left truncate">{item.label}</span>
                 {item.badge && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-[10px] lg:text-xs">
                     {item.badge}
                   </Badge>
                 )}
@@ -115,17 +116,17 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className={cn(
-        "flex items-center gap-3 p-4 border-b border-border/50",
+        "flex items-center gap-2 lg:gap-3 p-3 lg:p-4 border-b border-border/50",
         isCollapsed && "justify-center"
       )}>
         {!isCollapsed && (
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-center gap-2 lg:gap-3 flex-1 min-w-0">
+            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-primary to-primary/70 rounded-lg lg:rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+              <LayoutDashboard className="w-4 h-4 lg:w-5 lg:h-5 text-primary-foreground" />
             </div>
-            <div>
-              <h2 className="font-bold text-foreground">Admin Panel</h2>
-              <p className="text-xs text-muted-foreground">Green Grass Store</p>
+            <div className="min-w-0">
+              <h2 className="font-bold text-sm lg:text-base text-foreground truncate">Admin Panel</h2>
+              <p className="text-[10px] lg:text-xs text-muted-foreground truncate">Green Grass Store</p>
             </div>
           </div>
         )}
@@ -133,14 +134,14 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden lg:flex hover:bg-primary/10"
+          className="hidden lg:flex hover:bg-primary/10 h-8 w-8"
         >
-          {isCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          {isCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
         </Button>
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea className="flex-1 px-2 lg:px-3 py-3 lg:py-4">
         <NavSection title="Main" items={mainNavItems} />
         <NavSection title="Content" items={contentNavItems} />
         <NavSection title="System" items={settingsNavItems} />
@@ -148,11 +149,11 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
 
       {/* Footer */}
       {!isCollapsed && (
-        <div className="p-4 border-t border-border/50">
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-4">
-            <p className="text-xs text-muted-foreground mb-2">Need help?</p>
-            <p className="text-sm font-medium text-foreground">Contact Support</p>
-            <p className="text-xs text-muted-foreground">support@websearchbd.com</p>
+        <div className="p-3 lg:p-4 border-t border-border/50">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg lg:rounded-xl p-3 lg:p-4">
+            <p className="text-[10px] lg:text-xs text-muted-foreground mb-1 lg:mb-2">Need help?</p>
+            <p className="text-xs lg:text-sm font-medium text-foreground">Contact Support</p>
+            <p className="text-[10px] lg:text-xs text-muted-foreground truncate">support@websearchbd.com</p>
           </div>
         </div>
       )}
@@ -161,19 +162,18 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
 
   return (
     <>
-      {/* Mobile Trigger */}
-      <div className="lg:hidden fixed top-20 left-4 z-40">
+      {/* Mobile Trigger - Fixed position with better styling */}
+      <div className="lg:hidden fixed bottom-20 left-4 z-40">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button 
               size="icon" 
-              variant="outline"
-              className="bg-background shadow-lg"
+              className="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30"
             >
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
+          <SheetContent side="left" className="p-0 w-64 sm:w-72">
             <SidebarContent />
           </SheetContent>
         </Sheet>
@@ -182,7 +182,7 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
       {/* Desktop Sidebar */}
       <aside className={cn(
         "hidden lg:flex flex-col bg-card border-r border-border/50 transition-all duration-300",
-        isCollapsed ? "w-20" : "w-72"
+        isCollapsed ? "w-16 lg:w-20" : "w-56 lg:w-72"
       )}>
         <SidebarContent />
       </aside>
