@@ -49,11 +49,11 @@ const defaultFaqs: FAQItem[] = [
 ];
 
 const categoryIcons: Record<string, React.ReactNode> = {
-  'truck': <Truck className="w-5 h-5" />,
-  'refresh': <RefreshCw className="w-5 h-5" />,
-  'credit-card': <CreditCard className="w-5 h-5" />,
-  'shield': <ShieldCheck className="w-5 h-5" />,
-  'phone': <Phone className="w-5 h-5" />,
+  'truck': <Truck className="w-4 h-4 sm:w-5 sm:h-5" />,
+  'refresh': <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />,
+  'credit-card': <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />,
+  'shield': <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
+  'phone': <Phone className="w-4 h-4 sm:w-5 sm:h-5" />,
 };
 
 const FAQ = () => {
@@ -107,20 +107,20 @@ const FAQ = () => {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-[#2d5a3d] to-[#1a3d2a] text-white py-16 md:py-24">
+        <section className="bg-gradient-to-br from-[#2d5a3d] to-[#1a3d2a] text-white py-10 sm:py-14 md:py-20 lg:py-24">
           <div className="container mx-auto px-4 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <HelpCircle className="w-8 h-8" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-5 md:mb-6">
+                <HelpCircle className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-2 sm:mb-3 md:mb-4 px-2">
                 {isArabic ? "الأسئلة الشائعة" : "Frequently Asked Questions"}
               </h1>
-              <p className="text-white/80 text-lg max-w-2xl mx-auto">
+              <p className="text-white/80 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-4">
                 {isArabic 
                   ? "ابحث عن إجابات لأسئلتك الأكثر شيوعًا حول منتجاتنا وخدماتنا"
                   : "Find answers to your most common questions about our products and services"
@@ -131,45 +131,45 @@ const FAQ = () => {
         </section>
 
         {/* FAQ Content */}
-        <section className="py-12 md:py-20">
-          <div className="container mx-auto px-4 max-w-4xl">
+        <section className="py-8 sm:py-10 md:py-16 lg:py-20">
+          <div className="container mx-auto px-3 sm:px-4 max-w-4xl">
             {loading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-4 sm:space-y-6 md:space-y-8">
                 {groupedFaqs.map((category, categoryIndex) => (
                   <motion.div
                     key={category.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: categoryIndex * 0.1 }}
-                    className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+                    className="bg-white rounded-xl sm:rounded-2xl shadow-md sm:shadow-lg border border-gray-100 overflow-hidden"
                   >
                     {/* Category Header */}
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#2d5a3d]/10 rounded-lg flex items-center justify-center text-[#2d5a3d]">
-                          {categoryIcons[category.icon] || <HelpCircle className="w-5 h-5" />}
+                    <div className="bg-gray-50 px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-100">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-[#2d5a3d]/10 rounded-lg flex items-center justify-center text-[#2d5a3d] flex-shrink-0">
+                          {categoryIcons[category.icon] || <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
                         </div>
-                        <h2 className="text-lg font-semibold text-gray-900">
+                        <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
                           {isArabic ? category.nameAr : category.name}
                         </h2>
                       </div>
                     </div>
 
                     {/* FAQs */}
-                    <Accordion type="single" collapsible className="px-2">
+                    <Accordion type="single" collapsible className="px-1 sm:px-2">
                       {category.faqs.map((faq, faqIndex) => (
                         <AccordionItem key={faq.id} value={`item-${categoryIndex}-${faqIndex}`}>
-                          <AccordionTrigger className="px-4 py-4 text-left hover:no-underline">
-                            <span className="font-medium text-gray-900 text-sm md:text-base">
+                          <AccordionTrigger className="px-2 sm:px-3 md:px-4 py-3 sm:py-4 text-left hover:no-underline">
+                            <span className="font-medium text-gray-900 text-xs sm:text-sm md:text-base leading-snug pr-2">
                               {isArabic ? faq.questionAr : faq.question}
                             </span>
                           </AccordionTrigger>
-                          <AccordionContent className="px-4 pb-4">
-                            <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+                          <AccordionContent className="px-2 sm:px-3 md:px-4 pb-3 sm:pb-4">
+                            <p className="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed">
                               {isArabic ? faq.answerAr : faq.answer}
                             </p>
                           </AccordionContent>
@@ -186,29 +186,29 @@ const FAQ = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="mt-12 text-center bg-gradient-to-br from-[#2d5a3d] to-[#1a3d2a] rounded-2xl p-8 md:p-12 text-white"
+              className="mt-8 sm:mt-10 md:mt-12 text-center bg-gradient-to-br from-[#2d5a3d] to-[#1a3d2a] rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-10 lg:p-12 text-white"
             >
-              <h3 className="text-2xl font-bold mb-3">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3">
                 {isArabic ? "لم تجد إجابتك؟" : "Didn't find your answer?"}
               </h3>
-              <p className="text-white/80 mb-6">
+              <p className="text-white/80 text-xs sm:text-sm md:text-base mb-4 sm:mb-5 md:mb-6 px-2">
                 {isArabic 
                   ? "تواصل معنا مباشرة وسنساعدك في أقرب وقت ممكن"
                   : "Contact us directly and we'll help you as soon as possible"
                 }
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center">
                 <a
                   href="https://wa.me/+971547751901"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-xs sm:text-sm md:text-base"
                 >
                   {isArabic ? "واتساب" : "WhatsApp"}
                 </a>
                 <Link
                   to="/contact"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors border border-white/20"
+                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors border border-white/20 text-xs sm:text-sm md:text-base"
                 >
                   {isArabic ? "صفحة الاتصال" : "Contact Page"}
                 </Link>
