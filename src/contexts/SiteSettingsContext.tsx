@@ -65,8 +65,31 @@ export interface PromoSectionSettings {
   buttonText: string;
   buttonTextAr: string;
   buttonLink: string;
+  secondaryButtonText: string;
+  secondaryButtonTextAr: string;
+  secondaryButtonLink: string;
   backgroundImage: string;
   backgroundColor: string;
+}
+
+export interface FeaturedCategorySectionSettings {
+  enabled: boolean;
+  title: string;
+  titleAr: string;
+  categoriesLimit: number;
+  productsPerCategory: number;
+  showBadges: boolean;
+  selectedCategories: string[];
+}
+
+export interface CollectionSectionSettings {
+  enabled: boolean;
+  title: string;
+  titleAr: string;
+  subtitle: string;
+  subtitleAr: string;
+  productsLimit: number;
+  showFeaturedOnly: boolean;
 }
 
 export interface FooterSettings {
@@ -219,6 +242,8 @@ interface SiteSettingsContextType {
   hero: HeroSettings;
   giftSection: GiftSectionSettings;
   promoSection: PromoSectionSettings;
+  featuredCategorySection: FeaturedCategorySectionSettings;
+  collectionSection: CollectionSectionSettings;
   footer: FooterSettings;
   branding: BrandingSettings;
   themeColors: ThemeColors;
@@ -289,17 +314,40 @@ const defaultGiftSection: GiftSectionSettings = {
 
 const defaultPromoSection: PromoSectionSettings = {
   enabled: true,
-  title: "November Sale",
-  titleAr: "تخفيضات نوفمبر",
-  subtitle: "Up to 50% Off",
-  subtitleAr: "خصم يصل إلى 50%",
+  title: "Special Sale",
+  titleAr: "عرض خاص",
+  subtitle: "Up to 40% off on selected plants, pots, and accessories. Don't miss out on these amazing deals!",
+  subtitleAr: "خصم يصل إلى 40% على النباتات والأواني والإكسسوارات المختارة. لا تفوت هذه العروض المذهلة!",
   discountText: "Limited Time Offer",
   discountTextAr: "عرض لفترة محدودة",
   buttonText: "Shop Sale",
   buttonTextAr: "تسوق التخفيضات",
   buttonLink: "/shop?category=sale",
+  secondaryButtonText: "View All Products",
+  secondaryButtonTextAr: "عرض جميع المنتجات",
+  secondaryButtonLink: "/shop",
   backgroundImage: "",
   backgroundColor: "#2d5a3d"
+};
+
+const defaultFeaturedCategorySection: FeaturedCategorySectionSettings = {
+  enabled: true,
+  title: "Featured Categories",
+  titleAr: "الفئات المميزة",
+  categoriesLimit: 4,
+  productsPerCategory: 6,
+  showBadges: true,
+  selectedCategories: []
+};
+
+const defaultCollectionSection: CollectionSectionSettings = {
+  enabled: true,
+  title: "Our Collection",
+  titleAr: "مجموعتنا",
+  subtitle: "Discover our curated selection of premium plants and home décor",
+  subtitleAr: "اكتشف مجموعتنا المختارة من النباتات الفاخرة وديكور المنزل",
+  productsLimit: 8,
+  showFeaturedOnly: false
 };
 
 const defaultFooter: FooterSettings = {
@@ -544,6 +592,8 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   hero: defaultHero,
   giftSection: defaultGiftSection,
   promoSection: defaultPromoSection,
+  featuredCategorySection: defaultFeaturedCategorySection,
+  collectionSection: defaultCollectionSection,
   footer: defaultFooter,
   branding: defaultBranding,
   themeColors: defaultThemeColors,
@@ -572,6 +622,8 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [hero, setHero] = useState(defaultHero);
   const [giftSection, setGiftSection] = useState(defaultGiftSection);
   const [promoSection, setPromoSection] = useState(defaultPromoSection);
+  const [featuredCategorySection, setFeaturedCategorySection] = useState(defaultFeaturedCategorySection);
+  const [collectionSection, setCollectionSection] = useState(defaultCollectionSection);
   const [footer, setFooter] = useState(defaultFooter);
   const [branding, setBranding] = useState(defaultBranding);
   const [themeColors, setThemeColors] = useState(defaultThemeColors);
@@ -611,6 +663,12 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
             break;
           case 'promo_section':
             setPromoSection(value as unknown as PromoSectionSettings);
+            break;
+          case 'featured_category_section':
+            setFeaturedCategorySection(value as unknown as FeaturedCategorySectionSettings);
+            break;
+          case 'collection_section':
+            setCollectionSection(value as unknown as CollectionSectionSettings);
             break;
           case 'footer_content':
             setFooter(value as unknown as FooterSettings);
@@ -701,6 +759,8 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         hero,
         giftSection,
         promoSection,
+        featuredCategorySection,
+        collectionSection,
         footer,
         branding,
         themeColors,

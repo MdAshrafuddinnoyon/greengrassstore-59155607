@@ -303,9 +303,31 @@ export const OrdersManager = () => {
     }
   };
 
-  const printInvoice = (order: Order) => {
+  const printInvoice = async (order: Order) => {
+    // Fetch branding settings for logo
+    let logoUrl = '';
+    let siteName = 'GREEN GRASS STORE';
+    try {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'branding')
+        .single();
+      if (data?.setting_value) {
+        const branding = data.setting_value as any;
+        logoUrl = branding.logoUrl || '';
+        siteName = branding.siteName || 'GREEN GRASS STORE';
+      }
+    } catch (e) {
+      console.log('Could not fetch branding');
+    }
+
     const invoiceWindow = window.open('', '_blank');
     if (!invoiceWindow) return;
+
+    const logoSection = logoUrl 
+      ? `<img src="${logoUrl}" alt="${siteName}" style="max-height: 60px; max-width: 200px; margin-bottom: 10px;" />`
+      : `<h1 style="color: #2d5a3d; margin: 0;">${siteName}</h1>`;
 
     const invoiceHTML = `
       <!DOCTYPE html>
@@ -333,7 +355,7 @@ export const OrdersManager = () => {
       </head>
       <body>
         <div class="header">
-          <h1>GREEN GRASS STORE</h1>
+          ${logoSection}
           <p>www.greengrassstore.com</p>
           <p>Dubai, UAE | +971 54 775 1901</p>
         </div>
@@ -398,9 +420,31 @@ export const OrdersManager = () => {
     invoiceWindow.print();
   };
 
-  const printDeliverySlip = (order: Order) => {
+  const printDeliverySlip = async (order: Order) => {
+    // Fetch branding settings for logo
+    let logoUrl = '';
+    let siteName = 'GREEN GRASS STORE';
+    try {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'branding')
+        .single();
+      if (data?.setting_value) {
+        const branding = data.setting_value as any;
+        logoUrl = branding.logoUrl || '';
+        siteName = branding.siteName || 'GREEN GRASS STORE';
+      }
+    } catch (e) {
+      console.log('Could not fetch branding');
+    }
+
     const slipWindow = window.open('', '_blank');
     if (!slipWindow) return;
+
+    const logoSection = logoUrl 
+      ? `<img src="${logoUrl}" alt="${siteName}" style="max-height: 50px; max-width: 150px; margin-bottom: 5px;" />`
+      : `<p style="color: #666; margin: 5px 0; font-size: 12px;">${siteName}</p>`;
 
     const slipHTML = `
       <!DOCTYPE html>
@@ -430,7 +474,7 @@ export const OrdersManager = () => {
       <body>
         <div class="header">
           <h1>🚚 DELIVERY SLIP</h1>
-          <p>GREEN GRASS STORE</p>
+          ${logoSection}
           <span class="badge">Order #${order.order_number}</span>
         </div>
 

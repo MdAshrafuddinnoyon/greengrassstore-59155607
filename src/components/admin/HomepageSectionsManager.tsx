@@ -8,7 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Save, RefreshCw, Image as ImageIcon, Gift, Tag, Sparkles } from "lucide-react";
+import { Loader2, Save, RefreshCw, Image as ImageIcon, Gift, Tag, Sparkles, Grid, Package } from "lucide-react";
+import { MediaPicker } from "./MediaPicker";
 
 interface HeroSettings {
   enabled: boolean;
@@ -49,13 +50,37 @@ interface PromoSectionSettings {
   buttonText: string;
   buttonTextAr: string;
   buttonLink: string;
+  secondaryButtonText: string;
+  secondaryButtonTextAr: string;
+  secondaryButtonLink: string;
   backgroundImage: string;
   backgroundColor: string;
+}
+
+interface FeaturedCategorySectionSettings {
+  enabled: boolean;
+  title: string;
+  titleAr: string;
+  categoriesLimit: number;
+  productsPerCategory: number;
+  showBadges: boolean;
+  selectedCategories: string[];
+}
+
+interface CollectionSectionSettings {
+  enabled: boolean;
+  title: string;
+  titleAr: string;
+  subtitle: string;
+  subtitleAr: string;
+  productsLimit: number;
+  showFeaturedOnly: boolean;
 }
 
 export const HomepageSectionsManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
 
   const [heroSettings, setHeroSettings] = useState<HeroSettings>({
     enabled: true,
@@ -87,22 +112,54 @@ export const HomepageSectionsManager = () => {
 
   const [promoSettings, setPromoSettings] = useState<PromoSectionSettings>({
     enabled: true,
-    title: "November Sale",
-    titleAr: "تخفيضات نوفمبر",
-    subtitle: "Up to 50% Off",
-    subtitleAr: "خصم يصل إلى 50%",
+    title: "Special Sale",
+    titleAr: "عرض خاص",
+    subtitle: "Up to 40% off on selected plants, pots, and accessories.",
+    subtitleAr: "خصم يصل إلى 40% على النباتات والأواني والإكسسوارات المختارة.",
     discountText: "Limited Time Offer",
     discountTextAr: "عرض لفترة محدودة",
     buttonText: "Shop Sale",
     buttonTextAr: "تسوق التخفيضات",
     buttonLink: "/shop?category=sale",
+    secondaryButtonText: "View All Products",
+    secondaryButtonTextAr: "عرض جميع المنتجات",
+    secondaryButtonLink: "/shop",
     backgroundImage: "",
     backgroundColor: "#2d5a3d"
+  });
+
+  const [featuredCategorySettings, setFeaturedCategorySettings] = useState<FeaturedCategorySectionSettings>({
+    enabled: true,
+    title: "Featured Categories",
+    titleAr: "الفئات المميزة",
+    categoriesLimit: 4,
+    productsPerCategory: 6,
+    showBadges: true,
+    selectedCategories: []
+  });
+
+  const [collectionSettings, setCollectionSettings] = useState<CollectionSectionSettings>({
+    enabled: true,
+    title: "Our Collection",
+    titleAr: "مجموعتنا",
+    subtitle: "Discover our curated selection of premium plants and home décor",
+    subtitleAr: "اكتشف مجموعتنا المختارة من النباتات الفاخرة وديكور المنزل",
+    productsLimit: 8,
+    showFeaturedOnly: false
   });
 
   const fetchSettings = async () => {
     setLoading(true);
     try {
+      // Fetch categories
+      const { data: catData } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      if (catData) setCategories(catData);
+
       const { data, error } = await supabase
         .from('site_settings')
         .select('*');
@@ -117,6 +174,10 @@ export const HomepageSectionsManager = () => {
           setGiftSettings(value as unknown as GiftSectionSettings);
         } else if (setting.setting_key === 'promo_section') {
           setPromoSettings(value as unknown as PromoSectionSettings);
+        } else if (setting.setting_key === 'featured_category_section') {
+          setFeaturedCategorySettings(value as unknown as FeaturedCategorySectionSettings);
+        } else if (setting.setting_key === 'collection_section') {
+          setCollectionSettings(value as unknown as CollectionSectionSettings);
         }
       });
     } catch (error) {
@@ -172,18 +233,26 @@ export const HomepageSectionsManager = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="hero" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full">
           <TabsTrigger value="hero" className="gap-2">
             <ImageIcon className="w-4 h-4" />
-            Hero
+            <span className="hidden md:inline">Hero</span>
+          </TabsTrigger>
+          <TabsTrigger value="featured" className="gap-2">
+            <Grid className="w-4 h-4" />
+            <span className="hidden md:inline">Categories</span>
+          </TabsTrigger>
+          <TabsTrigger value="collection" className="gap-2">
+            <Package className="w-4 h-4" />
+            <span className="hidden md:inline">Collection</span>
           </TabsTrigger>
           <TabsTrigger value="gift" className="gap-2">
             <Gift className="w-4 h-4" />
-            Gift
+            <span className="hidden md:inline">Gift</span>
           </TabsTrigger>
           <TabsTrigger value="promo" className="gap-2">
             <Tag className="w-4 h-4" />
-            Promo/Sale
+            <span className="hidden md:inline">Promo</span>
           </TabsTrigger>
         </TabsList>
 
@@ -295,11 +364,10 @@ export const HomepageSectionsManager = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Background Image URL</Label>
-                <Input
+                <Label>Background Image</Label>
+                <MediaPicker
                   value={heroSettings.backgroundImage}
-                  onChange={(e) => setHeroSettings(prev => ({ ...prev, backgroundImage: e.target.value }))}
-                  placeholder="https://... or leave empty for default"
+                  onChange={(url) => setHeroSettings(prev => ({ ...prev, backgroundImage: url }))}
                 />
               </div>
 
@@ -310,6 +378,221 @@ export const HomepageSectionsManager = () => {
               >
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Hero Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Featured Categories Section */}
+        <TabsContent value="featured">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Grid className="w-5 h-5 text-primary" />
+                Featured Categories Section
+              </CardTitle>
+              <CardDescription>
+                Manage the category banners with product carousels on homepage
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <Label>Enable Featured Categories</Label>
+                  <p className="text-sm text-muted-foreground">Show category banners with products</p>
+                </div>
+                <Switch
+                  checked={featuredCategorySettings.enabled}
+                  onCheckedChange={(checked) => 
+                    setFeaturedCategorySettings(prev => ({ ...prev, enabled: checked }))
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Section Title (EN)</Label>
+                  <Input
+                    value={featuredCategorySettings.title}
+                    onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Section Title (AR)</Label>
+                  <Input
+                    value={featuredCategorySettings.titleAr}
+                    onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, titleAr: e.target.value }))}
+                    dir="rtl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Categories to Show</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={featuredCategorySettings.categoriesLimit}
+                    onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, categoriesLimit: parseInt(e.target.value) || 4 }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Products per Category</Label>
+                  <Input
+                    type="number"
+                    min={3}
+                    max={12}
+                    value={featuredCategorySettings.productsPerCategory}
+                    onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, productsPerCategory: parseInt(e.target.value) || 6 }))}
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    checked={featuredCategorySettings.showBadges}
+                    onCheckedChange={(checked) => 
+                      setFeaturedCategorySettings(prev => ({ ...prev, showBadges: checked }))
+                    }
+                  />
+                  <Label>Show Sale/New Badges</Label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select Categories to Display</Label>
+                <p className="text-sm text-muted-foreground mb-2">Leave empty to auto-select from active categories</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {categories.map(cat => (
+                    <label key={cat.id} className="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-muted/50">
+                      <input
+                        type="checkbox"
+                        checked={featuredCategorySettings.selectedCategories.includes(cat.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFeaturedCategorySettings(prev => ({
+                              ...prev,
+                              selectedCategories: [...prev.selectedCategories, cat.id]
+                            }));
+                          } else {
+                            setFeaturedCategorySettings(prev => ({
+                              ...prev,
+                              selectedCategories: prev.selectedCategories.filter(id => id !== cat.id)
+                            }));
+                          }
+                        }}
+                      />
+                      <span className="text-sm">{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => saveSettings('featured_category_section', featuredCategorySettings)}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Featured Categories Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Collection Section */}
+        <TabsContent value="collection">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                Our Collection Section
+              </CardTitle>
+              <CardDescription>
+                Manage the product collection grid on homepage
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <Label>Enable Collection Section</Label>
+                  <p className="text-sm text-muted-foreground">Show product collection on homepage</p>
+                </div>
+                <Switch
+                  checked={collectionSettings.enabled}
+                  onCheckedChange={(checked) => 
+                    setCollectionSettings(prev => ({ ...prev, enabled: checked }))
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Title (EN)</Label>
+                  <Input
+                    value={collectionSettings.title}
+                    onChange={(e) => setCollectionSettings(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Title (AR)</Label>
+                  <Input
+                    value={collectionSettings.titleAr}
+                    onChange={(e) => setCollectionSettings(prev => ({ ...prev, titleAr: e.target.value }))}
+                    dir="rtl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Subtitle (EN)</Label>
+                  <Textarea
+                    value={collectionSettings.subtitle}
+                    onChange={(e) => setCollectionSettings(prev => ({ ...prev, subtitle: e.target.value }))}
+                    rows={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Subtitle (AR)</Label>
+                  <Textarea
+                    value={collectionSettings.subtitleAr}
+                    onChange={(e) => setCollectionSettings(prev => ({ ...prev, subtitleAr: e.target.value }))}
+                    rows={2}
+                    dir="rtl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Products to Display</Label>
+                  <Input
+                    type="number"
+                    min={4}
+                    max={24}
+                    value={collectionSettings.productsLimit}
+                    onChange={(e) => setCollectionSettings(prev => ({ ...prev, productsLimit: parseInt(e.target.value) || 8 }))}
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    checked={collectionSettings.showFeaturedOnly}
+                    onCheckedChange={(checked) => 
+                      setCollectionSettings(prev => ({ ...prev, showFeaturedOnly: checked }))
+                    }
+                  />
+                  <Label>Show Featured Products Only</Label>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => saveSettings('collection_section', collectionSettings)}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Collection Settings
               </Button>
             </CardContent>
           </Card>
@@ -462,18 +745,19 @@ export const HomepageSectionsManager = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Subtitle/Discount (EN)</Label>
-                  <Input
+                  <Label>Description (EN)</Label>
+                  <Textarea
                     value={promoSettings.subtitle}
                     onChange={(e) => setPromoSettings(prev => ({ ...prev, subtitle: e.target.value }))}
-                    placeholder="Up to 50% Off"
+                    rows={2}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Subtitle/Discount (AR)</Label>
-                  <Input
+                  <Label>Description (AR)</Label>
+                  <Textarea
                     value={promoSettings.subtitleAr}
                     onChange={(e) => setPromoSettings(prev => ({ ...prev, subtitleAr: e.target.value }))}
+                    rows={2}
                     dir="rtl"
                   />
                 </div>
@@ -481,28 +765,80 @@ export const HomepageSectionsManager = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Background Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={promoSettings.backgroundColor}
-                      onChange={(e) => setPromoSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
-                      className="w-12 h-10 p-1"
-                    />
-                    <Input
-                      value={promoSettings.backgroundColor}
-                      onChange={(e) => setPromoSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
-                      className="flex-1"
-                    />
-                  </div>
+                  <Label>Discount Label (EN)</Label>
+                  <Input
+                    value={promoSettings.discountText}
+                    onChange={(e) => setPromoSettings(prev => ({ ...prev, discountText: e.target.value }))}
+                    placeholder="Limited Time Offer"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Button Link</Label>
+                  <Label>Discount Label (AR)</Label>
+                  <Input
+                    value={promoSettings.discountTextAr}
+                    onChange={(e) => setPromoSettings(prev => ({ ...prev, discountTextAr: e.target.value }))}
+                    placeholder="عرض لفترة محدودة"
+                    dir="rtl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Primary Button Text (EN)</Label>
+                  <Input
+                    value={promoSettings.buttonText}
+                    onChange={(e) => setPromoSettings(prev => ({ ...prev, buttonText: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Primary Button Text (AR)</Label>
+                  <Input
+                    value={promoSettings.buttonTextAr}
+                    onChange={(e) => setPromoSettings(prev => ({ ...prev, buttonTextAr: e.target.value }))}
+                    dir="rtl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Primary Button Link</Label>
                   <Input
                     value={promoSettings.buttonLink}
                     onChange={(e) => setPromoSettings(prev => ({ ...prev, buttonLink: e.target.value }))}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Secondary Button Text (EN)</Label>
+                  <Input
+                    value={promoSettings.secondaryButtonText}
+                    onChange={(e) => setPromoSettings(prev => ({ ...prev, secondaryButtonText: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Secondary Button Text (AR)</Label>
+                  <Input
+                    value={promoSettings.secondaryButtonTextAr}
+                    onChange={(e) => setPromoSettings(prev => ({ ...prev, secondaryButtonTextAr: e.target.value }))}
+                    dir="rtl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Secondary Button Link</Label>
+                  <Input
+                    value={promoSettings.secondaryButtonLink}
+                    onChange={(e) => setPromoSettings(prev => ({ ...prev, secondaryButtonLink: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Background Image</Label>
+                <MediaPicker
+                  value={promoSettings.backgroundImage}
+                  onChange={(url) => setPromoSettings(prev => ({ ...prev, backgroundImage: url }))}
+                />
               </div>
 
               <Button 
