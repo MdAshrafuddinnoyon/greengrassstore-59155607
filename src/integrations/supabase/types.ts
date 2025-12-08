@@ -666,6 +666,158 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_members: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          joined_at: string
+          points_earned: number
+          points_redeemed: number
+          tier_id: string | null
+          tier_updated_at: string | null
+          total_spend: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          points_earned?: number
+          points_redeemed?: number
+          tier_id?: string | null
+          tier_updated_at?: string | null
+          total_spend?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          points_earned?: number
+          points_redeemed?: number
+          tier_id?: string | null
+          tier_updated_at?: string | null
+          total_spend?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vip_members_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "vip_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vip_settings: {
+        Row: {
+          created_at: string
+          hero_subtitle: string | null
+          hero_subtitle_ar: string | null
+          hero_title: string | null
+          hero_title_ar: string | null
+          id: string
+          is_enabled: boolean
+          points_per_aed: number | null
+          program_description: string | null
+          program_description_ar: string | null
+          program_name: string
+          program_name_ar: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hero_subtitle?: string | null
+          hero_subtitle_ar?: string | null
+          hero_title?: string | null
+          hero_title_ar?: string | null
+          id?: string
+          is_enabled?: boolean
+          points_per_aed?: number | null
+          program_description?: string | null
+          program_description_ar?: string | null
+          program_name?: string
+          program_name_ar?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hero_subtitle?: string | null
+          hero_subtitle_ar?: string | null
+          hero_title?: string | null
+          hero_title_ar?: string | null
+          id?: string
+          is_enabled?: boolean
+          points_per_aed?: number | null
+          program_description?: string | null
+          program_description_ar?: string | null
+          program_name?: string
+          program_name_ar?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vip_tiers: {
+        Row: {
+          benefits: Json | null
+          benefits_ar: Json | null
+          color_gradient: string | null
+          created_at: string
+          discount_percent: number
+          display_order: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_best_value: boolean
+          max_spend: number | null
+          min_spend: number
+          name: string
+          name_ar: string | null
+          updated_at: string
+        }
+        Insert: {
+          benefits?: Json | null
+          benefits_ar?: Json | null
+          color_gradient?: string | null
+          created_at?: string
+          discount_percent?: number
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_best_value?: boolean
+          max_spend?: number | null
+          min_spend?: number
+          name: string
+          name_ar?: string | null
+          updated_at?: string
+        }
+        Update: {
+          benefits?: Json | null
+          benefits_ar?: Json | null
+          color_gradient?: string | null
+          created_at?: string
+          discount_percent?: number
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_best_value?: boolean
+          max_spend?: number | null
+          min_spend?: number
+          name?: string
+          name_ar?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wishlist: {
         Row: {
           created_at: string

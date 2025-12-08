@@ -40,6 +40,7 @@ import { SMTPSettingsManager } from "@/components/admin/SMTPSettingsManager";
 import { SocialIntegrationManager } from "@/components/admin/SocialIntegrationManager";
 import { BrandingManager } from "@/components/admin/BrandingManager";
 import { InvoiceTemplateManager } from "@/components/admin/InvoiceTemplateManager";
+import { VIPManager } from "@/components/admin/VIPManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -137,6 +138,8 @@ const Admin = () => {
         return <PopupManager />;
       case "coupons":
         return <CouponManager />;
+      case "vip":
+        return <VIPManager />;
       case "social":
         return <SocialIntegrationManager />;
       case "settings":
@@ -210,6 +213,7 @@ const Admin = () => {
       footer: "Footer Menu",
       popups: "Popup Notifications",
       coupons: "Discount Coupons",
+      vip: "VIP Program",
       social: "Social Integration",
       settings: "Settings",
     };
