@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Mail, Clock, Send, MessageCircle, Instagram, Facebook, ArrowRight, Sparkles, CheckCircle2, Leaf, Loader2 } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Send, MessageCircle, Instagram, Facebook, Sparkles, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,29 +113,29 @@ const Contact = () => {
   const contactInfo = [
     {
       icon: MapPin,
-      title: isArabic ? "زيارة متجرنا" : "Visit Our Store",
-      details: [isArabic ? content.addressLine2Ar : content.addressLine2, isArabic ? content.addressAr : content.address],
-      color: "from-emerald-500 to-green-600",
+      title: isArabic ? "موقعنا" : "Location",
+      details: [isArabic ? content.addressAr : content.address, isArabic ? content.addressLine2Ar : content.addressLine2],
+      color: "bg-emerald-500",
     },
     {
       icon: Phone,
-      title: isArabic ? "اتصل بنا" : "Call Us",
+      title: isArabic ? "هاتف" : "Phone",
       details: [content.phone],
-      color: "from-blue-500 to-indigo-600",
+      color: "bg-blue-500",
       href: `tel:${content.phone.replace(/\s/g, '')}`,
     },
     {
       icon: Mail,
-      title: isArabic ? "راسلنا" : "Email Us",
+      title: isArabic ? "بريد" : "Email",
       details: [content.email],
-      color: "from-purple-500 to-pink-600",
+      color: "bg-purple-500",
       href: `mailto:${content.email}`,
     },
     {
       icon: Clock,
-      title: isArabic ? "ساعات العمل" : "Working Hours",
+      title: isArabic ? "ساعات" : "Hours",
       details: [isArabic ? content.workingHoursAr : content.workingHours, isArabic ? content.fridayHoursAr : content.fridayHours],
-      color: "from-orange-500 to-red-600",
+      color: "bg-orange-500",
     },
   ];
 
@@ -143,18 +143,16 @@ const Contact = () => {
     {
       icon: MessageCircle,
       title: "WhatsApp",
-      subtitle: isArabic ? "تواصل الآن" : "Chat now",
+      subtitle: isArabic ? "تواصل" : "Chat",
       href: `https://wa.me/${content.whatsappNumber.replace(/[^0-9]/g, '')}`,
       color: "bg-[#25D366]",
-      hoverColor: "hover:bg-[#20BD5A]",
     },
     {
       icon: Phone,
-      title: isArabic ? "اتصل بنا" : "Call Us",
+      title: isArabic ? "اتصل" : "Call",
       subtitle: content.phone,
       href: `tel:${content.phone.replace(/\s/g, '')}`,
-      color: "bg-[#2d5a3d]",
-      hoverColor: "hover:bg-[#234830]",
+      color: "bg-primary",
     },
     {
       icon: Instagram,
@@ -162,7 +160,6 @@ const Contact = () => {
       subtitle: content.instagramHandle,
       href: content.instagramUrl,
       color: "bg-gradient-to-r from-purple-500 to-pink-500",
-      hoverColor: "hover:opacity-90",
     },
     {
       icon: Facebook,
@@ -170,7 +167,6 @@ const Contact = () => {
       subtitle: content.facebookName,
       href: content.facebookUrl,
       color: "bg-[#1877F2]",
-      hoverColor: "hover:bg-[#166FE5]",
     },
   ];
 
@@ -178,7 +174,7 @@ const Contact = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-background">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -189,106 +185,74 @@ const Contact = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white" dir={isArabic ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen flex flex-col bg-background" dir={isArabic ? 'rtl' : 'ltr'}>
       <Header />
       
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#2d5a3d] via-[#1a3d28] to-[#0f2418]" />
+      <main className="flex-1 pb-20 lg:pb-0">
+        {/* Hero Section - Modern Gradient */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+          {/* Background Elements */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+          </div>
           
-          <div className="absolute top-20 left-10 w-72 h-72 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-          
-          <div className="relative container mx-auto px-4 py-20 md:py-28">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="relative container mx-auto px-4 py-16 md:py-24">
+            <div className="max-w-4xl mx-auto text-center">
               <motion.div
-                initial={{ opacity: 0, x: isArabic ? 30 : -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4"
               >
-                <div className="flex items-center gap-2 mb-6">
-                  <Sparkles className="w-5 h-5 text-emerald-400" />
-                  <span className="text-emerald-400 font-medium text-sm uppercase tracking-wider">
-                    {isArabic ? "تواصل معنا" : "Get in Touch"}
-                  </span>
-                </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 leading-tight">
-                  {isArabic ? content.heroTitleAr.split(' ').slice(0, 2).join(' ') : content.heroTitle.split(' ').slice(0, 3).join(' ')}<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">
-                    {isArabic ? content.heroTitleAr.split(' ').slice(2).join(' ') : content.heroTitle.split(' ').slice(3).join(' ')}
-                  </span>
-                </h1>
-                <p className="text-lg text-white/80 mb-8 max-w-md">
-                  {isArabic ? content.heroSubtitleAr : content.heroSubtitle}
-                </p>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {features.map((feature, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 + idx * 0.1 }}
-                      className="flex items-center gap-2 text-white/90"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </motion.div>
-                  ))}
-                </div>
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium">
+                  <Sparkles className="w-4 h-4" />
+                  {isArabic ? "تواصل معنا" : "Get in Touch"}
+                </span>
               </motion.div>
               
-              {/* Contact Cards */}
-              <motion.div
-                initial={{ opacity: 0, x: isArabic ? -30 : 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="grid grid-cols-2 gap-4"
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6"
               >
-                {contactInfo.map((info, idx) => (
-                  <motion.div
-                    key={info.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + idx * 0.1 }}
-                    className="group"
+                {isArabic ? content.heroTitleAr : content.heroTitle}
+              </motion.h1>
+              
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-lg text-white/80 max-w-2xl mx-auto mb-10"
+              >
+                {isArabic ? content.heroSubtitleAr : content.heroSubtitle}
+              </motion.p>
+
+              {/* Features Grid - Responsive */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+              >
+                {features.map((feature, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 px-4 py-3 bg-white/10 backdrop-blur-sm rounded-xl text-white/90"
                   >
-                    {info.href ? (
-                      <a
-                        href={info.href}
-                        className="block bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-5 hover:bg-white/20 transition-all duration-300"
-                      >
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${info.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                          <info.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-white mb-1">{info.title}</h3>
-                        {info.details.map((detail, i) => (
-                          <p key={i} className="text-white/70 text-sm">{detail}</p>
-                        ))}
-                      </a>
-                    ) : (
-                      <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${info.color} flex items-center justify-center mb-4`}>
-                          <info.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-white mb-1">{info.title}</h3>
-                        {info.details.map((detail, i) => (
-                          <p key={i} className="text-white/70 text-sm">{detail}</p>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
+                    <CheckCircle2 className="w-4 h-4 text-green-300 flex-shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </div>
                 ))}
               </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Quick Connect Bar */}
-        <section className="bg-gray-50 py-6 border-b">
+        {/* Quick Connect - Responsive Grid */}
+        <section className="py-8 bg-muted/50 border-b border-border">
           <div className="container mx-auto px-4">
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
               {quickActions.map((action, idx) => (
                 <motion.a
                   key={action.title}
@@ -297,14 +261,16 @@ const Contact = () => {
                   rel={action.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
+                  transition={{ delay: idx * 0.05 }}
                   viewport={{ once: true }}
-                  className={`flex items-center gap-3 px-6 py-3 ${action.color} ${action.hoverColor} text-white rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105`}
+                  className={`flex items-center gap-3 p-4 ${action.color} text-white rounded-2xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]`}
                 >
-                  <action.icon className="w-5 h-5" />
-                  <div className={isArabic ? "text-right" : "text-left"}>
-                    <p className="font-semibold text-sm">{action.title}</p>
-                    <p className="text-xs text-white/80">{action.subtitle}</p>
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <action.icon className="w-5 h-5" />
+                  </div>
+                  <div className={`min-w-0 flex-1 ${isArabic ? "text-right" : "text-left"}`}>
+                    <p className="font-bold text-sm">{action.title}</p>
+                    <p className="text-xs text-white/80 truncate">{action.subtitle}</p>
                   </div>
                 </motion.a>
               ))}
@@ -312,50 +278,91 @@ const Contact = () => {
           </div>
         </section>
 
-        {/* Main Content - Form & Map */}
-        <section className="py-16 md:py-24">
+        {/* Contact Info Cards - Responsive Grid */}
+        <section className="py-12 bg-background">
           <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-5 gap-12">
-              {/* Form Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="lg:col-span-3"
-              >
-                <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-[#2d5a3d]/10 flex items-center justify-center">
-                      <Send className="w-5 h-5 text-[#2d5a3d]" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {contactInfo.map((info, idx) => (
+                <motion.div
+                  key={info.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  viewport={{ once: true }}
+                  className="group"
+                >
+                  {info.href ? (
+                    <a
+                      href={info.href}
+                      className="flex flex-col items-center text-center p-6 bg-card rounded-2xl border border-border hover:border-primary/30 hover:shadow-lg transition-all"
+                    >
+                      <div className={`w-14 h-14 ${info.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                        <info.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-bold text-foreground mb-2">{info.title}</h3>
+                      {info.details.map((detail, i) => (
+                        <p key={i} className="text-muted-foreground text-sm">{detail}</p>
+                      ))}
+                    </a>
+                  ) : (
+                    <div className="flex flex-col items-center text-center p-6 bg-card rounded-2xl border border-border">
+                      <div className={`w-14 h-14 ${info.color} rounded-2xl flex items-center justify-center mb-4`}>
+                        <info.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-bold text-foreground mb-2">{info.title}</h3>
+                      {info.details.map((detail, i) => (
+                        <p key={i} className="text-muted-foreground text-sm">{detail}</p>
+                      ))}
                     </div>
-                    <span className="text-[#2d5a3d] font-semibold text-sm uppercase tracking-wider">
-                      {isArabic ? "إرسال رسالة" : "Send Message"}
-                    </span>
-                  </div>
-                  <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-2">
-                    {isArabic ? "نموذج الاتصال" : "Contact Form"}
-                  </h2>
-                  <p className="text-gray-500 mb-8">
-                    {isArabic ? "املأ النموذج أدناه وسنرد عليك خلال 24 ساعة." : "Fill out the form below and we'll get back to you within 24 hours."}
-                  </p>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
+        {/* Form & Map Section */}
+        <section className="py-12 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Contact Form */}
+              <motion.div
+                initial={{ opacity: 0, x: isArabic ? 30 : -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+              >
+                <div className="bg-card rounded-3xl shadow-xl p-6 md:p-8 border border-border h-full">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Send className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">
+                        {isArabic ? "أرسل رسالة" : "Send Message"}
+                      </h2>
+                      <p className="text-muted-foreground text-sm">
+                        {isArabic ? "سنرد عليك خلال 24 ساعة" : "We'll respond within 24 hours"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          {isArabic ? "الاسم" : "Your Name"} <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground">
+                          {isArabic ? "الاسم" : "Name"} <span className="text-destructive">*</span>
                         </label>
                         <Input
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           placeholder={isArabic ? "محمد أحمد" : "John Doe"}
                           required
-                          className="h-12 rounded-xl border-gray-200 focus:border-[#2d5a3d] focus:ring-[#2d5a3d]/20"
+                          className="h-12 rounded-xl"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          {isArabic ? "البريد الإلكتروني" : "Email Address"} <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground">
+                          {isArabic ? "البريد" : "Email"} <span className="text-destructive">*</span>
                         </label>
                         <Input
                           type="email"
@@ -363,140 +370,114 @@ const Contact = () => {
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           placeholder="john@example.com"
                           required
-                          className="h-12 rounded-xl border-gray-200 focus:border-[#2d5a3d] focus:ring-[#2d5a3d]/20"
+                          className="h-12 rounded-xl"
                         />
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          {isArabic ? "رقم الهاتف" : "Phone Number"}
+                        <label className="block text-sm font-medium text-foreground">
+                          {isArabic ? "الهاتف" : "Phone"}
                         </label>
                         <Input
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           placeholder="+971 50 123 4567"
-                          className="h-12 rounded-xl border-gray-200 focus:border-[#2d5a3d] focus:ring-[#2d5a3d]/20"
+                          className="h-12 rounded-xl"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          {isArabic ? "الموضوع" : "Subject"} <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-foreground">
+                          {isArabic ? "الموضوع" : "Subject"} <span className="text-destructive">*</span>
                         </label>
                         <Input
                           value={formData.subject}
                           onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                           placeholder={isArabic ? "كيف يمكننا مساعدتك؟" : "How can we help?"}
                           required
-                          className="h-12 rounded-xl border-gray-200 focus:border-[#2d5a3d] focus:ring-[#2d5a3d]/20"
+                          className="h-12 rounded-xl"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        {isArabic ? "رسالتك" : "Your Message"} <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-foreground">
+                        {isArabic ? "الرسالة" : "Message"} <span className="text-destructive">*</span>
                       </label>
                       <Textarea
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        placeholder={isArabic ? "أخبرنا المزيد عن استفسارك..." : "Tell us more about your inquiry..."}
+                        placeholder={isArabic ? "اكتب رسالتك هنا..." : "Write your message here..."}
                         required
-                        className="min-h-[150px] rounded-xl border-gray-200 focus:border-[#2d5a3d] focus:ring-[#2d5a3d]/20 resize-none"
+                        rows={5}
+                        className="rounded-xl resize-none"
                       />
                     </div>
 
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full h-14 bg-[#2d5a3d] hover:bg-[#234830] text-white font-semibold rounded-xl text-lg shadow-lg shadow-[#2d5a3d]/20 hover:shadow-xl transition-all"
+                      className="w-full h-14 rounded-xl text-base font-semibold"
                     >
                       {isSubmitting ? (
-                        <span className="flex items-center gap-2">
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          {isArabic ? "جارٍ الإرسال..." : "Sending..."}
-                        </span>
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                          {isArabic ? "جاري الإرسال..." : "Sending..."}
+                        </>
                       ) : (
-                        <span className="flex items-center gap-2">
-                          <Send className="w-5 h-5" />
+                        <>
+                          <Send className="w-5 h-5 mr-2" />
                           {isArabic ? "إرسال الرسالة" : "Send Message"}
-                          <ArrowRight className="w-4 h-4" />
-                        </span>
+                        </>
                       )}
                     </Button>
                   </form>
                 </div>
               </motion.div>
 
-              {/* Sidebar - Map & Info */}
+              {/* Map */}
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: isArabic ? -30 : 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="lg:col-span-2 space-y-6"
               >
-                {/* Map */}
-                <div className="rounded-3xl overflow-hidden shadow-xl h-[300px] border border-gray-100">
+                <div className="bg-card rounded-3xl shadow-xl overflow-hidden border border-border h-full min-h-[400px] lg:min-h-full">
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-foreground">
+                          {isArabic ? "موقعنا" : "Our Location"}
+                        </h3>
+                        <p className="text-muted-foreground text-sm">
+                          {isArabic ? content.addressAr : content.address}
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(content.address + ', ' + content.addressLine2)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      {isArabic ? "فتح" : "Open"}
+                    </a>
+                  </div>
                   <iframe
                     src={content.mapEmbedUrl}
                     width="100%"
                     height="100%"
-                    style={{ border: 0 }}
+                    style={{ border: 0, minHeight: '350px' }}
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     title="Store Location"
                   />
                 </div>
-
-                {/* Store Info Card */}
-                <div className="bg-gradient-to-br from-[#2d5a3d] to-[#1a3d28] rounded-3xl p-6 text-white">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                      <Leaf className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold">Green Grass Store</h3>
-                      <p className="text-sm text-white/70">{isArabic ? content.addressLine2Ar : content.addressLine2}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-4 h-4 mt-0.5 text-emerald-400" />
-                      <p className="text-white/90">{isArabic ? content.addressAr : content.address}, {isArabic ? content.addressLine2Ar : content.addressLine2}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-4 h-4 text-emerald-400" />
-                      <a href={`tel:${content.phone.replace(/\s/g, '')}`} className="text-white/90 hover:text-white">{content.phone}</a>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-emerald-400" />
-                      <a href={`mailto:${content.email}`} className="text-white/90 hover:text-white">{content.email}</a>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Clock className="w-4 h-4 mt-0.5 text-emerald-400" />
-                      <div className="text-white/90">
-                        <p>{isArabic ? content.workingHoursAr : content.workingHours}</p>
-                        <p>{isArabic ? content.fridayHoursAr : content.fridayHours}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* WhatsApp CTA */}
-                <a
-                  href={`https://wa.me/${content.whatsappNumber.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-3xl p-6 text-center transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
-                >
-                  <MessageCircle className="w-8 h-8 mx-auto mb-3" />
-                  <h3 className="font-bold text-lg mb-1">{isArabic ? "تواصل عبر واتساب" : "Chat on WhatsApp"}</h3>
-                  <p className="text-white/90 text-sm">{isArabic ? "احصل على رد فوري" : "Get instant response"}</p>
-                </a>
               </motion.div>
             </div>
           </div>
