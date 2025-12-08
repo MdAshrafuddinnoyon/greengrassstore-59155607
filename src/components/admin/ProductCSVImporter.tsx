@@ -81,109 +81,46 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
   const parseShopifyCSV = (lines: string[], headers: string[]): CSVProduct[] => {
     const products: CSVProduct[] = [];
     const productMap = new Map<string, CSVProduct>();
-    const imagesMap = new Map<string, Set<string>>();
 
     for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const values = parseCSVLine(line);
-      if (values.length === 0) continue;
-
+      const values = parseCSVLine(lines[i]);
       const data: Record<string, string> = {};
-
+      
       headers.forEach((header, index) => {
-        data[header.toLowerCase().replace(/\s+/g, '_').replace(/[()]/g, '')] = values[index]?.trim() || '';
+        data[header.toLowerCase().replace(/\s+/g, '_')] = values[index]?.trim() || '';
       });
 
       const handle = data['handle'] || '';
       const title = data['title'] || '';
-
-      // Skip empty rows (when only handle is present without title)
-      if (!title) continue;
-
-      // Shopify exports multiple rows per product (variants + gallery images)
+      
+      // Shopify exports multiple rows per product (variants)
       if (handle && !productMap.has(handle)) {
-        const variantPrice = data['variant_price'] || data['price'] || '0';
-        const variantComparePrice = data['variant_compare_at_price'] || data['compare_at_price'] || '';
-
         productMap.set(handle, {
           name: title,
           slug: handle,
-          description: data['body_html'] || data['body_html'] || data['body'] || data['description'] || '',
-          category: data['type'] || data['product_type'] || data['product_category'] || 'general',
+          description: data['body_(html)'] || data['body_html'] || data['body'] || '',
+          category: data['type'] || data['product_type'] || 'general',
           subcategory: data['vendor'] || '',
-          price: variantPrice,
-          compare_at_price: variantComparePrice,
+          price: data['variant_price'] || data['price'] || '0',
+          compare_at_price: data['variant_compare_at_price'] || data['compare_at_price'] || '',
           sku: data['variant_sku'] || data['sku'] || '',
-          stock_quantity: data['variant_inventory_qty'] || data['inventory_quantity'] || data['variant_inventory_tracker'] === 'shopify' ? data['variant_inventory_qty'] : '10',
+          stock_quantity: data['variant_inventory_qty'] || data['inventory_quantity'] || '10',
           featured_image: data['image_src'] || data['image'] || '',
-          images: '',
+          images: data['variant_image'] || '',
           tags: data['tags'] || '',
           is_featured: 'false',
-          is_on_sale: (variantComparePrice && parseFloat(variantComparePrice) > parseFloat(variantPrice || '0')) ? 'true' : 'false',
+          is_on_sale: (data['variant_compare_at_price'] && parseFloat(data['variant_compare_at_price']) > parseFloat(data['variant_price'] || '0')) ? 'true' : 'false',
           is_new: 'false',
-          weight: data['variant_grams'] || data['variant_weight_unit'] || '',
+          weight: data['variant_grams'] || '',
         });
-
-        // Initialize images set
-        if (!imagesMap.has(handle)) {
-          imagesMap.set(handle, new Set());
-        }
-
-        // Add main image
-        if (data['image_src']) {
-          imagesMap.get(handle)!.add(data['image_src']);
-        }
-
-        // Add gallery images
-        const galleryUrls = data['gallery_image_urls'] || '';
-        if (galleryUrls) {
-          galleryUrls.split(/[,|]/).forEach(url => {
-            const trimmedUrl = url.trim();
-            if (trimmedUrl) {
-              imagesMap.get(handle)!.add(trimmedUrl);
-            }
-          });
-        }
       } else if (handle && productMap.has(handle)) {
-        // Additional rows for same product (variants or gallery images)
+        // Add additional images from variants
         const existing = productMap.get(handle)!;
-
-        // Add variant image
-        if (data['variant_image']) {
-          imagesMap.get(handle)!.add(data['variant_image']);
-        }
-
-        // Add image from image_src
-        if (data['image_src']) {
-          imagesMap.get(handle)!.add(data['image_src']);
-        }
-
-        // Add gallery images from additional rows
-        const galleryUrls = data['gallery_image_urls'] || '';
-        if (galleryUrls) {
-          galleryUrls.split(/[,|]/).forEach(url => {
-            const trimmedUrl = url.trim();
-            if (trimmedUrl) {
-              imagesMap.get(handle)!.add(trimmedUrl);
-            }
-          });
+        if (data['image_src'] && !existing.images?.includes(data['image_src'])) {
+          existing.images = existing.images ? `${existing.images}|${data['image_src']}` : data['image_src'];
         }
       }
     }
-
-    // Consolidate images
-    productMap.forEach((product, handle) => {
-      const imageSet = imagesMap.get(handle);
-      if (imageSet && imageSet.size > 0) {
-        const imagesArray = Array.from(imageSet);
-        // First image is featured image
-        product.featured_image = product.featured_image || imagesArray[0];
-        // Rest are gallery images
-        product.images = imagesArray.slice(1).join('|');
-      }
-    });
 
     productMap.forEach(product => products.push(product));
     return products;
@@ -192,109 +129,46 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
   // Parse WooCommerce CSV format
   const parseWooCommerceCSV = (lines: string[], headers: string[]): CSVProduct[] => {
     const products: CSVProduct[] = [];
-    const productMap = new Map<string, CSVProduct>();
-    const imagesMap = new Map<string, Set<string>>();
 
     for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const values = parseCSVLine(line);
-      if (values.length === 0) continue;
-
+      const values = parseCSVLine(lines[i]);
       const data: Record<string, string> = {};
-
+      
       headers.forEach((header, index) => {
         data[header.toLowerCase().replace(/\s+/g, '_')] = values[index]?.trim() || '';
       });
 
+      // Skip variable product parent (type === 'variable')
       const productType = data['type'] || '';
-      const name = data['name'] || data['post_title'] || data['title'] || '';
-      const sku = data['sku'] || data['_sku'] || '';
-      const parentSku = data['parent'] || '';
-
-      // Skip variable product parents (they don't have price)
       if (productType === 'variable') continue;
 
-      // For variations, use parent name as base or variation name
-      const productName = parentSku && productType === 'variation'
-        ? name.split(' - ')[0] || name
-        : name;
-
-      if (!productName) continue;
+      const name = data['name'] || data['post_title'] || data['title'] || '';
+      if (!name) continue;
 
       const regularPrice = data['regular_price'] || data['price'] || '0';
       const salePrice = data['sale_price'] || '';
-      const published = data['published'] === '1' || data['published']?.toLowerCase() === 'true';
-      const shortDesc = data['short_description'] || '';
-      const description = data['description'] || data['post_content'] || shortDesc || '';
 
-      // Extract categories (can be hierarchical like "Plants > Indoor")
-      const categories = data['categories'] || data['product_cat'] || data['category'] || 'general';
-      const categoryParts = categories.split(/[>,]/).map(c => c.trim());
-
-      // Process images
-      const mainImage = data['images'] || data['image'] || data['featured_image'] || '';
-      const galleryImages = data['gallery_image_urls'] || data['gallery'] || data['product_gallery'] || '';
-
-      // Use SKU as unique identifier
-      const productKey = sku || generateSlug(productName);
-
-      if (!productMap.has(productKey)) {
-        productMap.set(productKey, {
-          name: productName,
-          slug: data['slug'] || data['post_name'] || generateSlug(productName),
-          description,
-          category: categoryParts[0] || 'general',
-          subcategory: categoryParts[1] || '',
-          price: salePrice || regularPrice,
-          compare_at_price: salePrice ? regularPrice : '',
-          sku: productKey,
-          stock_quantity: data['stock'] || data['_stock'] || data['stock_quantity'] || data['in_stock'] === '1' ? '10' : '0',
-          featured_image: mainImage,
-          images: '',
-          tags: data['tags'] || data['product_tag'] || '',
-          is_featured: data['featured'] === '1' || data['is_featured']?.toLowerCase() === 'yes' ? 'true' : 'false',
-          is_on_sale: salePrice ? 'true' : 'false',
-          is_new: 'false',
-          weight: data['weight'] || data['_weight'] || '',
-          dimensions: data['dimensions'] || '',
-        });
-
-        // Initialize images set
-        if (!imagesMap.has(productKey)) {
-          imagesMap.set(productKey, new Set());
-        }
-
-        // Add main image
-        if (mainImage) {
-          mainImage.split(/[,|]/).forEach(url => {
-            const trimmedUrl = url.trim();
-            if (trimmedUrl) imagesMap.get(productKey)!.add(trimmedUrl);
-          });
-        }
-
-        // Add gallery images
-        if (galleryImages) {
-          galleryImages.split(/[,|]/).forEach(url => {
-            const trimmedUrl = url.trim();
-            if (trimmedUrl) imagesMap.get(productKey)!.add(trimmedUrl);
-          });
-        }
-      }
+      products.push({
+        name,
+        slug: data['slug'] || data['post_name'] || generateSlug(name),
+        description: data['description'] || data['post_content'] || data['short_description'] || '',
+        category: data['categories'] || data['product_cat'] || data['category'] || 'general',
+        subcategory: '',
+        price: salePrice || regularPrice,
+        compare_at_price: salePrice ? regularPrice : '',
+        sku: data['sku'] || data['_sku'] || '',
+        stock_quantity: data['stock'] || data['_stock'] || data['stock_quantity'] || '10',
+        featured_image: data['images'] || data['image'] || data['featured_image'] || '',
+        images: data['gallery'] || data['product_gallery'] || '',
+        tags: data['tags'] || data['product_tag'] || '',
+        is_featured: data['featured'] === '1' || data['is_featured'] === 'yes' ? 'true' : 'false',
+        is_on_sale: salePrice ? 'true' : 'false',
+        is_new: 'false',
+        weight: data['weight'] || data['_weight'] || '',
+        dimensions: data['dimensions'] || '',
+      });
     }
 
-    // Consolidate images
-    productMap.forEach((product, key) => {
-      const imageSet = imagesMap.get(key);
-      if (imageSet && imageSet.size > 0) {
-        const imagesArray = Array.from(imageSet);
-        product.featured_image = product.featured_image || imagesArray[0];
-        product.images = imagesArray.slice(1).join('|');
-      }
-    });
-
-    productMap.forEach(product => products.push(product));
     return products;
   };
 

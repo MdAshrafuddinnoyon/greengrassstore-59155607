@@ -23,8 +23,7 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeft,
-  Share2,
-  Crown
+  Share2
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -45,7 +44,6 @@ const mainNavItems: NavItem[] = [
   { id: "categories", label: "Categories", icon: FolderTree },
   { id: "orders", label: "Orders", icon: Receipt },
   { id: "customers", label: "Customers", icon: UserCheck },
-  { id: "vip", label: "VIP Program", icon: Crown },
   { id: "blog", label: "Blog", icon: FileText },
   { id: "subscribers", label: "Subscribers", icon: MessageSquare },
   { id: "requests", label: "Requests", icon: MessageSquare },

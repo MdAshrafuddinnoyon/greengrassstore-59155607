@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound, Crown, Sparkles } from "lucide-react";
+import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useWishlistStore, WishlistItem } from "@/stores/wishlistStore";
@@ -60,22 +60,6 @@ interface Profile {
   avatar_url: string | null;
 }
 
-interface VIPMembership {
-  id: string;
-  tier_id: string | null;
-  total_spend: number;
-  points_earned: number;
-  points_redeemed: number;
-  joined_at: string;
-  tier?: {
-    id: string;
-    name: string;
-    name_ar: string;
-    color_gradient: string;
-    discount_percent: number;
-  };
-}
-
 const Account = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -90,7 +74,6 @@ const Account = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [vipMembership, setVipMembership] = useState<VIPMembership | null>(null);
   
   // Password change states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -163,41 +146,10 @@ const Account = () => {
         setAddress(data.address || "");
         setCity(data.city || "");
       }
-
-      // Fetch VIP membership
-      await fetchVIPMembership(userId);
     } catch (error: any) {
       console.error("Error fetching profile:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchVIPMembership = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("vip_members")
-        .select(`
-          *,
-          tier:vip_tiers(
-            id,
-            name,
-            name_ar,
-            color_gradient,
-            discount_percent
-          )
-        `)
-        .eq("user_id", userId)
-        .eq("is_active", true)
-        .single();
-
-      if (error && error.code !== "PGRST116") {
-        throw error;
-      }
-
-      setVipMembership(data);
-    } catch (error: any) {
-      console.error("Error fetching VIP membership:", error);
     }
   };
 
@@ -803,98 +755,6 @@ const Account = () => {
                       )}
                     </div>
                   </div>
-
-                  {/* VIP Membership Card */}
-                  {vipMembership && vipMembership.tier && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-6"
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        <Crown className="w-5 h-5 text-yellow-600" />
-                        <h3 className="text-lg font-semibold text-foreground">
-                          {isArabic ? "عضوية VIP الخاصة بك" : "Your VIP Membership"}
-                        </h3>
-                      </div>
-
-                      <div className={`relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br ${vipMembership.tier.color_gradient} shadow-2xl`}>
-                        {/* Card Background Pattern */}
-                        <div className="absolute inset-0 opacity-10">
-                          <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
-                          <div className="absolute bottom-0 left-0 w-40 h-40 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
-                        </div>
-
-                        <div className="relative z-10">
-                          {/* Card Header */}
-                          <div className="flex items-start justify-between mb-8">
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <Crown className="w-6 h-6 text-white" />
-                                <span className="text-white/90 text-sm font-medium">
-                                  {isArabic ? "عضوية VIP" : "VIP Membership"}
-                                </span>
-                              </div>
-                              <h4 className="text-2xl font-bold text-white">
-                                {isArabic ? vipMembership.tier.name_ar : vipMembership.tier.name}
-                              </h4>
-                            </div>
-                            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                              <Sparkles className="w-4 h-4 text-yellow-300" />
-                              <span className="text-white font-semibold text-sm">
-                                {vipMembership.tier.discount_percent}% {isArabic ? "خصم" : "OFF"}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Card Stats */}
-                          <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                              <p className="text-white/70 text-xs mb-1">
-                                {isArabic ? "إجمالي الإنفاق" : "Total Spend"}
-                              </p>
-                              <p className="text-white text-2xl font-bold">
-                                {vipMembership.total_spend.toLocaleString()}
-                                <span className="text-base ml-1">AED</span>
-                              </p>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                              <p className="text-white/70 text-xs mb-1">
-                                {isArabic ? "النقاط المتاحة" : "Available Points"}
-                              </p>
-                              <p className="text-white text-2xl font-bold">
-                                {vipMembership.points_earned - vipMembership.points_redeemed}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Card Footer */}
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-white/70 text-xs mb-1">
-                                {isArabic ? "عضو منذ" : "Member Since"}
-                              </p>
-                              <p className="text-white font-medium">
-                                {new Date(vipMembership.joined_at).toLocaleDateString(isArabic ? 'ar-AE' : 'en-AE', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                                <User className="w-5 h-5 text-white" />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Card Chip Effect (like credit cards) */}
-                          <div className="absolute top-6 right-6 w-12 h-10 bg-gradient-to-br from-yellow-200/30 to-yellow-500/30 rounded-md border border-white/20" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
                 </motion.div>
               )}
 
