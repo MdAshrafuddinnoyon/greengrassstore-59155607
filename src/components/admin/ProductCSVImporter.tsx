@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileSpreadsheet, Download, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, Download, AlertCircle, CheckCircle2, Loader2, ShoppingBag, Store } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+
+type ImportSource = 'standard' | 'woocommerce' | 'shopify';
 
 interface CSVProduct {
   name: string;
@@ -26,6 +30,8 @@ interface CSVProduct {
   is_on_sale?: string;
   is_new?: string;
   discount_percentage?: string;
+  weight?: string;
+  dimensions?: string;
 }
 
 interface ImportResult {
@@ -44,17 +50,130 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
   const [csvData, setCsvData] = useState<CSVProduct[]>([]);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [progress, setProgress] = useState(0);
+  const [detectedSource, setDetectedSource] = useState<ImportSource>('standard');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateSlug = (name: string) => {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   };
 
-  const parseCSV = (text: string): CSVProduct[] => {
-    const lines = text.split('\n').filter(line => line.trim());
-    if (lines.length < 2) return [];
+  // Detect import source from CSV headers
+  const detectSource = (headers: string[]): ImportSource => {
+    const headerStr = headers.join(',').toLowerCase();
+    
+    // Shopify specific headers
+    if (headerStr.includes('variant_sku') || headerStr.includes('variant_grams') || 
+        headerStr.includes('image_src') || headerStr.includes('variant_inventory_qty')) {
+      return 'shopify';
+    }
+    
+    // WooCommerce specific headers
+    if (headerStr.includes('regular_price') || headerStr.includes('sale_price') || 
+        headerStr.includes('post_title') || headerStr.includes('_sku') ||
+        headerStr.includes('_stock') || headerStr.includes('woocommerce')) {
+      return 'woocommerce';
+    }
+    
+    return 'standard';
+  };
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+  // Parse Shopify CSV format
+  const parseShopifyCSV = (lines: string[], headers: string[]): CSVProduct[] => {
+    const products: CSVProduct[] = [];
+    const productMap = new Map<string, CSVProduct>();
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      const data: Record<string, string> = {};
+      
+      headers.forEach((header, index) => {
+        data[header.toLowerCase().replace(/\s+/g, '_')] = values[index]?.trim() || '';
+      });
+
+      const handle = data['handle'] || '';
+      const title = data['title'] || '';
+      
+      // Shopify exports multiple rows per product (variants)
+      if (handle && !productMap.has(handle)) {
+        productMap.set(handle, {
+          name: title,
+          slug: handle,
+          description: data['body_(html)'] || data['body_html'] || data['body'] || '',
+          category: data['type'] || data['product_type'] || 'general',
+          subcategory: data['vendor'] || '',
+          price: data['variant_price'] || data['price'] || '0',
+          compare_at_price: data['variant_compare_at_price'] || data['compare_at_price'] || '',
+          sku: data['variant_sku'] || data['sku'] || '',
+          stock_quantity: data['variant_inventory_qty'] || data['inventory_quantity'] || '10',
+          featured_image: data['image_src'] || data['image'] || '',
+          images: data['variant_image'] || '',
+          tags: data['tags'] || '',
+          is_featured: 'false',
+          is_on_sale: (data['variant_compare_at_price'] && parseFloat(data['variant_compare_at_price']) > parseFloat(data['variant_price'] || '0')) ? 'true' : 'false',
+          is_new: 'false',
+          weight: data['variant_grams'] || '',
+        });
+      } else if (handle && productMap.has(handle)) {
+        // Add additional images from variants
+        const existing = productMap.get(handle)!;
+        if (data['image_src'] && !existing.images?.includes(data['image_src'])) {
+          existing.images = existing.images ? `${existing.images}|${data['image_src']}` : data['image_src'];
+        }
+      }
+    }
+
+    productMap.forEach(product => products.push(product));
+    return products;
+  };
+
+  // Parse WooCommerce CSV format
+  const parseWooCommerceCSV = (lines: string[], headers: string[]): CSVProduct[] => {
+    const products: CSVProduct[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      const data: Record<string, string> = {};
+      
+      headers.forEach((header, index) => {
+        data[header.toLowerCase().replace(/\s+/g, '_')] = values[index]?.trim() || '';
+      });
+
+      // Skip variable product parent (type === 'variable')
+      const productType = data['type'] || '';
+      if (productType === 'variable') continue;
+
+      const name = data['name'] || data['post_title'] || data['title'] || '';
+      if (!name) continue;
+
+      const regularPrice = data['regular_price'] || data['price'] || '0';
+      const salePrice = data['sale_price'] || '';
+
+      products.push({
+        name,
+        slug: data['slug'] || data['post_name'] || generateSlug(name),
+        description: data['description'] || data['post_content'] || data['short_description'] || '',
+        category: data['categories'] || data['product_cat'] || data['category'] || 'general',
+        subcategory: '',
+        price: salePrice || regularPrice,
+        compare_at_price: salePrice ? regularPrice : '',
+        sku: data['sku'] || data['_sku'] || '',
+        stock_quantity: data['stock'] || data['_stock'] || data['stock_quantity'] || '10',
+        featured_image: data['images'] || data['image'] || data['featured_image'] || '',
+        images: data['gallery'] || data['product_gallery'] || '',
+        tags: data['tags'] || data['product_tag'] || '',
+        is_featured: data['featured'] === '1' || data['is_featured'] === 'yes' ? 'true' : 'false',
+        is_on_sale: salePrice ? 'true' : 'false',
+        is_new: 'false',
+        weight: data['weight'] || data['_weight'] || '',
+        dimensions: data['dimensions'] || '',
+      });
+    }
+
+    return products;
+  };
+
+  // Parse standard CSV format
+  const parseStandardCSV = (lines: string[], headers: string[]): CSVProduct[] => {
     const products: CSVProduct[] = [];
 
     for (let i = 1; i < lines.length; i++) {
@@ -63,7 +182,9 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
 
       headers.forEach((header, index) => {
         const value = values[index]?.trim() || '';
-        switch (header) {
+        const h = header.toLowerCase().replace(/\s+/g, '_');
+        
+        switch (h) {
           case 'name':
           case 'title':
           case 'product_name':
@@ -80,6 +201,7 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
           case 'description':
           case 'body':
           case 'body_html':
+          case 'body_(html)':
             product.description = value;
             break;
           case 'description_ar':
@@ -89,38 +211,46 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
           case 'category':
           case 'product_type':
           case 'type':
+          case 'categories':
             product.category = value || 'general';
             break;
           case 'subcategory':
+          case 'vendor':
             product.subcategory = value;
             break;
           case 'price':
           case 'variant_price':
+          case 'regular_price':
             product.price = value || '0';
             break;
           case 'compare_at_price':
           case 'compare_price':
           case 'original_price':
+          case 'variant_compare_at_price':
             product.compare_at_price = value;
             break;
           case 'sku':
           case 'variant_sku':
+          case '_sku':
             product.sku = value;
             break;
           case 'stock':
           case 'stock_quantity':
           case 'inventory_quantity':
+          case 'variant_inventory_qty':
+          case '_stock':
             product.stock_quantity = value;
             break;
           case 'featured_image':
           case 'image_src':
           case 'image':
           case 'image_url':
-            product.featured_image = value;
-            break;
           case 'images':
+            if (!product.featured_image) product.featured_image = value;
+            break;
           case 'gallery':
           case 'additional_images':
+          case 'product_gallery':
             product.images = value;
             break;
           case 'tags':
@@ -153,6 +283,24 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
     }
 
     return products;
+  };
+
+  const parseCSV = (text: string): CSVProduct[] => {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = parseCSVLine(lines[0]).map(h => h.trim());
+    const source = detectSource(headers);
+    setDetectedSource(source);
+
+    switch (source) {
+      case 'shopify':
+        return parseShopifyCSV(lines, headers);
+      case 'woocommerce':
+        return parseWooCommerceCSV(lines, headers);
+      default:
+        return parseStandardCSV(lines, headers);
+    }
   };
 
   const parseCSVLine = (line: string): string[] => {
@@ -196,7 +344,7 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
       if (products.length === 0) {
         toast.error('No valid products found in CSV');
       } else {
-        toast.success(`Found ${products.length} products ready to import`);
+        toast.success(`Found ${products.length} products (${detectedSource.toUpperCase()} format detected)`);
       }
     };
     reader.readAsText(file);
@@ -219,7 +367,6 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
         const price = parseFloat(product.price) || 0;
         const comparePrice = product.compare_at_price ? parseFloat(product.compare_at_price) : null;
         
-        // Calculate compare_at_price from discount percentage if provided
         let finalComparePrice = comparePrice;
         if (product.discount_percentage && !comparePrice) {
           const discount = parseFloat(product.discount_percentage);
@@ -228,13 +375,20 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
           }
         }
 
+        // Handle images (pipe-separated or comma-separated)
         const imagesArray = product.images 
-          ? product.images.split('|').map(img => img.trim()).filter(Boolean)
+          ? product.images.split(/[|,]/).map(img => img.trim()).filter(Boolean)
           : [];
 
+        // Handle tags (comma-separated)
         const tagsArray = product.tags 
           ? product.tags.split(',').map(tag => tag.trim()).filter(Boolean)
           : [];
+
+        // Extract first category if multiple are provided
+        const categoryParts = product.category.split(/[,>]/).map(c => c.trim());
+        const mainCategory = categoryParts[0] || 'general';
+        const subCategory = categoryParts[1] || product.subcategory || null;
 
         const productData = {
           name: product.name,
@@ -242,8 +396,8 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
           slug: product.slug || generateSlug(product.name),
           description: product.description || null,
           description_ar: product.description_ar || null,
-          category: product.category || 'general',
-          subcategory: product.subcategory || null,
+          category: mainCategory,
+          subcategory: subCategory,
           price,
           compare_at_price: finalComparePrice,
           currency: 'AED',
@@ -281,18 +435,50 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
     }
   };
 
-  const downloadTemplate = () => {
-    const template = `name,name_ar,category,subcategory,price,compare_at_price,discount_percentage,sku,stock_quantity,featured_image,images,tags,is_featured,is_on_sale,is_new,description,description_ar
+  const downloadTemplate = (type: ImportSource) => {
+    let template = '';
+    let filename = '';
+
+    switch (type) {
+      case 'shopify':
+        template = `Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Variant SKU,Variant Grams,Variant Inventory Qty,Variant Price,Variant Compare At Price,Image Src
+"example-plant","Example Plant","<p>Beautiful indoor plant</p>","Green Grass","Plants","indoor,green","TRUE","Size","Medium","PLANT-001","500","50","29.99","39.99","https://example.com/image.jpg"
+"ceramic-pot","Ceramic Pot","<p>Elegant ceramic pot</p>","Green Grass","Pots","ceramic,home","TRUE","Size","Large","POT-001","1000","100","19.99","","https://example.com/pot.jpg"`;
+        filename = 'shopify_product_template.csv';
+        break;
+
+      case 'woocommerce':
+        template = `ID,Type,SKU,Name,Published,Featured,Short description,Description,Regular price,Sale price,Categories,Tags,Images,Stock
+"","simple","PLANT-001","Example Plant","1","1","Beautiful indoor plant","<p>Beautiful indoor plant for your home</p>","39.99","29.99","Plants > Mixed Plant","indoor,green","https://example.com/image.jpg","50"
+"","simple","POT-001","Ceramic Pot","1","0","Elegant ceramic pot","<p>Elegant ceramic pot for your plants</p>","19.99","","Pots > Ceramic Pot","ceramic,home","https://example.com/pot.jpg","100"`;
+        filename = 'woocommerce_product_template.csv';
+        break;
+
+      default:
+        template = `name,name_ar,category,subcategory,price,compare_at_price,discount_percentage,sku,stock_quantity,featured_image,images,tags,is_featured,is_on_sale,is_new,description,description_ar
 "Example Plant","نبتة مثال","Plants","Mixed Plant",29.99,39.99,,PLANT-001,50,https://example.com/image.jpg,https://example.com/img2.jpg|https://example.com/img3.jpg,"indoor,green",true,true,false,"Beautiful indoor plant","نبتة داخلية جميلة"
 "Ceramic Pot","وعاء سيراميك","Pots","Ceramic Pot",19.99,,10,POT-001,100,https://example.com/pot.jpg,,"ceramic,home",false,true,true,"Elegant ceramic pot","وعاء سيراميك أنيق"`;
+        filename = 'product_import_template.csv';
+    }
 
     const blob = new Blob([template], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'product_import_template.csv';
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const getSourceBadge = () => {
+    switch (detectedSource) {
+      case 'shopify':
+        return <Badge className="bg-green-100 text-green-800"><ShoppingBag className="w-3 h-3 mr-1" /> Shopify</Badge>;
+      case 'woocommerce':
+        return <Badge className="bg-purple-100 text-purple-800"><Store className="w-3 h-3 mr-1" /> WooCommerce</Badge>;
+      default:
+        return <Badge variant="secondary">Standard CSV</Badge>;
+    }
   };
 
   return (
@@ -300,15 +486,76 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">CSV Import</h3>
-          <p className="text-sm text-muted-foreground">Import products from CSV file</p>
+          <h3 className="text-lg font-semibold">Product Import</h3>
+          <p className="text-sm text-muted-foreground">
+            Import products from Shopify, WooCommerce, or CSV
+          </p>
         </div>
-        
-        <Button variant="outline" onClick={downloadTemplate}>
-          <Download className="w-4 h-4 mr-2" />
-          Download Template
-        </Button>
       </div>
+
+      {/* Template Downloads */}
+      <Tabs defaultValue="standard" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="standard">Standard CSV</TabsTrigger>
+          <TabsTrigger value="shopify">Shopify</TabsTrigger>
+          <TabsTrigger value="woocommerce">WooCommerce</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="standard" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Standard CSV Format</CardTitle>
+              <CardDescription>Basic CSV with all product fields</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="sm" onClick={() => downloadTemplate('standard')}>
+                <Download className="w-4 h-4 mr-2" />
+                Download Template
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="shopify" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4" />
+                Shopify Export Format
+              </CardTitle>
+              <CardDescription>
+                Export from Shopify Admin: Products → Export → CSV for Excel
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="sm" onClick={() => downloadTemplate('shopify')}>
+                <Download className="w-4 h-4 mr-2" />
+                Download Shopify Template
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="woocommerce" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Store className="w-4 h-4" />
+                WooCommerce Export Format
+              </CardTitle>
+              <CardDescription>
+                Export from WordPress: WooCommerce → Products → Export
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="sm" onClick={() => downloadTemplate('woocommerce')}>
+                <Download className="w-4 h-4 mr-2" />
+                Download WooCommerce Template
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Upload Area */}
       <Card>
@@ -320,7 +567,7 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
             <FileSpreadsheet className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="font-medium">Click to upload CSV file</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Supports: name, price, compare_at_price, discount_percentage, category, images, etc.
+              Auto-detects Shopify, WooCommerce, or Standard format
             </p>
             <input
               ref={fileInputRef}
@@ -340,6 +587,7 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
             <CardTitle className="text-lg flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-green-500" />
               {csvData.length} Products Found
+              <span className="ml-2">{getSourceBadge()}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -441,14 +689,13 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
       {/* Info */}
       <Alert>
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>CSV Format Tips</AlertTitle>
+        <AlertTitle>Supported Formats</AlertTitle>
         <AlertDescription className="space-y-2">
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li><strong>discount_percentage:</strong> Set discount % (e.g., 10 for 10% off) - auto-calculates compare price</li>
-            <li><strong>compare_at_price:</strong> Original price before discount</li>
-            <li><strong>images:</strong> Multiple images separated by | (pipe)</li>
-            <li><strong>tags:</strong> Multiple tags separated by comma</li>
-            <li><strong>is_featured/is_on_sale/is_new:</strong> Use true/false or yes/no</li>
+            <li><strong>Shopify:</strong> Export from Shopify Admin → Products → Export</li>
+            <li><strong>WooCommerce:</strong> Export from WooCommerce → Products → Export</li>
+            <li><strong>Standard:</strong> Any CSV with name, price, category columns</li>
+            <li>Format is auto-detected from CSV headers</li>
           </ul>
         </AlertDescription>
       </Alert>
