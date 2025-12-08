@@ -191,105 +191,102 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
           />
           
           {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-col gap-1.5 sm:gap-2 z-10">
             {product.is_on_sale && discountPercentage > 0 && (
-              <span className="flex items-center gap-1 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg">
-                <Percent className="w-3 h-3" />
+              <span className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full shadow-lg">
+                <Percent className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 {discountPercentage}% OFF
               </span>
             )}
             {product.is_new && (
-              <span className="flex items-center gap-1 px-2.5 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full shadow-lg">
-                <Sparkles className="w-3 h-3" />
+              <span className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 bg-emerald-500 text-white text-[10px] sm:text-xs font-bold rounded-full shadow-lg">
+                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 {isArabic ? 'جديد' : 'NEW'}
               </span>
             )}
             {product.is_featured && !product.is_new && !product.is_on_sale && (
-              <span className="flex items-center gap-1 px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-lg">
-                <Tag className="w-3 h-3" />
+              <span className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 bg-amber-500 text-white text-[10px] sm:text-xs font-bold rounded-full shadow-lg">
+                <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 {isArabic ? 'مميز' : 'FEATURED'}
               </span>
             )}
           </div>
 
-          {/* Quick Actions Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/20 flex items-center justify-center gap-3"
-          >
+          {/* Quick Actions - Always visible on mobile, hover on desktop */}
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2 z-10">
+            {/* Wishlist - Always visible */}
             <motion.button
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
-              transition={{ duration: 0.2, delay: 0.05 }}
-              onClick={handleAddToCart}
-              className="p-3 bg-white rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
-              aria-label="Add to cart"
-            >
-              <ShoppingCart className="w-5 h-5" />
-            </motion.button>
-            
-            <motion.button
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleToggleWishlist}
               className={cn(
-                "p-3 rounded-full shadow-lg transition-colors",
+                "p-2 sm:p-2.5 rounded-full shadow-md transition-colors",
                 isWishlisted 
                   ? "bg-red-500 text-white" 
-                  : "bg-white hover:bg-red-500 hover:text-white"
+                  : "bg-white/90 backdrop-blur-sm hover:bg-red-500 hover:text-white text-gray-600"
               )}
               aria-label="Add to wishlist"
             >
-              <Heart className={cn("w-5 h-5", isWishlisted && "fill-current")} />
+              <Heart className={cn("w-4 h-4 sm:w-5 sm:h-5", isWishlisted && "fill-current")} />
             </motion.button>
 
+            {/* Quick View - Always visible */}
             <motion.button
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
-              transition={{ duration: 0.2, delay: 0.15 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleQuickView}
-              className="p-3 bg-white rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
+              className="p-2 sm:p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-primary hover:text-white transition-colors text-gray-600"
               aria-label="Quick view"
             >
-              <Eye className="w-5 h-5" />
+              <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
             </motion.button>
-            
-            <motion.button
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
-              transition={{ duration: 0.2, delay: 0.2 }}
-              onClick={handleToggleCompare}
-              className={cn(
-                "p-3 rounded-full shadow-lg transition-colors",
-                isCompared 
-                  ? "bg-primary text-white" 
-                  : "bg-white hover:bg-primary hover:text-white"
-              )}
-              aria-label="Compare"
-            >
-              <GitCompare className="w-5 h-5" />
-            </motion.button>
-          </motion.div>
+          </div>
+
+          {/* Add to Cart - Bottom overlay on hover (desktop) or always visible (mobile) */}
+          <div className={cn(
+            "absolute bottom-0 left-0 right-0 p-2 sm:p-3 bg-gradient-to-t from-black/60 to-transparent transition-opacity duration-300",
+            "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          )}>
+            <div className="flex gap-2">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleAddToCart}
+                className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 bg-white text-foreground rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-primary hover:text-white transition-colors"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">{isArabic ? 'أضف' : 'Add'}</span>
+              </motion.button>
+              
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleToggleCompare}
+                className={cn(
+                  "p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-colors",
+                  isCompared 
+                    ? "bg-primary text-white" 
+                    : "bg-white text-foreground hover:bg-primary hover:text-white"
+                )}
+                aria-label="Compare"
+              >
+                <GitCompare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </motion.button>
+            </div>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+        <div className="p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-0.5 sm:mb-1">
             {product.category}
           </p>
-          <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors min-h-[2.5rem]">
+          <h3 className="font-medium text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-colors min-h-[2rem] sm:min-h-[2.5rem]">
             {displayName}
           </h3>
           
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-lg font-bold text-primary">
+          <div className="mt-2 sm:mt-3 flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
+            <span className="text-sm sm:text-lg font-bold text-primary">
               {product.currency} {product.price.toFixed(2)}
             </span>
             {product.compare_at_price && product.compare_at_price > product.price && (
-              <span className="text-sm text-muted-foreground line-through">
+              <span className="text-xs sm:text-sm text-muted-foreground line-through">
                 {product.currency} {product.compare_at_price.toFixed(2)}
               </span>
             )}
@@ -297,7 +294,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
 
           {/* Stock Status */}
           {product.stock_quantity !== undefined && product.stock_quantity <= 5 && product.stock_quantity > 0 && (
-            <p className="mt-2 text-xs text-amber-600 font-medium">
+            <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-amber-600 font-medium">
               {isArabic ? `${product.stock_quantity} فقط متبقي` : `Only ${product.stock_quantity} left`}
             </p>
           )}
