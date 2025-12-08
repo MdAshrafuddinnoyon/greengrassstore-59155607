@@ -36,7 +36,7 @@ export const Header = () => {
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
   const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
   const { language, setLanguage } = useLanguage();
-  const { announcementBar, megaMenuCategories, branding } = useSiteSettings();
+  const { announcementBar, megaMenuCategories, branding, themeColors } = useSiteSettings();
   const items = useCartStore(state => state.items);
   const totalPrice = items.reduce((sum, item) => sum + parseFloat(item.price.amount) * item.quantity, 0);
   const megaMenuRef = useRef<HTMLDivElement>(null);
@@ -140,7 +140,10 @@ export const Header = () => {
       )}
 
       {/* Main Header */}
-      <header className={cn("sticky top-0 z-50 transition-all duration-300 bg-white", isScrolled && "shadow-md")}>
+      <header 
+        className={cn("sticky top-0 z-50 transition-all duration-300", isScrolled && "shadow-md")}
+        style={{ backgroundColor: themeColors?.headerBackground || '#ffffff' }}
+      >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Mobile Menu Button */}

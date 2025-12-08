@@ -88,6 +88,24 @@ export interface BrandingSettings {
   taglineAr: string;
 }
 
+export interface ThemeColors {
+  primaryColor: string;
+  primaryForeground: string;
+  secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  foregroundColor: string;
+  headerBackground: string;
+  footerBackground: string;
+}
+
+export interface TypographySettings {
+  headingFont: string;
+  bodyFont: string;
+  headingFontAr: string;
+  bodyFontAr: string;
+}
+
 export interface WhatsAppSettings {
   phone: string;
   enabled: boolean;
@@ -203,6 +221,8 @@ interface SiteSettingsContextType {
   promoSection: PromoSectionSettings;
   footer: FooterSettings;
   branding: BrandingSettings;
+  themeColors: ThemeColors;
+  typography: TypographySettings;
   whatsapp: WhatsAppSettings;
   salesAgent: SalesAgentSettings;
   storeInfo: StoreInfo;
@@ -299,6 +319,24 @@ const defaultBranding: BrandingSettings = {
   siteNameAr: "جرين جراس",
   tagline: "Plants & Pots Store",
   taglineAr: "متجر النباتات والأواني"
+};
+
+const defaultThemeColors: ThemeColors = {
+  primaryColor: "#2d5a3d",
+  primaryForeground: "#ffffff",
+  secondaryColor: "#f5f3ef",
+  accentColor: "#e8e4dd",
+  backgroundColor: "#fefefe",
+  foregroundColor: "#1f1f1f",
+  headerBackground: "#ffffff",
+  footerBackground: "#3d3d35"
+};
+
+const defaultTypography: TypographySettings = {
+  headingFont: "Cormorant Garamond",
+  bodyFont: "Inter",
+  headingFontAr: "Cairo",
+  bodyFontAr: "Cairo"
 };
 
 const defaultWhatsApp: WhatsAppSettings = {
@@ -508,6 +546,8 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   promoSection: defaultPromoSection,
   footer: defaultFooter,
   branding: defaultBranding,
+  themeColors: defaultThemeColors,
+  typography: defaultTypography,
   whatsapp: defaultWhatsApp,
   salesAgent: defaultSalesAgent,
   storeInfo: defaultStoreInfo,
@@ -534,6 +574,8 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [promoSection, setPromoSection] = useState(defaultPromoSection);
   const [footer, setFooter] = useState(defaultFooter);
   const [branding, setBranding] = useState(defaultBranding);
+  const [themeColors, setThemeColors] = useState(defaultThemeColors);
+  const [typography, setTypography] = useState(defaultTypography);
   const [whatsapp, setWhatsapp] = useState(defaultWhatsApp);
   const [salesAgent, setSalesAgent] = useState(defaultSalesAgent);
   const [storeInfo, setStoreInfo] = useState(defaultStoreInfo);
@@ -575,6 +617,12 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
             break;
           case 'branding':
             setBranding(value as unknown as BrandingSettings);
+            break;
+          case 'theme_colors':
+            setThemeColors(value as unknown as ThemeColors);
+            break;
+          case 'typography':
+            setTypography(value as unknown as TypographySettings);
             break;
           case 'whatsapp':
             setWhatsapp(value as unknown as WhatsAppSettings);
@@ -655,6 +703,8 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         promoSection,
         footer,
         branding,
+        themeColors,
+        typography,
         whatsapp,
         salesAgent,
         storeInfo,

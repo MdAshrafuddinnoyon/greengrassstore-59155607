@@ -9,7 +9,7 @@ import logo192 from "@/assets/logo-192.png";
 
 export const Footer = () => {
   const { t, language } = useLanguage();
-  const { footer, branding, megaMenuCategories } = useSiteSettings();
+  const { footer, branding, megaMenuCategories, themeColors } = useSiteSettings();
   const isArabic = language === "ar";
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +48,10 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="bg-[#3d3d35] text-white">
+    <footer 
+      className="text-white"
+      style={{ backgroundColor: themeColors?.footerBackground || '#3d3d35' }}
+    >
       {/* Newsletter Section */}
       <div className="border-b border-white/10">
         <div className="container mx-auto px-4 py-10">
