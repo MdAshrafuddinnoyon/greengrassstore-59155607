@@ -623,6 +623,27 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchSettings();
+    
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('site_settings_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'site_settings'
+        },
+        () => {
+          // Refetch all settings when any setting changes
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (

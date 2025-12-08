@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Sheet,
   SheetContent,
@@ -10,13 +11,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, ShoppingBag } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, Truck, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const WHATSAPP_NUMBER = "971547751901"; // Green Grass Store WhatsApp
 
 export const CartDrawer = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { shippingSettings } = useSiteSettings();
   const { 
     items, 
     isLoading, 
@@ -27,6 +30,13 @@ export const CartDrawer = () => {
   
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
+
+  // Dynamic shipping calculation
+  const freeShippingThreshold = shippingSettings?.freeShippingThreshold || 200;
+  const freeShippingEnabled = shippingSettings?.freeShippingEnabled ?? true;
+  const amountForFreeShipping = Math.max(0, freeShippingThreshold - totalPrice);
+  const progressPercent = Math.min(100, (totalPrice / freeShippingThreshold) * 100);
+  const qualifiesForFreeShipping = totalPrice >= freeShippingThreshold;
 
   const handleCheckout = async () => {
     try {
@@ -107,15 +117,36 @@ export const CartDrawer = () => {
                 </Link>
                 
                 {/* Decorative elements */}
-                <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
-                  <span className="w-8 h-px bg-border" />
-                  <span>Free shipping on orders over AED 200</span>
-                  <span className="w-8 h-px bg-border" />
-                </div>
+                {freeShippingEnabled && (
+                  <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
+                    <span className="w-8 h-px bg-border" />
+                    <span>Free shipping on orders over AED {freeShippingThreshold}</span>
+                    <span className="w-8 h-px bg-border" />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
             <>
+              {/* Free Shipping Progress Bar */}
+              {freeShippingEnabled && (
+                <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Truck className="w-4 h-4 text-primary" />
+                    {qualifiesForFreeShipping ? (
+                      <span className="text-sm font-medium text-primary">
+                        🎉 You qualify for FREE shipping!
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        Add <span className="font-semibold text-foreground">AED {amountForFreeShipping.toFixed(2)}</span> more for free shipping
+                      </span>
+                    )}
+                  </div>
+                  <Progress value={progressPercent} className="h-2" />
+                </div>
+              )}
+
               <div className="flex-1 overflow-y-auto pr-2 min-h-0">
                 <div className="space-y-4">
                   {items.map((item) => (
