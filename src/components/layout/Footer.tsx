@@ -221,20 +221,16 @@ export const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 py-5">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-500">
+        <div className="container mx-auto px-4 py-4 sm:py-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <p className="text-[10px] sm:text-xs text-gray-500 text-center sm:text-left">
               {t("footer.copyright")}
             </p>
-            <div className="flex items-center gap-6 text-xs text-gray-500">
-              <Link to="/privacy" className="hover:text-white transition-colors">{t("footer.privacy")}</Link>
-              <Link to="/terms" className="hover:text-white transition-colors">{t("footer.terms")}</Link>
-              <span>www.greengrassstore.com</span>
-            </div>
+            <span className="text-[10px] sm:text-xs text-gray-500">www.greengrassstore.com</span>
           </div>
           {/* Developer Credit - PERMANENT - Cannot be changed */}
-          <div className="mt-4 pt-4 border-t border-white/10 text-center">
-            <p className="text-xs text-gray-500">
+          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/10 text-center">
+            <p className="text-[10px] sm:text-xs text-gray-500">
               Developed by{" "}
               <a
                 href="https://www.websearchbd.com"
