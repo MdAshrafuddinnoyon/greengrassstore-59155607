@@ -8,7 +8,7 @@ import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCartStore } from "@/stores/cartStore";
 import { SearchSuggestions } from "@/components/search/SearchSuggestions";
-import logo from "@/assets/logo.jpg";
+import logo from "@/assets/logo-192.png";
 
 // Icon mapping
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
