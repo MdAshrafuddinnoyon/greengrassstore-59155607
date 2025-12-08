@@ -584,7 +584,10 @@ export default function Shop() {
                       </p>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          onClick={() => {
+                            setCurrentPage(prev => Math.max(1, prev - 1));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
                           disabled={currentPage === 1}
                           className="px-4 py-2 text-sm font-medium bg-background border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
@@ -612,7 +615,10 @@ export default function Shop() {
                             return (
                               <button
                                 key={page}
-                                onClick={() => setCurrentPage(page)}
+                                onClick={() => {
+                                  setCurrentPage(page);
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
                                 className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${
                                   currentPage === page
                                     ? "bg-primary text-primary-foreground"
@@ -626,7 +632,10 @@ export default function Shop() {
                         </div>
 
                         <button
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          onClick={() => {
+                            setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
                           disabled={currentPage === totalPages}
                           className="px-4 py-2 text-sm font-medium bg-background border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >

@@ -344,11 +344,11 @@ export const Header = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex flex-col">
                     {branding.logoUrl ? (
-                      <img src={branding.logoUrl} alt={branding.siteName} className="h-10 w-auto" />
+                      <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto max-w-[140px] object-contain" />
                     ) : (
-                      <img src={logo} alt="Green Grass" className="h-10 w-auto" />
+                      <img src={logo} alt="Green Grass" className="h-8 w-auto max-w-[140px] object-contain" />
                     )}
-                    <span className="text-[10px] text-gray-500">www.greengrassstore.com</span>
+                    <span className="text-[9px] text-gray-500">www.greengrassstore.com</span>
                   </div>
                   <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
                     <X className="w-5 h-5" />
