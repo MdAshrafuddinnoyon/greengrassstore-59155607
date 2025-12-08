@@ -162,11 +162,16 @@ export const Header = () => {
 
             {/* Logo - Center */}
             <Link to="/" className="flex flex-col items-center justify-center flex-shrink-0 mx-4 lg:mx-8">
-              {branding.logoUrl ? (
-                <img src={branding.logoUrl} alt={branding.siteName} className="h-10 md:h-12 w-auto" />
-              ) : (
-                <img src={logo} alt="Green Grass" className="h-10 md:h-12 w-auto" />
-              )}
+              <img 
+                key={branding.logoUrl || 'header-logo'}
+                src={branding.logoUrl || logo} 
+                alt={branding.siteName || "Green Grass"} 
+                className="h-10 md:h-12 w-auto"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = logo;
+                }}
+              />
               <span className="text-[10px] text-gray-500 hidden md:block">www.greengrassstore.com</span>
             </Link>
 
@@ -348,11 +353,16 @@ export const Header = () => {
               <div className="p-5">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex flex-col">
-                    {branding.logoUrl ? (
-                      <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto max-w-[140px] object-contain" />
-                    ) : (
-                      <img src={logo} alt="Green Grass" className="h-8 w-auto max-w-[140px] object-contain" />
-                    )}
+                    <img 
+                      key={branding.logoUrl || 'mobile-logo'}
+                      src={branding.logoUrl || logo} 
+                      alt={branding.siteName || "Green Grass"} 
+                      className="h-8 w-auto max-w-[140px] object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = logo;
+                      }}
+                    />
                     <span className="text-[9px] text-gray-500">www.greengrassstore.com</span>
                   </div>
                   <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">

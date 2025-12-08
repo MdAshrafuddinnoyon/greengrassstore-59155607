@@ -95,6 +95,27 @@ export const BrandingManager = () => {
 
   useEffect(() => {
     fetchSettings();
+
+    // Real-time subscription for branding changes
+    const channel = supabase
+      .channel('branding-settings-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_settings' },
+        (payload) => {
+          const setting = payload.new as any;
+          if (setting?.setting_key === 'branding' || 
+              setting?.setting_key === 'theme_colors' || 
+              setting?.setting_key === 'typography') {
+            fetchSettings();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSettings = async () => {

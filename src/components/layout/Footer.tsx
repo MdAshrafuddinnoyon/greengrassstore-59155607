@@ -128,11 +128,16 @@ export const Footer = () => {
           {/* Logo & Description */}
           <div className="col-span-2">
             <div className="mb-4 md:mb-6">
-              {/* Footer Logo with transparent background */}
+              {/* Footer Logo with transparent background - key forces re-render on change */}
               <img 
+                key={branding.logoUrl || 'default-logo'}
                 src={branding.logoUrl || logo192} 
                 alt={branding.siteName || "Green Grass"} 
                 className="h-12 md:h-16 w-auto object-contain mix-blend-lighten"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = logo192;
+                }}
               />
             </div>
             <p className="text-gray-400 text-xs md:text-sm leading-relaxed max-w-xs">
