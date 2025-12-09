@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound } from "lucide-react";
+import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useWishlistStore, WishlistItem } from "@/stores/wishlistStore";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CustomRequestModal } from "@/components/custom-request/CustomRequestModal";
+import { VIPMembershipCard } from "@/components/account/VIPMembershipCard";
 import { toast } from "sonner";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import type { Json } from "@/integrations/supabase/types";
@@ -527,6 +528,7 @@ const Account = () => {
 
   const tabs = [
     { id: "profile", label: t("account.profile"), icon: User },
+    { id: "vip", label: isArabic ? "VIP" : "VIP", icon: Crown },
     { id: "orders", label: t("account.orders"), icon: Package },
     { id: "wishlist", label: t("account.wishlist"), icon: Heart, count: wishlistItems.length },
     { id: "requests", label: t("account.myRequests"), icon: FileText, count: customRequests.length },
@@ -754,6 +756,32 @@ const Account = () => {
                         </div>
                       )}
                     </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === "vip" && user && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-6"
+                >
+                  <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                        <Crown className="w-5 h-5 text-amber-500" />
+                        {isArabic ? "عضوية VIP" : "VIP Membership"}
+                      </h2>
+                      <Link 
+                        to="/vip" 
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        {isArabic ? "اعرف المزيد" : "Learn More"}
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                    
+                    <VIPMembershipCard userId={user.id} />
                   </div>
                 </motion.div>
               )}
