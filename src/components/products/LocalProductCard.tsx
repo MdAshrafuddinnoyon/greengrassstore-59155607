@@ -252,7 +252,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
                 className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 bg-white text-foreground rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-primary hover:text-white transition-colors"
               >
                 <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">{isArabic ? 'أضف' : 'Add'}</span>
+                <span>{isArabic ? 'أضف للسلة' : 'Add to Cart'}</span>
               </motion.button>
               
               <motion.button
