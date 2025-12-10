@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Save, RefreshCw, Image as ImageIcon, Gift, Tag, Sparkles, Grid, Package } from "lucide-react";
+import { Loader2, Save, RefreshCw, Image as ImageIcon, Gift, Tag, Sparkles, Grid, Package, Instagram, X, Plus } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
 
 interface HeroSettings {
@@ -75,6 +75,14 @@ interface CollectionSectionSettings {
   subtitleAr: string;
   productsLimit: number;
   showFeaturedOnly: boolean;
+}
+
+interface InstagramSectionSettings {
+  enabled: boolean;
+  username: string;
+  profileUrl: string;
+  title: string;
+  images: string[];
 }
 
 export const HomepageSectionsManager = () => {
@@ -148,6 +156,14 @@ export const HomepageSectionsManager = () => {
     showFeaturedOnly: false
   });
 
+  const [instagramSettings, setInstagramSettings] = useState<InstagramSectionSettings>({
+    enabled: true,
+    username: "@greengrassstore",
+    profileUrl: "https://instagram.com/greengrassstore",
+    title: "GREEN GRASS",
+    images: []
+  });
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -178,6 +194,8 @@ export const HomepageSectionsManager = () => {
           setFeaturedCategorySettings(value as unknown as FeaturedCategorySectionSettings);
         } else if (setting.setting_key === 'collection_section') {
           setCollectionSettings(value as unknown as CollectionSectionSettings);
+        } else if (setting.setting_key === 'instagram_section') {
+          setInstagramSettings(value as unknown as InstagramSectionSettings);
         }
       });
     } catch (error) {
@@ -234,25 +252,29 @@ export const HomepageSectionsManager = () => {
     <div className="space-y-6">
       <Tabs defaultValue="hero" className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1 p-1 w-full">
-          <TabsTrigger value="hero" className="flex-1 min-w-[60px] gap-1 text-xs sm:text-sm py-2">
+          <TabsTrigger value="hero" className="flex-1 min-w-[50px] gap-1 text-xs sm:text-sm py-2">
             <ImageIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline sm:inline">Hero</span>
+            <span className="hidden sm:inline">Hero</span>
           </TabsTrigger>
-          <TabsTrigger value="featured" className="flex-1 min-w-[60px] gap-1 text-xs sm:text-sm py-2">
+          <TabsTrigger value="featured" className="flex-1 min-w-[50px] gap-1 text-xs sm:text-sm py-2">
             <Grid className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Categories</span>
           </TabsTrigger>
-          <TabsTrigger value="collection" className="flex-1 min-w-[60px] gap-1 text-xs sm:text-sm py-2">
+          <TabsTrigger value="collection" className="flex-1 min-w-[50px] gap-1 text-xs sm:text-sm py-2">
             <Package className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Collection</span>
           </TabsTrigger>
-          <TabsTrigger value="gift" className="flex-1 min-w-[60px] gap-1 text-xs sm:text-sm py-2">
+          <TabsTrigger value="gift" className="flex-1 min-w-[50px] gap-1 text-xs sm:text-sm py-2">
             <Gift className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Gift</span>
           </TabsTrigger>
-          <TabsTrigger value="promo" className="flex-1 min-w-[60px] gap-1 text-xs sm:text-sm py-2">
+          <TabsTrigger value="promo" className="flex-1 min-w-[50px] gap-1 text-xs sm:text-sm py-2">
             <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Promo</span>
+          </TabsTrigger>
+          <TabsTrigger value="instagram" className="flex-1 min-w-[50px] gap-1 text-xs sm:text-sm py-2">
+            <Instagram className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Instagram</span>
           </TabsTrigger>
         </TabsList>
 
@@ -848,6 +870,119 @@ export const HomepageSectionsManager = () => {
               >
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Promo Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Instagram Section */}
+        <TabsContent value="instagram">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Instagram className="w-5 h-5 text-primary" />
+                Instagram Section
+              </CardTitle>
+              <CardDescription>
+                Manage the Instagram feed section on homepage
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <Label>Enable Instagram Section</Label>
+                  <p className="text-sm text-muted-foreground">Show/hide Instagram feed</p>
+                </div>
+                <Switch
+                  checked={instagramSettings.enabled}
+                  onCheckedChange={(checked) => 
+                    setInstagramSettings(prev => ({ ...prev, enabled: checked }))
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Instagram Username</Label>
+                  <Input
+                    value={instagramSettings.username}
+                    onChange={(e) => setInstagramSettings(prev => ({ ...prev, username: e.target.value }))}
+                    placeholder="@yourusername"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Profile URL</Label>
+                  <Input
+                    value={instagramSettings.profileUrl}
+                    onChange={(e) => setInstagramSettings(prev => ({ ...prev, profileUrl: e.target.value }))}
+                    placeholder="https://instagram.com/yourusername"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Section Title</Label>
+                <Input
+                  value={instagramSettings.title}
+                  onChange={(e) => setInstagramSettings(prev => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Custom Images (Max 6)</Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (instagramSettings.images.length < 6) {
+                        setInstagramSettings(prev => ({ ...prev, images: [...prev.images, ''] }));
+                      }
+                    }}
+                    disabled={instagramSettings.images.length >= 6}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Image
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Leave empty to use default images. Add custom images to display your own Instagram posts.
+                </p>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {instagramSettings.images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <MediaPicker
+                        value={image}
+                        onChange={(url) => {
+                          const newImages = [...instagramSettings.images];
+                          newImages[index] = url;
+                          setInstagramSettings(prev => ({ ...prev, images: newImages }));
+                        }}
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 w-6 h-6"
+                        onClick={() => {
+                          const newImages = instagramSettings.images.filter((_, i) => i !== index);
+                          setInstagramSettings(prev => ({ ...prev, images: newImages }));
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => saveSettings('instagram_section', instagramSettings)}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Instagram Settings
               </Button>
             </CardContent>
           </Card>
