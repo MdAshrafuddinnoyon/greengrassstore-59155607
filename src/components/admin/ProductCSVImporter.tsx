@@ -61,63 +61,75 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
   const detectSource = (headers: string[]): ImportSource => {
     const headerStr = headers.join(',').toLowerCase();
     
-    // Shopify specific headers
-    if (headerStr.includes('variant_sku') || headerStr.includes('variant_grams') || 
-        headerStr.includes('image_src') || headerStr.includes('variant_inventory_qty')) {
+    // Shopify specific headers - check for actual Shopify export format
+    if (headerStr.includes('handle') && (headerStr.includes('variant sku') || headerStr.includes('variant_sku') ||
+        headerStr.includes('image src') || headerStr.includes('image_src') || 
+        headerStr.includes('variant price') || headerStr.includes('variant_price') ||
+        headerStr.includes('variant grams') || headerStr.includes('variant_grams'))) {
       return 'shopify';
     }
     
-    // WooCommerce specific headers
-    if (headerStr.includes('regular_price') || headerStr.includes('sale_price') || 
-        headerStr.includes('post_title') || headerStr.includes('_sku') ||
-        headerStr.includes('_stock') || headerStr.includes('woocommerce')) {
+    // WooCommerce specific headers - check for actual WooCommerce export format
+    if ((headerStr.includes('regular price') || headerStr.includes('regular_price') ||
+        headerStr.includes('sale price') || headerStr.includes('sale_price')) &&
+        (headerStr.includes('type') || headerStr.includes('sku'))) {
       return 'woocommerce';
     }
     
     return 'standard';
   };
 
-  // Parse Shopify CSV format
+  // Parse Shopify CSV format - Updated for actual Shopify export format
   const parseShopifyCSV = (lines: string[], headers: string[]): CSVProduct[] => {
     const products: CSVProduct[] = [];
     const productMap = new Map<string, CSVProduct>();
+
+    // Normalize headers
+    const normalizedHeaders = headers.map(h => h.toLowerCase().replace(/\s+/g, '_').replace(/[()]/g, ''));
 
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
       const data: Record<string, string> = {};
       
-      headers.forEach((header, index) => {
-        data[header.toLowerCase().replace(/\s+/g, '_')] = values[index]?.trim() || '';
+      normalizedHeaders.forEach((header, index) => {
+        data[header] = values[index]?.trim() || '';
       });
 
       const handle = data['handle'] || '';
       const title = data['title'] || '';
       
+      // Skip rows without handle (variant continuation rows with only images)
+      if (!handle) continue;
+      
       // Shopify exports multiple rows per product (variants)
-      if (handle && !productMap.has(handle)) {
+      if (!productMap.has(handle)) {
+        // Extract gallery images from dedicated column if exists
+        const galleryImages = data['gallery_image_urls'] || '';
+        
         productMap.set(handle, {
           name: title,
           slug: handle,
-          description: data['body_(html)'] || data['body_html'] || data['body'] || '',
-          category: data['type'] || data['product_type'] || 'general',
+          description: data['body_html'] || data['body'] || '',
+          category: data['type'] || data['product_category'] || 'general',
           subcategory: data['vendor'] || '',
-          price: data['variant_price'] || data['price'] || '0',
-          compare_at_price: data['variant_compare_at_price'] || data['compare_at_price'] || '',
-          sku: data['variant_sku'] || data['sku'] || '',
-          stock_quantity: data['variant_inventory_qty'] || data['inventory_quantity'] || '10',
-          featured_image: data['image_src'] || data['image'] || '',
-          images: data['variant_image'] || '',
+          price: data['variant_price'] || '0',
+          compare_at_price: data['variant_compare_at_price'] || '',
+          sku: data['variant_sku'] || '',
+          stock_quantity: data['variant_inventory_qty'] || '10',
+          featured_image: data['image_src'] || '',
+          images: galleryImages,
           tags: data['tags'] || '',
-          is_featured: 'false',
+          is_featured: (data['published'] || '').toLowerCase() === 'true' ? 'true' : 'false',
           is_on_sale: (data['variant_compare_at_price'] && parseFloat(data['variant_compare_at_price']) > parseFloat(data['variant_price'] || '0')) ? 'true' : 'false',
           is_new: 'false',
           weight: data['variant_grams'] || '',
         });
-      } else if (handle && productMap.has(handle)) {
+      } else if (productMap.has(handle)) {
         // Add additional images from variants
         const existing = productMap.get(handle)!;
-        if (data['image_src'] && !existing.images?.includes(data['image_src'])) {
-          existing.images = existing.images ? `${existing.images}|${data['image_src']}` : data['image_src'];
+        const newImage = data['image_src'];
+        if (newImage && existing.featured_image !== newImage && !existing.images?.includes(newImage)) {
+          existing.images = existing.images ? `${existing.images}|${newImage}` : newImage;
         }
       }
     }
@@ -126,46 +138,91 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
     return products;
   };
 
-  // Parse WooCommerce CSV format
+  // Parse WooCommerce CSV format - Updated for actual WooCommerce export format
   const parseWooCommerceCSV = (lines: string[], headers: string[]): CSVProduct[] => {
     const products: CSVProduct[] = [];
+
+    // Normalize headers - WooCommerce uses spaces and special characters
+    const normalizedHeaders = headers.map(h => h.toLowerCase().replace(/\s+/g, '_').replace(/[?()]/g, ''));
 
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
       const data: Record<string, string> = {};
       
-      headers.forEach((header, index) => {
-        data[header.toLowerCase().replace(/\s+/g, '_')] = values[index]?.trim() || '';
+      normalizedHeaders.forEach((header, index) => {
+        data[header] = values[index]?.trim() || '';
       });
 
-      // Skip variable product parent (type === 'variable')
+      // Skip variation products (type === 'variation') - only import main products
       const productType = data['type'] || '';
-      if (productType === 'variable') continue;
+      if (productType === 'variation') continue;
+      
+      // Skip variable parent products - import simple products or variable parents with data
+      if (productType === 'variable') {
+        // For variable products, we still need to capture main product info
+        const name = data['name'] || '';
+        if (!name) continue;
+        
+        // Extract first image from comma-separated list
+        const imagesList = data['images'] || '';
+        const imagesArray = imagesList.split(',').map(img => img.trim()).filter(Boolean);
+        const featuredImage = imagesArray[0] || '';
+        const galleryImages = imagesArray.slice(1).join('|');
+        
+        // For variable products, try to find a sensible price
+        const regularPrice = data['regular_price'] || '0';
+        const salePrice = data['sale_price'] || '';
+        
+        products.push({
+          name,
+          slug: data['sku'] ? data['sku'].replace(/-parent$/, '') : generateSlug(name),
+          description: data['description'] || data['short_description'] || '',
+          category: data['categories'] || 'general',
+          subcategory: '',
+          price: salePrice || regularPrice || '0',
+          compare_at_price: salePrice && regularPrice ? regularPrice : '',
+          sku: data['sku'] || '',
+          stock_quantity: data['stock'] || '10',
+          featured_image: featuredImage,
+          images: galleryImages || data['gallery_image_urls'] || '',
+          tags: data['tags'] || '',
+          is_featured: data['is_featured'] === '1' ? 'true' : 'false',
+          is_on_sale: salePrice ? 'true' : 'false',
+          is_new: 'false',
+          weight: data['weight_kg'] || '',
+        });
+        continue;
+      }
 
-      const name = data['name'] || data['post_title'] || data['title'] || '';
+      const name = data['name'] || '';
       if (!name) continue;
 
-      const regularPrice = data['regular_price'] || data['price'] || '0';
+      const regularPrice = data['regular_price'] || '0';
       const salePrice = data['sale_price'] || '';
+      
+      // Extract images
+      const imagesList = data['images'] || '';
+      const imagesArray = imagesList.split(',').map(img => img.trim()).filter(Boolean);
+      const featuredImage = imagesArray[0] || '';
+      const galleryImages = imagesArray.slice(1).join('|');
 
       products.push({
         name,
-        slug: data['slug'] || data['post_name'] || generateSlug(name),
-        description: data['description'] || data['post_content'] || data['short_description'] || '',
-        category: data['categories'] || data['product_cat'] || data['category'] || 'general',
+        slug: data['sku'] || generateSlug(name),
+        description: data['description'] || data['short_description'] || '',
+        category: data['categories'] || 'general',
         subcategory: '',
         price: salePrice || regularPrice,
-        compare_at_price: salePrice ? regularPrice : '',
-        sku: data['sku'] || data['_sku'] || '',
-        stock_quantity: data['stock'] || data['_stock'] || data['stock_quantity'] || '10',
-        featured_image: data['images'] || data['image'] || data['featured_image'] || '',
-        images: data['gallery'] || data['product_gallery'] || '',
-        tags: data['tags'] || data['product_tag'] || '',
-        is_featured: data['featured'] === '1' || data['is_featured'] === 'yes' ? 'true' : 'false',
+        compare_at_price: salePrice && regularPrice ? regularPrice : '',
+        sku: data['sku'] || '',
+        stock_quantity: data['stock'] || '10',
+        featured_image: featuredImage,
+        images: galleryImages || data['gallery_image_urls'] || '',
+        tags: data['tags'] || '',
+        is_featured: data['is_featured'] === '1' ? 'true' : 'false',
         is_on_sale: salePrice ? 'true' : 'false',
         is_new: 'false',
-        weight: data['weight'] || data['_weight'] || '',
-        dimensions: data['dimensions'] || '',
+        weight: data['weight_kg'] || '',
       });
     }
 
