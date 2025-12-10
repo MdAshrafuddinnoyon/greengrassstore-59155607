@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Save, Plus, Trash2, Crown, Users, Settings, Star, Edit } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, Save, Plus, Trash2, Crown, Users, Settings, Star, Edit, Ban, UserCheck, MoreHorizontal } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Json } from "@/integrations/supabase/types";
 
 interface VIPTier {
@@ -94,6 +96,11 @@ export const VIPManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [benefitInput, setBenefitInput] = useState("");
   const [benefitInputAr, setBenefitInputAr] = useState("");
+  
+  // Member management states
+  const [editingMember, setEditingMember] = useState<VIPMember | null>(null);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
+  const [memberProfiles, setMemberProfiles] = useState<Record<string, { full_name: string; phone: string | null }>>({});
 
   useEffect(() => {
     fetchData();
@@ -139,6 +146,23 @@ export const VIPManager = () => {
 
       if (membersError) throw membersError;
       setMembers(membersData || []);
+
+      // Fetch profiles for member names
+      if (membersData && membersData.length > 0) {
+        const userIds = membersData.map(m => m.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, phone')
+          .in('user_id', userIds);
+        
+        if (profilesData) {
+          const profileMap: Record<string, { full_name: string; phone: string | null }> = {};
+          profilesData.forEach(p => {
+            profileMap[p.user_id] = { full_name: p.full_name || 'Unknown', phone: p.phone };
+          });
+          setMemberProfiles(profileMap);
+        }
+      }
 
     } catch (error) {
       console.error('Error fetching VIP data:', error);
@@ -274,6 +298,78 @@ export const VIPManager = () => {
       ...prev,
       benefits_ar: prev?.benefits_ar?.filter((_, i) => i !== index) || []
     }));
+  };
+
+  // Member management functions
+  const toggleMemberStatus = async (member: VIPMember) => {
+    try {
+      const { error } = await supabase
+        .from('vip_members')
+        .update({ is_active: !member.is_active })
+        .eq('id', member.id);
+      
+      if (error) throw error;
+      toast.success(member.is_active ? 'Member deactivated' : 'Member activated');
+      fetchData();
+    } catch (error) {
+      console.error('Error toggling member status:', error);
+      toast.error('Failed to update member status');
+    }
+  };
+
+  const deleteMember = async (memberId: string) => {
+    if (!confirm('Are you sure you want to remove this VIP member?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('vip_members')
+        .delete()
+        .eq('id', memberId);
+      
+      if (error) throw error;
+      toast.success('Member removed from VIP program');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast.error('Failed to remove member');
+    }
+  };
+
+  const updateMemberTier = async (memberId: string, tierId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('vip_members')
+        .update({ 
+          tier_id: tierId, 
+          tier_updated_at: new Date().toISOString() 
+        })
+        .eq('id', memberId);
+      
+      if (error) throw error;
+      toast.success('Member tier updated');
+      setIsMemberDialogOpen(false);
+      setEditingMember(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating member tier:', error);
+      toast.error('Failed to update tier');
+    }
+  };
+
+  const updateMemberPoints = async (memberId: string, pointsEarned: number, pointsRedeemed: number) => {
+    try {
+      const { error } = await supabase
+        .from('vip_members')
+        .update({ points_earned: pointsEarned, points_redeemed: pointsRedeemed })
+        .eq('id', memberId);
+      
+      if (error) throw error;
+      toast.success('Points updated');
+      fetchData();
+    } catch (error) {
+      console.error('Error updating points:', error);
+      toast.error('Failed to update points');
+    }
   };
 
   if (loading) {
@@ -561,15 +657,20 @@ export const VIPManager = () => {
                       <TableHead>Points</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {members.map((member) => {
                       const memberTier = tiers.find(t => t.id === member.tier_id);
+                      const profile = memberProfiles[member.user_id];
                       return (
                         <TableRow key={member.id}>
                           <TableCell>
-                            <div className="font-medium">{member.user_id.slice(0, 8)}...</div>
+                            <div>
+                              <div className="font-medium">{profile?.full_name || 'Unknown User'}</div>
+                              <div className="text-xs text-muted-foreground">{profile?.phone || 'No phone'}</div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             {memberTier ? (
@@ -589,9 +690,52 @@ export const VIPManager = () => {
                           </TableCell>
                           <TableCell>{new Date(member.joined_at).toLocaleDateString()}</TableCell>
                           <TableCell>
-                            <Badge variant={member.is_active ? "default" : "secondary"}>
-                              {member.is_active ? "Active" : "Inactive"}
+                            <Badge 
+                              variant={member.is_active ? "default" : "destructive"}
+                              className="cursor-pointer"
+                              onClick={() => toggleMemberStatus(member)}
+                            >
+                              {member.is_active ? "Active" : "Banned"}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  setEditingMember(member);
+                                  setIsMemberDialogOpen(true);
+                                }}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Tier / Points
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toggleMemberStatus(member)}>
+                                  {member.is_active ? (
+                                    <>
+                                      <Ban className="w-4 h-4 mr-2" />
+                                      Ban Member
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="w-4 h-4 mr-2" />
+                                      Activate Member
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => deleteMember(member.id)}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Remove from VIP
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       );
@@ -601,6 +745,81 @@ export const VIPManager = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Edit Member Dialog */}
+          <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit VIP Member</DialogTitle>
+                <DialogDescription>
+                  Update member's tier and points
+                </DialogDescription>
+              </DialogHeader>
+              {editingMember && (
+                <div className="space-y-4 mt-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="font-medium">{memberProfiles[editingMember.user_id]?.full_name || 'Unknown User'}</p>
+                    <p className="text-sm text-muted-foreground">Total Spend: {editingMember.total_spend} AED</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>VIP Tier</Label>
+                    <Select 
+                      value={editingMember.tier_id || ''} 
+                      onValueChange={(value) => setEditingMember(prev => prev ? { ...prev, tier_id: value || null } : null)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tier" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No Tier</SelectItem>
+                        {tiers.map(tier => (
+                          <SelectItem key={tier.id} value={tier.id}>
+                            {tier.name} ({tier.discount_percent}% discount)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Points Earned</Label>
+                      <Input
+                        type="number"
+                        value={editingMember.points_earned}
+                        onChange={(e) => setEditingMember(prev => prev ? { ...prev, points_earned: Number(e.target.value) } : null)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Points Redeemed</Label>
+                      <Input
+                        type="number"
+                        value={editingMember.points_redeemed}
+                        onChange={(e) => setEditingMember(prev => prev ? { ...prev, points_redeemed: Number(e.target.value) } : null)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      className="flex-1"
+                      onClick={() => {
+                        updateMemberTier(editingMember.id, editingMember.tier_id);
+                        updateMemberPoints(editingMember.id, editingMember.points_earned, editingMember.points_redeemed);
+                      }}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsMemberDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Settings Tab */}

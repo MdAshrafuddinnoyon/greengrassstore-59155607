@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Loader2, Users, Search, Eye, Phone, MapPin, Calendar, ShoppingBag, 
-  Trash2, UserPlus, Download, Upload, FileSpreadsheet, RefreshCw
+  Trash2, UserPlus, Download, Upload, FileSpreadsheet, RefreshCw, Crown
 } from "lucide-react";
 import { ExportButtons } from "./ExportButtons";
 import {
@@ -52,6 +52,14 @@ interface Customer {
   created_at: string;
   orders_count?: number;
   total_spent?: number;
+  is_vip?: boolean;
+  vip_tier?: string;
+}
+
+interface VIPTier {
+  id: string;
+  name: string;
+  color_gradient: string;
 }
 
 export const CustomerManager = () => {
@@ -88,6 +96,12 @@ export const CustomerManager = () => {
   // CSV Import
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
+  // VIP Management
+  const [vipTiers, setVipTiers] = useState<VIPTier[]>([]);
+  const [vipDialogOpen, setVipDialogOpen] = useState(false);
+  const [customerForVip, setCustomerForVip] = useState<Customer | null>(null);
+  const [selectedTier, setSelectedTier] = useState<string>("");
+
   const fetchCustomers = async () => {
     setLoading(true);
     try {
@@ -104,6 +118,20 @@ export const CustomerManager = () => {
 
       if (ordersError) throw ordersError;
 
+      // Fetch VIP members
+      const { data: vipMembers } = await supabase
+        .from('vip_members')
+        .select('user_id, tier_id, is_active');
+
+      // Fetch VIP tiers
+      const { data: tiersData } = await supabase
+        .from('vip_tiers')
+        .select('id, name, color_gradient')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (tiersData) setVipTiers(tiersData);
+
       const statsMap = new Map<string, { count: number; total: number }>();
       orders?.forEach(order => {
         if (order.user_id) {
@@ -115,12 +143,23 @@ export const CustomerManager = () => {
         }
       });
 
-      const customersWithStats = profiles?.map(profile => ({
-        ...profile,
-        email: '',
-        orders_count: statsMap.get(profile.user_id)?.count || 0,
-        total_spent: statsMap.get(profile.user_id)?.total || 0
-      })) || [];
+      const vipMap = new Map<string, { tier_id: string | null; is_active: boolean }>();
+      vipMembers?.forEach(member => {
+        vipMap.set(member.user_id, { tier_id: member.tier_id, is_active: member.is_active });
+      });
+
+      const customersWithStats = profiles?.map(profile => {
+        const vipInfo = vipMap.get(profile.user_id);
+        const tierInfo = vipInfo?.tier_id ? tiersData?.find(t => t.id === vipInfo.tier_id) : null;
+        return {
+          ...profile,
+          email: '',
+          orders_count: statsMap.get(profile.user_id)?.count || 0,
+          total_spent: statsMap.get(profile.user_id)?.total || 0,
+          is_vip: vipInfo?.is_active || false,
+          vip_tier: tierInfo?.name || null
+        };
+      }) || [];
 
       setCustomers(customersWithStats);
     } catch (error) {
@@ -281,6 +320,74 @@ export const CustomerManager = () => {
       setSelectedIds(selectedIds.filter(i => i !== id));
     } else {
       setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // VIP Management
+  const handleAddToVip = async () => {
+    if (!customerForVip) return;
+    
+    try {
+      // Check if already VIP member
+      const { data: existing } = await supabase
+        .from('vip_members')
+        .select('id')
+        .eq('user_id', customerForVip.user_id)
+        .maybeSingle();
+      
+      if (existing) {
+        // Update existing membership
+        const { error } = await supabase
+          .from('vip_members')
+          .update({ 
+            tier_id: selectedTier || null, 
+            is_active: true,
+            tier_updated_at: new Date().toISOString()
+          })
+          .eq('user_id', customerForVip.user_id);
+        
+        if (error) throw error;
+        toast.success('VIP membership updated');
+      } else {
+        // Create new membership
+        const { error } = await supabase
+          .from('vip_members')
+          .insert({
+            user_id: customerForVip.user_id,
+            tier_id: selectedTier || null,
+            is_active: true,
+            total_spend: customerForVip.total_spent || 0
+          });
+        
+        if (error) throw error;
+        toast.success('Customer added to VIP program');
+      }
+      
+      setVipDialogOpen(false);
+      setCustomerForVip(null);
+      setSelectedTier("");
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error adding to VIP:', error);
+      toast.error('Failed to update VIP status');
+    }
+  };
+
+  const handleRemoveFromVip = async (userId: string) => {
+    if (!confirm('Remove this customer from VIP program?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('vip_members')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      toast.success('Customer removed from VIP program');
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error removing from VIP:', error);
+      toast.error('Failed to remove from VIP');
     }
   };
 
@@ -460,7 +567,7 @@ export const CustomerManager = () => {
                   </TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Location</TableHead>
+                  <TableHead>VIP Status</TableHead>
                   <TableHead>Orders</TableHead>
                   <TableHead>Total Spent</TableHead>
                   <TableHead>Joined</TableHead>
@@ -486,18 +593,39 @@ export const CustomerManager = () => {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">{customer.full_name || 'No name'}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Phone className="w-3 h-3" />
-                          {customer.phone || '-'}
-                        </div>
+                        <div className="text-xs text-muted-foreground">{customer.phone || '-'}</div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm">
                           <MapPin className="w-3 h-3" />
                           {customer.city || customer.country || '-'}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {customer.is_vip ? (
+                          <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white cursor-pointer" onClick={() => {
+                            setCustomerForVip(customer);
+                            setSelectedTier("");
+                            setVipDialogOpen(true);
+                          }}>
+                            <Crown className="w-3 h-3 mr-1" />
+                            {customer.vip_tier || 'VIP'}
+                          </Badge>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-6 text-xs"
+                            onClick={() => {
+                              setCustomerForVip(customer);
+                              setSelectedTier("");
+                              setVipDialogOpen(true);
+                            }}
+                          >
+                            <Crown className="w-3 h-3 mr-1" />
+                            Add VIP
+                          </Button>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{customer.orders_count || 0}</Badge>
@@ -519,6 +647,17 @@ export const CustomerManager = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
+                          {customer.is_vip && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-amber-600 hover:text-amber-700"
+                              onClick={() => handleRemoveFromVip(customer.user_id)}
+                              title="Remove from VIP"
+                            >
+                              <Crown className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -768,6 +907,52 @@ export const CustomerManager = () => {
               onChange={handleImportCSV}
             />
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* VIP Assignment Dialog */}
+      <Dialog open={vipDialogOpen} onOpenChange={setVipDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-amber-500" />
+              {customerForVip?.is_vip ? 'Update VIP Membership' : 'Add to VIP Program'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="font-medium">{customerForVip?.full_name || 'Unknown Customer'}</p>
+              <p className="text-sm text-muted-foreground">Total Spent: AED {(customerForVip?.total_spent || 0).toFixed(2)}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Select VIP Tier</Label>
+              <Select value={selectedTier} onValueChange={setSelectedTier}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vipTiers.map(tier => (
+                    <SelectItem key={tier.id} value={tier.id}>
+                      <div className="flex items-center gap-2">
+                        <Crown className="w-4 h-4" />
+                        {tier.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVipDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddToVip} className="bg-gradient-to-r from-yellow-500 to-amber-600">
+              <Crown className="w-4 h-4 mr-2" />
+              {customerForVip?.is_vip ? 'Update VIP' : 'Add to VIP'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
