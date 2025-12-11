@@ -83,6 +83,27 @@ export const HeroSliderManager = () => {
   const saveSettings = async () => {
     setSaving(true);
     try {
+      // Create a clean object for saving
+      const settingsToSave = {
+        enabled: settings.enabled,
+        autoPlay: settings.autoPlay,
+        autoPlayInterval: settings.autoPlayInterval,
+        slides: settings.slides.map(slide => ({
+          id: slide.id,
+          title: slide.title,
+          titleAr: slide.titleAr,
+          subtitle: slide.subtitle,
+          subtitleAr: slide.subtitleAr,
+          description: slide.description,
+          descriptionAr: slide.descriptionAr,
+          buttonText: slide.buttonText,
+          buttonTextAr: slide.buttonTextAr,
+          buttonLink: slide.buttonLink,
+          backgroundImage: slide.backgroundImage,
+          order: slide.order
+        }))
+      };
+
       const { data: existing } = await supabase
         .from('site_settings')
         .select('id')
@@ -92,17 +113,23 @@ export const HeroSliderManager = () => {
       if (existing) {
         const { error } = await supabase
           .from('site_settings')
-          .update({ setting_value: JSON.parse(JSON.stringify(settings)) })
+          .update({ 
+            setting_value: settingsToSave,
+            updated_at: new Date().toISOString()
+          })
           .eq('setting_key', 'hero_slider');
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('site_settings')
-          .insert({ setting_key: 'hero_slider', setting_value: JSON.parse(JSON.stringify(settings)) });
+          .insert({ 
+            setting_key: 'hero_slider', 
+            setting_value: settingsToSave 
+          });
         if (error) throw error;
       }
       
-      toast.success('Hero slider settings saved');
+      toast.success('Hero slider settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error('Failed to save settings');
