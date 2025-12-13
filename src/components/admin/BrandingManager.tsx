@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Palette, Type, Image as ImageIcon, Save, RefreshCw, Eye } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
+import { hexToHSL } from "@/lib/colorUtils";
 import type { Json } from "@/integrations/supabase/types";
 
 interface BrandingSettings {
@@ -188,33 +189,13 @@ export const BrandingManager = () => {
 
   const applyThemeColors = () => {
     const root = document.documentElement;
-    const hexToHSL = (hex: string) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      if (!result) return "0 0% 0%";
-      const r = parseInt(result[1], 16) / 255;
-      const g = parseInt(result[2], 16) / 255;
-      const b = parseInt(result[3], 16) / 255;
-      const max = Math.max(r, g, b), min = Math.min(r, g, b);
-      let h = 0, s = 0;
-      const l = (max + min) / 2;
-      if (max !== min) {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-          case g: h = ((b - r) / d + 2) / 6; break;
-          case b: h = ((r - g) / d + 4) / 6; break;
-        }
-      }
-      return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-    };
-
-    root.style.setProperty('--primary', hexToHSL(themeColors.primaryColor));
-    root.style.setProperty('--primary-foreground', hexToHSL(themeColors.primaryForeground));
-    root.style.setProperty('--secondary', hexToHSL(themeColors.secondaryColor));
-    root.style.setProperty('--accent', hexToHSL(themeColors.accentColor));
-    root.style.setProperty('--background', hexToHSL(themeColors.backgroundColor));
-    root.style.setProperty('--foreground', hexToHSL(themeColors.foregroundColor));
+    
+    root.style.setProperty('--primary', hexToHSL(themeColors.primaryColor) || "0 0% 0%");
+    root.style.setProperty('--primary-foreground', hexToHSL(themeColors.primaryForeground) || "0 0% 100%");
+    root.style.setProperty('--secondary', hexToHSL(themeColors.secondaryColor) || "0 0% 96%");
+    root.style.setProperty('--accent', hexToHSL(themeColors.accentColor) || "0 0% 96%");
+    root.style.setProperty('--background', hexToHSL(themeColors.backgroundColor) || "0 0% 100%");
+    root.style.setProperty('--foreground', hexToHSL(themeColors.foregroundColor) || "0 0% 3.9%");
   };
 
   if (loading) {
