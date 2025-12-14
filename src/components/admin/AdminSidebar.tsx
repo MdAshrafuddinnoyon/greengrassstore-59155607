@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -24,7 +27,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   Share2,
-  Crown
+  Crown,
+  LogOut
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -71,6 +75,13 @@ const settingsNavItems: NavItem[] = [
 export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logged out successfully");
+    navigate("/");
+  };
 
   const NavSection = ({ title, items }: { title: string; items: NavItem[] }) => (
     <div className="mb-4 lg:mb-6">
@@ -147,6 +158,22 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
         <NavSection title="Main" items={mainNavItems} />
         <NavSection title="Content" items={contentNavItems} />
         <NavSection title="System" items={settingsNavItems} />
+        
+        {/* Logout Button */}
+        <div className="mt-4 px-1">
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "w-full flex items-center gap-2 lg:gap-3 px-2 lg:px-3 py-2 lg:py-2.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200",
+              "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground",
+              isCollapsed && "justify-center px-2"
+            )}
+            title={isCollapsed ? "Logout" : undefined}
+          >
+            <LogOut className={cn("w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0", isCollapsed && "w-5 h-5 lg:w-6 lg:h-6")} />
+            {!isCollapsed && <span className="flex-1 text-left">Logout</span>}
+          </button>
+        </div>
       </ScrollArea>
 
       {/* Footer */}
