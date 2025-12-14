@@ -765,14 +765,14 @@ export const VIPManager = () => {
                   <div className="space-y-2">
                     <Label>VIP Tier</Label>
                     <Select 
-                      value={editingMember.tier_id || ''} 
-                      onValueChange={(value) => setEditingMember(prev => prev ? { ...prev, tier_id: value || null } : null)}
+                      value={editingMember.tier_id || 'none'} 
+                      onValueChange={(value) => setEditingMember(prev => prev ? { ...prev, tier_id: value === 'none' ? null : value } : null)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select tier" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No Tier</SelectItem>
+                        <SelectItem value="none">No Tier</SelectItem>
                         {tiers.map(tier => (
                           <SelectItem key={tier.id} value={tier.id}>
                             {tier.name} ({tier.discount_percent}% discount)
