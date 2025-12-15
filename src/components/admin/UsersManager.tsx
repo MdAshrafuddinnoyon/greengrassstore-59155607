@@ -284,6 +284,40 @@ export const UsersManager = () => {
       u.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // State for adding new admin/moderator/store manager
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "moderator">("moderator");
+  const [addingUser, setAddingUser] = useState(false);
+
+  const handleAddUserWithRole = async () => {
+    if (!newUserEmail.trim()) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    setAddingUser(true);
+    try {
+      // First check if user exists in profiles by searching
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .limit(100);
+
+      // Note: We can't directly query by email in profiles, so we need to work with user_id
+      // The admin needs to know the user_id or the user must already be registered
+      
+      toast.info("To add an admin/moderator, the user must first create an account. Once they register, you can assign their role from the Users list above.");
+      setShowAddUser(false);
+      setNewUserEmail("");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Failed to add user");
+    } finally {
+      setAddingUser(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -296,6 +330,10 @@ export const UsersManager = () => {
             <CardDescription>Manage user accounts, roles, and security settings</CardDescription>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => setShowAddUser(true)} className="gap-1">
+              <Plus className="w-4 h-4" />
+              Add Admin/Moderator
+            </Button>
             <Button variant="outline" size="sm" onClick={() => { fetchUsers(); fetchBlockedIPs(); }}>
               <RefreshCw className="w-4 h-4 mr-1" />
               Refresh
@@ -315,6 +353,60 @@ export const UsersManager = () => {
         </div>
       </CardHeader>
       <CardContent>
+        {/* Add User Dialog */}
+        <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Admin / Moderator</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> The user must first create an account on the website. 
+                  Once registered, you can assign them a role from the user list.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Select Role</Label>
+                <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "moderator")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin (Full Access)</SelectItem>
+                    <SelectItem value="moderator">Moderator (Limited Access)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Role Permissions</Label>
+                <div className="p-3 bg-muted rounded-lg text-sm space-y-2">
+                  {newUserRole === "admin" ? (
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>✓ Full access to all admin features</li>
+                      <li>✓ Manage products, orders, users</li>
+                      <li>✓ Site settings and configuration</li>
+                      <li>✓ Create/remove other admins</li>
+                    </ul>
+                  ) : (
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>✓ View and manage orders</li>
+                      <li>✓ Manage products and blog</li>
+                      <li>✓ View customer information</li>
+                      <li>✗ Cannot change site settings</li>
+                      <li>✗ Cannot manage other users</li>
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAddUser(false)}>Cancel</Button>
+              <Button onClick={() => setShowAddUser(false)}>Understood</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="users" className="gap-1">

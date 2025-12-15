@@ -52,6 +52,9 @@ const Checkout = () => {
     id: string;
   } | null>(null);
 
+  // Privacy policy checkbox
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
   
@@ -680,6 +683,42 @@ Please confirm my order. Thank you!`;
                     </div>
                   </label>
 
+                  {/* Privacy Policy Checkbox */}
+                  <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="accept-terms"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="accept-terms" className="text-xs sm:text-sm text-gray-600">
+                      {isArabic ? (
+                        <>
+                          أوافق على{" "}
+                          <Link to="/privacy-policy" className="text-primary hover:underline">
+                            سياسة الخصوصية
+                          </Link>
+                          {" "}و{" "}
+                          <Link to="/terms-of-service" className="text-primary hover:underline">
+                            الشروط والأحكام
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          I agree to the{" "}
+                          <Link to="/privacy-policy" className="text-primary hover:underline">
+                            Privacy Policy
+                          </Link>
+                          {" "}and{" "}
+                          <Link to="/terms-of-service" className="text-primary hover:underline">
+                            Terms of Service
+                          </Link>
+                        </>
+                      )}
+                    </label>
+                  </div>
+
                   {/* Place Order Button */}
                   <Button
                     onClick={
@@ -687,14 +726,14 @@ Please confirm my order. Thank you!`;
                       paymentMethod === "home_delivery" ? handleHomeDeliveryOrder :
                       handleWhatsAppOrder
                     }
-                    disabled={isLoading}
+                    disabled={isLoading || !acceptedTerms}
                     className={`w-full h-11 sm:h-14 text-sm sm:text-lg font-semibold ${
                       paymentMethod === "whatsapp" 
                         ? "bg-[#25D366] hover:bg-[#128C7E] text-white"
                         : paymentMethod === "home_delivery"
                         ? "bg-amber-500 hover:bg-amber-600 text-white"
                         : "bg-[#2d5a3d] hover:bg-[#234830] text-white"
-                    }`}
+                    } disabled:opacity-50`}
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-2" />
@@ -717,6 +756,12 @@ Please confirm my order. Thank you!`;
                       </>
                     )}
                   </Button>
+
+                  {!acceptedTerms && (
+                    <p className="text-xs text-amber-600 text-center">
+                      {isArabic ? "يجب الموافقة على الشروط والأحكام للمتابعة" : "Please accept the terms and conditions to proceed"}
+                    </p>
+                  )}
                 </div>
 
                 {/* Trust Badges */}

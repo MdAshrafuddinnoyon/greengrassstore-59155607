@@ -1,17 +1,87 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { Instagram, Facebook, Truck, RefreshCw, CreditCard, MapPin, Send } from "lucide-react";
+import { Instagram, Facebook, Truck, RefreshCw, CreditCard, MapPin, Send, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import logo192 from "@/assets/logo-192.png";
+
+interface FooterFeature {
+  id: string;
+  icon: string;
+  title: string;
+  titleAr: string;
+  description: string;
+  descriptionAr: string;
+  enabled: boolean;
+}
+
+const getFeatureIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'truck': return Truck;
+    case 'rotate': return RefreshCw;
+    case 'credit-card': return CreditCard;
+    case 'map-pin': return MapPin;
+    case 'percent': return Percent;
+    default: return Truck;
+  }
+};
+
+const getFeatureIconColor = (iconName: string) => {
+  switch (iconName) {
+    case 'truck': return 'text-amber-500';
+    case 'rotate': return 'text-blue-400';
+    case 'credit-card': return 'text-yellow-400';
+    case 'map-pin': return 'text-pink-400';
+    case 'percent': return 'text-green-400';
+    default: return 'text-amber-500';
+  }
+};
 
 export const Footer = () => {
   const { t, language } = useLanguage();
   const { footer, branding, themeColors } = useSiteSettings();
   const isArabic = language === "ar";
   const [email, setEmail] = useState("");
+  const [footerFeatures, setFooterFeatures] = useState<FooterFeature[]>([]);
+
+  // Fetch footer features from database
+  useEffect(() => {
+    const fetchFooterFeatures = async () => {
+      try {
+        const { data } = await supabase
+          .from('site_settings')
+          .select('setting_value')
+          .eq('setting_key', 'footer_features')
+          .single();
+
+        if (data?.setting_value) {
+          setFooterFeatures(data.setting_value as unknown as FooterFeature[]);
+        }
+      } catch (error) {
+        console.error('Error fetching footer features:', error);
+      }
+    };
+
+    fetchFooterFeatures();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel('footer-features-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_settings', filter: "setting_key=eq.footer_features" },
+        () => {
+          fetchFooterFeatures();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get footer logo - prioritize footer.logoUrl, then branding.logoUrl, then default
@@ -84,38 +154,61 @@ export const Footer = () => {
         </div>
       </div>
 
-      {/* Features Bar */}
+      {/* Features Bar - Dynamic from Admin Settings */}
       <div className="border-b border-white/10">
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="flex items-start gap-3">
-              <Truck className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-sm">{t("footer.freeDelivery")}</h4>
-                <p className="text-gray-400 text-xs mt-0.5">{t("footer.freeDeliveryDesc")}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <RefreshCw className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-sm">{t("footer.hassleFree")}</h4>
-                <p className="text-gray-400 text-xs mt-0.5">{t("footer.hassleFreeDesc")}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CreditCard className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-sm">{t("footer.easyInstallments")}</h4>
-                <p className="text-gray-400 text-xs mt-0.5">{t("footer.easyInstallmentsDesc")}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-pink-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-sm">{t("footer.visitStore")}</h4>
-                <p className="text-gray-400 text-xs mt-0.5">{t("footer.visitStoreDesc")}</p>
-              </div>
-            </div>
+            {footerFeatures.length > 0 ? (
+              footerFeatures.filter(f => f.enabled).map((feature) => {
+                const IconComponent = getFeatureIcon(feature.icon);
+                const iconColor = getFeatureIconColor(feature.icon);
+                return (
+                  <div key={feature.id} className="flex items-start gap-3">
+                    <IconComponent className={`w-5 h-5 ${iconColor} flex-shrink-0 mt-0.5`} />
+                    <div>
+                      <h4 className="font-semibold text-sm">
+                        {isArabic ? feature.titleAr : feature.title}
+                      </h4>
+                      <p className="text-gray-400 text-xs mt-0.5">
+                        {isArabic ? feature.descriptionAr : feature.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              // Fallback static features
+              <>
+                <div className="flex items-start gap-3">
+                  <Truck className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">{t("footer.freeDelivery")}</h4>
+                    <p className="text-gray-400 text-xs mt-0.5">{t("footer.freeDeliveryDesc")}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <RefreshCw className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">{t("footer.hassleFree")}</h4>
+                    <p className="text-gray-400 text-xs mt-0.5">{t("footer.hassleFreeDesc")}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CreditCard className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">{t("footer.easyInstallments")}</h4>
+                    <p className="text-gray-400 text-xs mt-0.5">{t("footer.easyInstallmentsDesc")}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-pink-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">{t("footer.visitStore")}</h4>
+                    <p className="text-gray-400 text-xs mt-0.5">{t("footer.visitStoreDesc")}</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
