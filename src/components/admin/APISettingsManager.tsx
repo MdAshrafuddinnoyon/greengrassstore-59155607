@@ -213,7 +213,7 @@ export const APISettingsManager = () => {
                       <SelectItem value="lovable">
                         <span className="flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-purple-500" />
-                          Lovable AI (Recommended - No API Key Required)
+                          websearchbd AI (Recommended - No API Key Required)
                         </span>
                       </SelectItem>
                       <SelectItem value="google">
@@ -231,7 +231,7 @@ export const APISettingsManager = () => {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Lovable AI is pre-configured and ready to use. Other providers require API keys.
+                    websearchbd AI is pre-configured and ready to use. Other providers require API keys.
                   </p>
                 </div>
 
