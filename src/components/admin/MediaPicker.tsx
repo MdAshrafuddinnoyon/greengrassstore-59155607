@@ -92,52 +92,78 @@ export const MediaPicker = ({
   }, [open]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
+    // Convert FileList to array
+    const filesToUpload = Array.from(fileList);
+    
+    // Validate all files are images
+    const invalidFiles = filesToUpload.filter(f => !f.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      toast.error(`${invalidFiles.length} file(s) are not images and will be skipped`);
     }
+    
+    const validFiles = filesToUpload.filter(f => f.type.startsWith('image/'));
+    if (validFiles.length === 0) return;
 
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePath = `${uploadFolder}/${fileName}`;
+      const uploadedUrls: string[] = [];
+      
+      for (const file of validFiles) {
+        const fileName = `${Date.now()}-${file.name}`;
+        const filePath = `${uploadFolder}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filePath, file);
+        const { error: uploadError } = await supabase.storage
+          .from('media')
+          .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error(`Failed to upload ${file.name}:`, uploadError);
+          continue;
+        }
 
-      const { error: dbError } = await supabase
-        .from('media_files')
-        .insert({
-          file_name: file.name,
-          file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
-          user_id: user.id,
-          folder: uploadFolder
-        });
+        const { error: dbError } = await supabase
+          .from('media_files')
+          .insert({
+            file_name: file.name,
+            file_path: filePath,
+            file_type: file.type,
+            file_size: file.size,
+            user_id: user.id,
+            folder: uploadFolder
+          });
 
-      if (dbError) throw dbError;
+        if (dbError) {
+          console.error(`Failed to save ${file.name} to database:`, dbError);
+          continue;
+        }
 
-      const { data: urlData } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath);
+        const { data: urlData } = supabase.storage
+          .from('media')
+          .getPublicUrl(filePath);
 
-      onChange(urlData.publicUrl);
-      setUrlInput(urlData.publicUrl);
-      toast.success(`Image uploaded to ${uploadFolder} folder`);
-      setOpen(false);
+        uploadedUrls.push(urlData.publicUrl);
+      }
+
+      if (uploadedUrls.length > 0) {
+        // For single file mode, use last uploaded file
+        onChange(uploadedUrls[uploadedUrls.length - 1]);
+        setUrlInput(uploadedUrls[uploadedUrls.length - 1]);
+        toast.success(`${uploadedUrls.length} image(s) uploaded to ${uploadFolder} folder`);
+        fetchFiles(); // Refresh file list
+      }
+      
+      if (uploadedUrls.length === validFiles.length) {
+        setOpen(false);
+      }
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload image');
+      toast.error('Failed to upload images');
     } finally {
       setUploading(false);
     }
@@ -283,6 +309,7 @@ export const MediaPicker = ({
                       className="hidden"
                       id="media-picker-upload"
                       disabled={uploading}
+                      multiple
                     />
                     <Button asChild disabled={uploading}>
                       <label htmlFor="media-picker-upload" className="cursor-pointer">

@@ -184,6 +184,16 @@ export interface ShippingSettings {
   shippingLabelAr: string;
 }
 
+export interface FooterFeature {
+  id: string;
+  icon: string;
+  title: string;
+  titleAr: string;
+  description: string;
+  descriptionAr: string;
+  enabled: boolean;
+}
+
 export interface SecuritySettings {
   recaptchaEnabled: boolean;
   adminUrlPath: string;
@@ -280,6 +290,7 @@ interface SiteSettingsContextType {
   salesAgent: SalesAgentSettings;
   storeInfo: StoreInfo;
   shippingSettings: ShippingSettings;
+  footerFeatures: FooterFeature[];
   securitySettings: SecuritySettings;
   megaMenuCategories: MegaMenuCategory[];
   faqItems: FAQItem[];
@@ -501,6 +512,13 @@ const defaultShippingSettings: ShippingSettings = {
   shippingLabelAr: "الشحن"
 };
 
+const defaultFooterFeatures: FooterFeature[] = [
+  { id: '1', icon: 'truck', title: 'Free Delivery', titleAr: 'توصيل مجاني', description: 'Free Delivery On Orders Over 300 AED', descriptionAr: 'توصيل مجاني للطلبات فوق 300 درهم', enabled: true },
+  { id: '2', icon: 'rotate', title: 'Hassle-Free Returns', titleAr: 'إرجاع سهل', description: 'Within 7 days of delivery.', descriptionAr: 'خلال 7 أيام من التسليم', enabled: true },
+  { id: '3', icon: 'credit-card', title: 'Easy Installments', titleAr: 'أقساط سهلة', description: 'Pay Later with tabby.', descriptionAr: 'ادفع لاحقاً مع تابي', enabled: true },
+  { id: '4', icon: 'map-pin', title: 'Visit Us In-Store', titleAr: 'زورنا في المتجر', description: 'In Abu Dhabi and Dubai.', descriptionAr: 'في أبوظبي ودبي', enabled: true },
+];
+
 const defaultMegaMenuCategories: MegaMenuCategory[] = [
   {
     id: '1',
@@ -689,6 +707,7 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   salesAgent: defaultSalesAgent,
   storeInfo: defaultStoreInfo,
   shippingSettings: defaultShippingSettings,
+  footerFeatures: defaultFooterFeatures,
   securitySettings: defaultSecuritySettings,
   megaMenuCategories: defaultMegaMenuCategories,
   faqItems: defaultFaqItems,
@@ -857,6 +876,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         salesAgent,
         storeInfo,
         shippingSettings,
+        footerFeatures: defaultFooterFeatures,
         securitySettings,
         megaMenuCategories,
         faqItems,

@@ -22,7 +22,6 @@ const PrivacyPolicy = () => {
               <p className="text-sm sm:text-base md:text-lg text-white/80 px-2">
                 Your privacy is important to us. This policy explains how we collect, use, and protect your information.
               </p>
-              <p className="text-xs sm:text-sm text-white/60 mt-3 sm:mt-4">Last updated: December 2024</p>
             </motion.div>
           </div>
         </div>

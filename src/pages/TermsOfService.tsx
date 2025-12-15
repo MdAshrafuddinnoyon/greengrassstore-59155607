@@ -22,7 +22,6 @@ const TermsOfService = () => {
               <p className="text-sm sm:text-base md:text-lg text-white/80 px-2">
                 Please read these terms carefully before using our services.
               </p>
-              <p className="text-xs sm:text-sm text-white/60 mt-3 sm:mt-4">Effective Date: December 2024</p>
             </motion.div>
           </div>
         </div>
