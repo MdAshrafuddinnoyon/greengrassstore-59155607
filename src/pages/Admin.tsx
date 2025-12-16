@@ -42,7 +42,7 @@ import { VIPManager } from "@/components/admin/VIPManager";
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { isAdmin, isLoading, checkRole } = useAdminStore();
+  const { isAdmin, isLoading, checkRole, canAccessAdmin } = useAdminStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -68,12 +68,12 @@ const Admin = () => {
     }
   }, [authLoading, isAuthenticated, navigate]);
 
-  // Redirect if not admin
+  // Redirect if cannot access admin (not admin, moderator, or store_manager)
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !isAdmin) {
+    if (!isLoading && isAuthenticated && !canAccessAdmin()) {
       navigate("/");
     }
-  }, [isLoading, isAuthenticated, isAdmin, navigate]);
+  }, [isLoading, isAuthenticated, canAccessAdmin, navigate]);
 
   if (authLoading || isLoading) {
     return (
@@ -86,7 +86,7 @@ const Admin = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!canAccessAdmin()) {
     return null;
   }
 

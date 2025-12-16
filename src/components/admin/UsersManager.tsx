@@ -137,7 +137,7 @@ export const UsersManager = () => {
           await supabase.from("user_roles").delete().eq("user_id", userId);
         }
       } else {
-        const roleValue = newRole as "admin" | "moderator" | "user";
+        const roleValue = newRole as "admin" | "moderator" | "store_manager" | "user";
         if (existingRole) {
           await supabase.from("user_roles").update({ role: roleValue }).eq("user_id", userId);
         } else {
@@ -272,6 +272,7 @@ export const UsersManager = () => {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "admin": return "bg-red-500";
+      case "store_manager": return "bg-purple-500";
       case "moderator": return "bg-blue-500";
       default: return "bg-gray-500";
     }
@@ -287,35 +288,86 @@ export const UsersManager = () => {
   // State for adding new admin/moderator/store manager
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"admin" | "moderator">("moderator");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "moderator" | "store_manager">("store_manager");
   const [addingUser, setAddingUser] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{email: string, password: string, role: string} | null>(null);
 
   const handleAddUserWithRole = async () => {
     if (!newUserEmail.trim()) {
       toast.error("Please enter an email address");
       return;
     }
+    if (!newUserPassword.trim() || newUserPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
 
     setAddingUser(true);
     try {
-      // First check if user exists in profiles by searching
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name")
-        .limit(100);
+      // Create user via Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUserEmail.trim(),
+        password: newUserPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: newUserName || newUserEmail.split('@')[0]
+          }
+        }
+      });
 
-      // Note: We can't directly query by email in profiles, so we need to work with user_id
-      // The admin needs to know the user_id or the user must already be registered
+      if (authError) throw authError;
       
-      toast.info("To add an admin/moderator, the user must first create an account. Once they register, you can assign their role from the Users list above.");
-      setShowAddUser(false);
-      setNewUserEmail("");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to add user");
+      if (authData.user) {
+        // Wait a moment for the profile trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Assign role
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert([{ user_id: authData.user.id, role: newUserRole }]);
+
+        if (roleError) {
+          console.error("Role assignment error:", roleError);
+        }
+
+        // Update profile name if provided
+        if (newUserName) {
+          await supabase
+            .from("profiles")
+            .update({ full_name: newUserName })
+            .eq("user_id", authData.user.id);
+        }
+
+        setCreatedCredentials({
+          email: newUserEmail,
+          password: newUserPassword,
+          role: newUserRole
+        });
+
+        toast.success(`${newUserRole} account created successfully!`);
+        fetchUsers();
+      }
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      if (error.message?.includes("already registered")) {
+        toast.error("This email is already registered. Please assign the role from the user list.");
+      } else {
+        toast.error(error.message || "Failed to create user");
+      }
     } finally {
       setAddingUser(false);
     }
+  };
+
+  const resetAddUserForm = () => {
+    setNewUserEmail("");
+    setNewUserPassword("");
+    setNewUserName("");
+    setNewUserRole("store_manager");
+    setCreatedCredentials(null);
   };
 
   return (
@@ -330,9 +382,9 @@ export const UsersManager = () => {
             <CardDescription>Manage user accounts, roles, and security settings</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setShowAddUser(true)} className="gap-1">
+            <Button onClick={() => { resetAddUserForm(); setShowAddUser(true); }} className="gap-1">
               <Plus className="w-4 h-4" />
-              Add Admin/Moderator
+              Add Staff Account
             </Button>
             <Button variant="outline" size="sm" onClick={() => { fetchUsers(); fetchBlockedIPs(); }}>
               <RefreshCw className="w-4 h-4 mr-1" />
@@ -354,56 +406,118 @@ export const UsersManager = () => {
       </CardHeader>
       <CardContent>
         {/* Add User Dialog */}
-        <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
-          <DialogContent>
+        <Dialog open={showAddUser} onOpenChange={(open) => { if (!open) resetAddUserForm(); setShowAddUser(open); }}>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add Admin / Moderator</DialogTitle>
+              <DialogTitle>Add Staff Account</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">
-                  <strong>Note:</strong> The user must first create an account on the website. 
-                  Once registered, you can assign them a role from the user list.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>Select Role</Label>
-                <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "moderator")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin (Full Access)</SelectItem>
-                    <SelectItem value="moderator">Moderator (Limited Access)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Role Permissions</Label>
-                <div className="p-3 bg-muted rounded-lg text-sm space-y-2">
-                  {newUserRole === "admin" ? (
-                    <ul className="space-y-1 text-muted-foreground">
-                      <li>✓ Full access to all admin features</li>
-                      <li>✓ Manage products, orders, users</li>
-                      <li>✓ Site settings and configuration</li>
-                      <li>✓ Create/remove other admins</li>
-                    </ul>
-                  ) : (
-                    <ul className="space-y-1 text-muted-foreground">
-                      <li>✓ View and manage orders</li>
-                      <li>✓ Manage products and blog</li>
-                      <li>✓ View customer information</li>
-                      <li>✗ Cannot change site settings</li>
-                      <li>✗ Cannot manage other users</li>
-                    </ul>
-                  )}
+            
+            {createdCredentials ? (
+              <div className="space-y-4 py-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800 font-medium mb-2">✓ Account Created Successfully!</p>
+                  <p className="text-xs text-green-700">Share these credentials securely with the staff member:</p>
+                </div>
+                <div className="space-y-3 p-4 bg-muted rounded-lg">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <p className="font-mono text-sm">{createdCredentials.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Password</Label>
+                    <p className="font-mono text-sm">{createdCredentials.password}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Role</Label>
+                    <Badge className={getRoleBadgeColor(createdCredentials.role)}>{createdCredentials.role}</Badge>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={() => { resetAddUserForm(); setShowAddUser(false); }}>Done</Button>
                 </div>
               </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAddUser(false)}>Cancel</Button>
-              <Button onClick={() => setShowAddUser(false)}>Understood</Button>
-            </div>
+            ) : (
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input
+                    placeholder="Staff member name"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Address *</Label>
+                  <Input
+                    type="email"
+                    placeholder="staff@example.com"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password *</Label>
+                  <Input
+                    type="text"
+                    placeholder="Minimum 6 characters"
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Staff member will use this to login</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Select Role *</Label>
+                  <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "moderator" | "store_manager")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin (Full Access)</SelectItem>
+                      <SelectItem value="store_manager">Store Manager (Products & Orders)</SelectItem>
+                      <SelectItem value="moderator">Moderator (Content Only)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Role Permissions</Label>
+                  <div className="p-3 bg-muted rounded-lg text-sm space-y-2">
+                    {newUserRole === "admin" ? (
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>✓ Full access to all admin features</li>
+                        <li>✓ Manage products, orders, users</li>
+                        <li>✓ Site settings and configuration</li>
+                        <li>✓ Create/remove other staff</li>
+                      </ul>
+                    ) : newUserRole === "store_manager" ? (
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>✓ Manage products and inventory</li>
+                        <li>✓ View and manage orders</li>
+                        <li>✓ View customer information</li>
+                        <li>✓ Manage categories</li>
+                        <li>✗ Cannot change site settings</li>
+                        <li>✗ Cannot manage other users</li>
+                      </ul>
+                    ) : (
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>✓ Manage blog posts</li>
+                        <li>✓ View orders (read-only)</li>
+                        <li>✓ View customer information</li>
+                        <li>✗ Cannot manage products</li>
+                        <li>✗ Cannot change site settings</li>
+                        <li>✗ Cannot manage other users</li>
+                      </ul>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => { resetAddUserForm(); setShowAddUser(false); }}>Cancel</Button>
+                  <Button onClick={handleAddUserWithRole} disabled={addingUser}>
+                    {addingUser ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Create Account
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -469,12 +583,13 @@ export const UsersManager = () => {
                               value={user.role || "user"}
                               onValueChange={(value) => updateUserRole(user.user_id, value)}
                             >
-                              <SelectTrigger className="w-28 h-8 text-xs">
+                              <SelectTrigger className="w-32 h-8 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="user">User</SelectItem>
                                 <SelectItem value="moderator">Moderator</SelectItem>
+                                <SelectItem value="store_manager">Store Manager</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
                               </SelectContent>
                             </Select>
