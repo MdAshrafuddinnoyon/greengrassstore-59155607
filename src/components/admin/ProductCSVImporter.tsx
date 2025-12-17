@@ -463,9 +463,9 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
           featured_image: product.featured_image || null,
           images: imagesArray,
           tags: tagsArray,
-          is_featured: toBool(product.is_featured),
-          is_on_sale: toBool(product.is_on_sale) || (finalComparePrice && finalComparePrice > price),
-          is_new: toBool(product.is_new),
+          is_featured: Boolean(toBool(product.is_featured)),
+          is_on_sale: Boolean(toBool(product.is_on_sale) || (finalComparePrice && finalComparePrice > price)),
+          is_new: Boolean(toBool(product.is_new)),
           is_active: true,
           product_type: 'simple' as const,
         };
