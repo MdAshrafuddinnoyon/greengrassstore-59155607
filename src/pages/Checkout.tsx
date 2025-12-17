@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput, validatePhoneNumber } from "@/components/ui/phone-input";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   ShoppingCart, 
   Minus, 
@@ -54,6 +55,44 @@ const Checkout = () => {
 
   // Privacy policy checkbox
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  
+  // Auto-fill customer info for logged-in users
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Fetch user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, phone, address, city')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (profile) {
+            setCustomerInfo(prev => ({
+              ...prev,
+              name: profile.full_name || prev.name,
+              phone: profile.phone || prev.phone,
+              address: profile.address || prev.address,
+              city: profile.city || prev.city,
+              email: user.email || prev.email,
+            }));
+          } else {
+            // Just set email from auth
+            setCustomerInfo(prev => ({
+              ...prev,
+              email: user.email || prev.email,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
@@ -231,8 +270,6 @@ Please confirm my order. Thank you!`;
         total: parseFloat(item.price.amount) * item.quantity
       }));
 
-      const { supabase } = await import('@/integrations/supabase/client');
-      
       // Get current user for linking order
       const { data: { user } } = await supabase.auth.getUser();
       

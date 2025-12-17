@@ -26,20 +26,24 @@ export const GiftSection = () => {
   useEffect(() => {
     const fetchGiftProducts = async () => {
       try {
-        // Fetch products that have 'gift' tag, 'gift' in category/subcategory, or is_gift flag
+        // Fetch products that have 'gift' tag, 'gift'/'gifts' in category/subcategory
         const { data, error } = await supabase
           .from('products')
           .select('id, name, name_ar, price, featured_image, slug, category, subcategory, tags')
           .eq('is_active', true)
-          .limit(20);
+          .limit(50);
         
         if (error) throw error;
         
-        // Filter products that match gift criteria
+        // Filter products that match gift criteria (case-insensitive)
         const giftProducts = (data || []).filter(product => {
-          const categoryMatch = product.category?.toLowerCase().includes('gift');
-          const subcategoryMatch = product.subcategory?.toLowerCase().includes('gift');
-          const tagsMatch = product.tags?.some((tag: string) => tag.toLowerCase().includes('gift'));
+          const categoryLower = product.category?.toLowerCase() || '';
+          const subcategoryLower = product.subcategory?.toLowerCase() || '';
+          const categoryMatch = categoryLower.includes('gift') || categoryLower === 'gifts';
+          const subcategoryMatch = subcategoryLower.includes('gift') || subcategoryLower === 'gifts';
+          const tagsMatch = product.tags?.some((tag: string) => 
+            tag.toLowerCase().includes('gift') || tag.toLowerCase() === 'gifts'
+          );
           return categoryMatch || subcategoryMatch || tagsMatch;
         }).slice(0, 6);
         
