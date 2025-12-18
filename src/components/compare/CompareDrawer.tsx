@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Scale, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCompareStore } from "@/stores/compareStore";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const CompareDrawer = () => {
   const { items, isOpen, toggleCompareDrawer, removeItem, clearAll } = useCompareStore();
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Don't show if no items
   if (items.length === 0) return null;
 
   return (
@@ -40,16 +39,16 @@ export const CompareDrawer = () => {
                   {/* Product Thumbnails */}
                   <div className="flex-1 flex items-center gap-3 overflow-x-auto pb-1">
                     {items.map((item) => (
-                      <div key={item.node.id} className="relative flex-shrink-0">
+                      <div key={item.id} className="relative flex-shrink-0">
                         <div className="w-14 h-14 rounded-lg overflow-hidden bg-background/10">
                           <img
-                            src={item.node.images.edges[0]?.node.url}
-                            alt={item.node.title}
+                            src={item.featured_image || '/placeholder.svg'}
+                            alt={item.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <button
-                          onClick={() => removeItem(item.node.id)}
+                          onClick={() => removeItem(item.id)}
                           className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center"
                         >
                           <X className="w-3 h-3 text-white" />
@@ -119,15 +118,6 @@ export const CompareDrawer = () => {
 const CompareTable = () => {
   const { items, removeItem } = useCompareStore();
 
-  const compareFields = [
-    { label: "Image", key: "image" },
-    { label: "Name", key: "title" },
-    { label: "Price", key: "price" },
-    { label: "Description", key: "description" },
-    { label: "Options", key: "options" },
-    { label: "Availability", key: "availability" },
-  ];
-
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full min-w-[600px]">
@@ -137,9 +127,9 @@ const CompareTable = () => {
               Feature
             </th>
             {items.map((item) => (
-              <th key={item.node.id} className="p-3 text-center min-w-[200px]">
+              <th key={item.id} className="p-3 text-center min-w-[200px]">
                 <button
-                  onClick={() => removeItem(item.node.id)}
+                  onClick={() => removeItem(item.id)}
                   className="absolute top-2 right-2 p-1 rounded-full bg-muted hover:bg-destructive/10"
                 >
                   <X className="w-4 h-4" />
@@ -155,11 +145,11 @@ const CompareTable = () => {
               Image
             </td>
             {items.map((item) => (
-              <td key={item.node.id} className="p-3 text-center">
-                <Link to={`/product/${item.node.handle}`}>
+              <td key={item.id} className="p-3 text-center">
+                <Link to={`/product/${item.slug}`}>
                   <img
-                    src={item.node.images.edges[0]?.node.url}
-                    alt={item.node.title}
+                    src={item.featured_image || '/placeholder.svg'}
+                    alt={item.name}
                     className="w-24 h-24 object-cover rounded-lg mx-auto hover:scale-105 transition-transform"
                   />
                 </Link>
@@ -173,12 +163,12 @@ const CompareTable = () => {
               Name
             </td>
             {items.map((item) => (
-              <td key={item.node.id} className="p-3 text-center">
+              <td key={item.id} className="p-3 text-center">
                 <Link
-                  to={`/product/${item.node.handle}`}
+                  to={`/product/${item.slug}`}
                   className="font-medium text-foreground hover:text-primary transition-colors"
                 >
-                  {item.node.title}
+                  {item.name}
                 </Link>
               </td>
             ))}
@@ -190,10 +180,9 @@ const CompareTable = () => {
               Price
             </td>
             {items.map((item) => (
-              <td key={item.node.id} className="p-3 text-center">
+              <td key={item.id} className="p-3 text-center">
                 <span className="font-bold text-primary text-lg">
-                  {item.node.priceRange.minVariantPrice.currencyCode}{" "}
-                  {parseFloat(item.node.priceRange.minVariantPrice.amount).toFixed(0)}
+                  {item.currency} {item.price.toFixed(2)}
                 </span>
               </td>
             ))}
@@ -205,36 +194,24 @@ const CompareTable = () => {
               Description
             </td>
             {items.map((item) => (
-              <td key={item.node.id} className="p-3 text-center">
+              <td key={item.id} className="p-3 text-center">
                 <p className="text-sm text-muted-foreground line-clamp-3">
-                  {item.node.description || "No description available"}
+                  {item.description || "No description available"}
                 </p>
               </td>
             ))}
           </tr>
 
-          {/* Options Row */}
+          {/* Category Row */}
           <tr className="border-b">
             <td className="p-3 text-sm font-medium text-muted-foreground bg-muted/50 sticky left-0">
-              Options
+              Category
             </td>
             {items.map((item) => (
-              <td key={item.node.id} className="p-3 text-center">
-                {item.node.options && item.node.options.length > 0 ? (
-                  <div className="flex flex-wrap justify-center gap-1">
-                    {item.node.options.map((opt, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 bg-muted rounded-full text-xs"
-                      >
-                        {opt.name}: {opt.values.slice(0, 2).join(", ")}
-                        {opt.values.length > 2 && "..."}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground text-sm">-</span>
-                )}
+              <td key={item.id} className="p-3 text-center">
+                <span className="px-2 py-0.5 bg-muted rounded-full text-xs">
+                  {item.category}
+                </span>
               </td>
             ))}
           </tr>
@@ -245,11 +222,9 @@ const CompareTable = () => {
               Availability
             </td>
             {items.map((item) => {
-              const isAvailable = item.node.variants.edges.some(
-                (v) => v.node.availableForSale
-              );
+              const isAvailable = (item.stock_quantity ?? 0) > 0;
               return (
-                <td key={item.node.id} className="p-3 text-center">
+                <td key={item.id} className="p-3 text-center">
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       isAvailable
@@ -270,9 +245,9 @@ const CompareTable = () => {
               Action
             </td>
             {items.map((item) => (
-              <td key={item.node.id} className="p-3 text-center">
+              <td key={item.id} className="p-3 text-center">
                 <Button asChild size="sm">
-                  <Link to={`/product/${item.node.handle}`}>View Details</Link>
+                  <Link to={`/product/${item.slug}`}>View Details</Link>
                 </Button>
               </td>
             ))}

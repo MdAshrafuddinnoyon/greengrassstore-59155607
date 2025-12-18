@@ -173,23 +173,7 @@ const CategoryBannerSlider = ({ category, products, reverse }: CategoryBannerSli
     const displayImage = product.featured_image || product.images?.[0] || '/placeholder.svg';
     
     addItem({
-      product: {
-        node: {
-          id: product.id,
-          title: product.name,
-          description: '',
-          handle: product.slug,
-          priceRange: {
-            minVariantPrice: {
-              amount: product.price.toString(),
-              currencyCode: product.currency
-            }
-          },
-          images: { edges: [{ node: { url: displayImage, altText: product.name } }] },
-          variants: { edges: [{ node: { id: product.id, title: 'Default', price: { amount: product.price.toString(), currencyCode: product.currency }, availableForSale: true, selectedOptions: [] } }] },
-          options: []
-        }
-      },
+      product: { ...product, featured_image: displayImage },
       variantId: product.id,
       variantTitle: 'Default',
       price: { amount: product.price.toString(), currencyCode: product.currency },

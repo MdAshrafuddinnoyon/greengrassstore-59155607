@@ -239,27 +239,7 @@ const ProductDetail = () => {
     if (!product) return;
 
     const cartItem: CartItem = {
-      product: {
-        node: {
-          id: product.id,
-          title: product.name,
-          handle: product.slug,
-          description: product.description || '',
-          priceRange: {
-            minVariantPrice: {
-              amount: String(currentPrice),
-              currencyCode: product.currency,
-            },
-          },
-          images: {
-            edges: allImages.map(url => ({
-              node: { url, altText: product.name },
-            })),
-          },
-          variants: { edges: [] },
-          options: [],
-        },
-      },
+      product: { ...product, featured_image: allImages[0] || product.featured_image },
       variantId: selectedVariant?.id || product.id,
       variantTitle: Object.values(selectedOptions).filter(Boolean).join(' / ') || 'Default',
       price: {

@@ -15,17 +15,15 @@ import { ShoppingCart, Minus, Plus, Trash2, Truck, ShoppingBag } from "lucide-re
 import { useCartStore } from "@/stores/cartStore";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
-const WHATSAPP_NUMBER = "971547751901"; // Green Grass Store WhatsApp
+const WHATSAPP_NUMBER = "971547751901";
 
 export const CartDrawer = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { shippingSettings } = useSiteSettings();
   const { 
     items, 
-    isLoading, 
     updateQuantity, 
-    removeItem, 
-    createCheckout 
+    removeItem
   } = useCartStore();
   
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -38,22 +36,9 @@ export const CartDrawer = () => {
   const progressPercent = Math.min(100, (totalPrice / freeShippingThreshold) * 100);
   const qualifiesForFreeShipping = totalPrice >= freeShippingThreshold;
 
-  const handleCheckout = async () => {
-    try {
-      await createCheckout();
-      const checkoutUrl = useCartStore.getState().checkoutUrl;
-      if (checkoutUrl) {
-        window.open(checkoutUrl, '_blank');
-        setIsOpen(false);
-      }
-    } catch (error) {
-      console.error('Checkout failed:', error);
-    }
-  };
-
   const handleWhatsAppCheckout = () => {
     const itemsList = items.map(item => 
-      `• ${item.product.node.title} (${item.selectedOptions.map(o => o.value).join(', ')}) x${item.quantity} - ${item.price.currencyCode} ${parseFloat(item.price.amount).toFixed(2)}`
+      `• ${item.product.name} (${item.selectedOptions.map(o => o.value).join(', ')}) x${item.quantity} - ${item.price.currencyCode} ${parseFloat(item.price.amount).toFixed(2)}`
     ).join('\n');
     
     const message = `Hi! I want to place an order:\n\n${itemsList}\n\n💰 Total: ${items[0]?.price.currencyCode || 'AED'} ${totalPrice.toFixed(2)}\n\nPlease confirm and process my order.`;
@@ -88,7 +73,6 @@ export const CartDrawer = () => {
           {items.length === 0 ? (
             <div className="flex-1 flex items-center justify-center px-4">
               <div className="text-center max-w-xs mx-auto">
-                {/* Modern animated icon container */}
                 <div className="relative mx-auto mb-6 w-20 h-20 sm:w-24 sm:h-24">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full animate-pulse" />
                   <div className="absolute inset-2 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center shadow-inner">
@@ -96,17 +80,14 @@ export const CartDrawer = () => {
                   </div>
                 </div>
                 
-                {/* Heading */}
                 <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
                   Your Cart is Empty
                 </h3>
                 
-                {/* Description */}
                 <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed">
                   You haven't added any products to your cart yet
                 </p>
                 
-                {/* CTA Button */}
                 <Link to="/shop" onClick={() => setIsOpen(false)}>
                   <Button 
                     className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 sm:px-8 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
@@ -116,7 +97,6 @@ export const CartDrawer = () => {
                   </Button>
                 </Link>
                 
-                {/* Decorative elements */}
                 {freeShippingEnabled && (
                   <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
                     <span className="w-8 h-px bg-border" />
@@ -152,17 +132,17 @@ export const CartDrawer = () => {
                   {items.map((item) => (
                     <div key={item.variantId} className="flex gap-4 p-2 border-b">
                       <div className="w-16 h-16 bg-secondary/20 rounded-md overflow-hidden flex-shrink-0">
-                        {item.product.node.images?.edges?.[0]?.node && (
+                        {item.product.featured_image && (
                           <img
-                            src={item.product.node.images.edges[0].node.url}
-                            alt={item.product.node.title}
+                            src={item.product.featured_image}
+                            alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
                         )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium truncate">{item.product.node.title}</h4>
+                        <h4 className="font-medium truncate">{item.product.name}</h4>
                         <p className="text-sm text-muted-foreground">
                           {item.selectedOptions.map(option => option.value).join(' • ')}
                         </p>
@@ -214,7 +194,6 @@ export const CartDrawer = () => {
                   </span>
                 </div>
                 
-                {/* Proceed to Checkout Page */}
                 <Link to="/checkout" onClick={() => setIsOpen(false)} className="block">
                   <Button 
                     className="w-full bg-[#2d5a3d] hover:bg-[#234830]" 

@@ -32,7 +32,7 @@ const Checkout = () => {
   const isArabic = language === "ar";
   const navigate = useNavigate();
   const { shippingSettings } = useSiteSettings();
-  const { items, updateQuantity, removeItem, clearCart, createCheckout, isLoading } = useCartStore();
+  const { items, updateQuantity, removeItem, clearCart, isLoading } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<"online" | "whatsapp" | "home_delivery">("online");
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
@@ -187,21 +187,11 @@ const Checkout = () => {
     toast.success(isArabic ? "تم إزالة كود الخصم" : "Coupon removed");
   };
 
-  const handleShopifyCheckout = async () => {
-    try {
-      await createCheckout();
-      const checkoutUrl = useCartStore.getState().checkoutUrl;
-      if (checkoutUrl) {
-        window.open(checkoutUrl, '_blank');
-      }
-    } catch (error) {
-      toast.error(isArabic ? "فشل في إنشاء الطلب" : "Failed to create checkout");
-    }
-  };
+  // Online checkout removed - using home delivery only
 
   const generateOrderMessage = (paymentType: string) => {
     const itemsList = items.map((item, index) => 
-      `${index + 1}. ${item.product.node.title}
+      `${index + 1}. ${item.product.name}
    ${item.selectedOptions.map(opt => `${opt.name}: ${opt.value}`).join(', ')}
    Qty: ${item.quantity} × ${currency} ${parseFloat(item.price.amount).toFixed(2)} = ${currency} ${(parseFloat(item.price.amount) * item.quantity).toFixed(2)}`
     ).join('\n\n');
@@ -263,7 +253,7 @@ Please confirm my order. Thank you!`;
       // Create order in Supabase
       const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
       const orderItems = items.map(item => ({
-        name: item.product.node.title,
+        name: item.product.name,
         options: item.selectedOptions.map(o => o.value).join(', '),
         quantity: item.quantity,
         price: parseFloat(item.price.amount),
@@ -393,10 +383,10 @@ Please confirm my order. Thank you!`;
                   {items.map((item) => (
                     <div key={item.variantId} className="py-3 sm:py-4 flex gap-3 sm:gap-4">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0">
-                        {item.product.node.images?.edges?.[0]?.node && (
+                        {item.product.featured_image && (
                           <img
-                            src={item.product.node.images.edges[0].node.url}
-                            alt={item.product.node.title}
+                            src={item.product.featured_image}
+                            alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
                         )}
@@ -404,7 +394,7 @@ Please confirm my order. Thank you!`;
                       
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2">
-                          {item.product.node.title}
+                          {item.product.name}
                         </h3>
                         {item.selectedOptions.length > 0 && (
                           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -759,7 +749,6 @@ Please confirm my order. Thank you!`;
                   {/* Place Order Button */}
                   <Button
                     onClick={
-                      paymentMethod === "online" ? handleShopifyCheckout : 
                       paymentMethod === "home_delivery" ? handleHomeDeliveryOrder :
                       handleWhatsAppOrder
                     }

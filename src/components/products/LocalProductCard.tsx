@@ -55,45 +55,8 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
     e.preventDefault();
     e.stopPropagation();
     
-    // Create a minimal ShopifyProduct-like structure for cart compatibility
-    const cartItem = {
-      product: {
-        node: {
-          id: product.id,
-          title: product.name,
-          description: product.description || '',
-          handle: product.slug,
-          priceRange: {
-            minVariantPrice: {
-              amount: product.price.toString(),
-              currencyCode: product.currency
-            }
-          },
-          images: {
-            edges: [{
-              node: {
-                url: displayImage,
-                altText: product.name
-              }
-            }]
-          },
-          variants: {
-            edges: [{
-              node: {
-                id: product.id,
-                title: 'Default',
-                price: {
-                  amount: product.price.toString(),
-                  currencyCode: product.currency
-                },
-                availableForSale: true,
-                selectedOptions: []
-              }
-            }]
-          },
-          options: []
-        }
-      },
+    addItem({
+      product: { ...product, featured_image: displayImage },
       variantId: product.id,
       variantTitle: 'Default',
       price: {
@@ -102,9 +65,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
       },
       quantity: 1,
       selectedOptions: []
-    };
-    
-    addItem(cartItem);
+    });
     toast.success(isArabic ? 'تمت الإضافة إلى السلة' : 'Added to cart');
   };
 
@@ -140,26 +101,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
       removeFromCompare(product.id);
       toast.success(isArabic ? 'تمت الإزالة من المقارنة' : 'Removed from compare');
     } else {
-      const shopifyLikeProduct = {
-        node: {
-          id: product.id,
-          title: product.name,
-          description: product.description || '',
-          handle: product.slug,
-          priceRange: {
-            minVariantPrice: {
-              amount: product.price.toString(),
-              currencyCode: product.currency
-            }
-          },
-          images: {
-            edges: [{ node: { url: displayImage, altText: product.name } }]
-          },
-          variants: { edges: [] },
-          options: []
-        }
-      };
-      const added = addToCompare(shopifyLikeProduct);
+      const added = addToCompare({ ...product, featured_image: displayImage });
       if (added) {
         toast.success(isArabic ? 'تمت الإضافة للمقارنة' : 'Added to compare');
       } else {

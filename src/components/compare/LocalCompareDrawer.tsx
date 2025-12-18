@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCompareStore } from "@/stores/compareStore";
 import { X, ChevronUp, ChevronDown, GitCompare, Trash2, Check, Minus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 
 export const LocalCompareDrawer = () => {
@@ -16,14 +15,6 @@ export const LocalCompareDrawer = () => {
   // Hide on admin pages
   const isAdminRoute = location.pathname.startsWith('/admin');
   if (isAdminRoute || items.length === 0) return null;
-
-  const getProductData = (item: typeof items[0]) => ({
-    id: item.node.id,
-    title: item.node.title,
-    image: item.node.images.edges[0]?.node.url || '/placeholder.svg',
-    price: `${item.node.priceRange.minVariantPrice.currencyCode} ${parseFloat(item.node.priceRange.minVariantPrice.amount).toFixed(2)}`,
-    handle: item.node.handle
-  });
 
   return (
     <>
@@ -75,27 +66,24 @@ export const LocalCompareDrawer = () => {
                     >
                       <div className="p-4">
                         <div className="flex gap-3 mb-4">
-                          {items.map((item) => {
-                            const product = getProductData(item);
-                            return (
-                              <div key={product.id} className="relative flex-1 max-w-[120px]">
-                                <div className="aspect-square rounded-lg overflow-hidden bg-muted">
-                                  <img 
-                                    src={product.image} 
-                                    alt={product.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <button
-                                  onClick={() => removeItem(product.id)}
-                                  className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                                <p className="text-xs font-medium truncate mt-1">{product.title}</p>
+                          {items.map((item) => (
+                            <div key={item.id} className="relative flex-1 max-w-[120px]">
+                              <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                                <img 
+                                  src={item.featured_image || '/placeholder.svg'} 
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
-                            );
-                          })}
+                              <button
+                                onClick={() => removeItem(item.id)}
+                                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              <p className="text-xs font-medium truncate mt-1">{item.name}</p>
+                            </div>
+                          ))}
                           
                           {/* Empty slots */}
                           {Array.from({ length: 4 - items.length }).map((_, i) => (
@@ -147,34 +135,31 @@ export const LocalCompareDrawer = () => {
               <thead>
                 <tr>
                   <th className="text-left p-3 bg-muted/50 w-32">Attribute</th>
-                  {items.map((item) => {
-                    const product = getProductData(item);
-                    return (
-                      <th key={product.id} className="p-3 bg-muted/50">
-                        <div className="relative">
-                          <button
-                            onClick={() => removeItem(product.id)}
-                            className="absolute -top-1 -right-1 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center z-10"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                          <div className="w-24 h-24 mx-auto rounded-lg overflow-hidden bg-muted mb-2">
-                            <img 
-                              src={product.image} 
-                              alt={product.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <Link 
-                            to={`/product/${product.handle}`}
-                            className="text-sm font-medium hover:text-primary transition-colors line-clamp-2"
-                          >
-                            {product.title}
-                          </Link>
+                  {items.map((item) => (
+                    <th key={item.id} className="p-3 bg-muted/50">
+                      <div className="relative">
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="absolute -top-1 -right-1 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center z-10"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                        <div className="w-24 h-24 mx-auto rounded-lg overflow-hidden bg-muted mb-2">
+                          <img 
+                            src={item.featured_image || '/placeholder.svg'} 
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                      </th>
-                    );
-                  })}
+                        <Link 
+                          to={`/product/${item.slug}`}
+                          className="text-sm font-medium hover:text-primary transition-colors line-clamp-2"
+                        >
+                          {item.name}
+                        </Link>
+                      </div>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -182,10 +167,9 @@ export const LocalCompareDrawer = () => {
                 <tr className="border-b">
                   <td className="p-3 font-medium text-muted-foreground">Price</td>
                   {items.map((item) => (
-                    <td key={item.node.id} className="p-3 text-center">
+                    <td key={item.id} className="p-3 text-center">
                       <span className="text-lg font-bold text-primary">
-                        {item.node.priceRange.minVariantPrice.currencyCode}{' '}
-                        {parseFloat(item.node.priceRange.minVariantPrice.amount).toFixed(2)}
+                        {item.currency} {item.price.toFixed(2)}
                       </span>
                     </td>
                   ))}
@@ -195,9 +179,9 @@ export const LocalCompareDrawer = () => {
                 <tr className="border-b">
                   <td className="p-3 font-medium text-muted-foreground">Description</td>
                   {items.map((item) => (
-                    <td key={item.node.id} className="p-3 text-center text-sm">
-                      {item.node.description ? (
-                        <p className="line-clamp-3">{item.node.description}</p>
+                    <td key={item.id} className="p-3 text-center text-sm">
+                      {item.description ? (
+                        <p className="line-clamp-3">{item.description}</p>
                       ) : (
                         <Minus className="w-4 h-4 mx-auto text-muted-foreground" />
                       )}
@@ -209,7 +193,7 @@ export const LocalCompareDrawer = () => {
                 <tr className="border-b">
                   <td className="p-3 font-medium text-muted-foreground">Availability</td>
                   {items.map((item) => (
-                    <td key={item.node.id} className="p-3 text-center">
+                    <td key={item.id} className="p-3 text-center">
                       <Badge variant="secondary" className="bg-green-100 text-green-800">
                         <Check className="w-3 h-3 mr-1" />
                         In Stock
@@ -221,18 +205,15 @@ export const LocalCompareDrawer = () => {
                 {/* Action Row */}
                 <tr>
                   <td className="p-3 font-medium text-muted-foreground">Action</td>
-                  {items.map((item) => {
-                    const product = getProductData(item);
-                    return (
-                      <td key={item.node.id} className="p-3 text-center">
-                        <Link to={`/product/${product.handle}`}>
-                          <Button size="sm" className="w-full">
-                            View Details
-                          </Button>
-                        </Link>
-                      </td>
-                    );
-                  })}
+                  {items.map((item) => (
+                    <td key={item.id} className="p-3 text-center">
+                      <Link to={`/product/${item.slug}`}>
+                        <Button size="sm" className="w-full">
+                          View Details
+                        </Button>
+                      </Link>
+                    </td>
+                  ))}
                 </tr>
               </tbody>
             </table>
