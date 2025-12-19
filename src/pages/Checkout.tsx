@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { FooterFeaturesBar } from "@/components/shared/FooterFeaturesBar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { useCartStore } from "@/stores/cartStore";
@@ -254,10 +255,12 @@ Please confirm my order. Thank you!`;
       const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
       const orderItems = items.map(item => ({
         name: item.product.name,
+        productId: item.product.id,
         options: item.selectedOptions.map(o => o.value).join(', '),
         quantity: item.quantity,
         price: parseFloat(item.price.amount),
-        total: parseFloat(item.price.amount) * item.quantity
+        total: parseFloat(item.price.amount) * item.quantity,
+        image: item.product.featured_image
       }));
 
       // Get current user for linking order
@@ -281,6 +284,34 @@ Please confirm my order. Thank you!`;
       });
 
       if (error) throw error;
+
+      // Reduce stock quantity for each product
+      for (const item of items) {
+        if (item.product.id) {
+          // Get current stock
+          const { data: productData } = await supabase
+            .from('products')
+            .select('stock_quantity')
+            .eq('id', item.product.id)
+            .single();
+          
+          if (productData) {
+            const newStock = Math.max(0, (productData.stock_quantity || 0) - item.quantity);
+            await supabase
+              .from('products')
+              .update({ stock_quantity: newStock })
+              .eq('id', item.product.id);
+          }
+        }
+      }
+
+      // Update coupon used_count if coupon was applied
+      if (appliedCoupon) {
+        await supabase
+          .from('discount_coupons')
+          .update({ used_count: (await supabase.from('discount_coupons').select('used_count').eq('id', appliedCoupon.id).single()).data?.used_count + 1 || 1 })
+          .eq('id', appliedCoupon.id);
+      }
 
       toast.success(isArabic ? "تم تأكيد طلبك! رقم الطلب: " + orderNumber : "Order confirmed! Order #: " + orderNumber);
       clearCart();
@@ -321,6 +352,7 @@ Please confirm my order. Thank you!`;
             </Link>
           </motion.div>
         </main>
+        <FooterFeaturesBar variant="light" />
         <Footer />
       </div>
     );
@@ -811,6 +843,7 @@ Please confirm my order. Thank you!`;
         </div>
       </main>
 
+      <FooterFeaturesBar variant="light" />
       <Footer />
     </div>
   );
