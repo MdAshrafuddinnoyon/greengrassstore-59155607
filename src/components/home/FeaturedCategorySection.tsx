@@ -60,33 +60,67 @@ export const FeaturedCategorySection = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch categories from Supabase
-        const { data: categoriesData, error: catError } = await supabase
+        // Fetch all categories to build parent-child mapping
+        const { data: allCategoriesData, error: allCatError } = await supabase
           .from('categories')
           .select('*')
           .eq('is_active', true)
-          .order('display_order', { ascending: true })
-          .limit(4);
+          .order('display_order', { ascending: true });
         
-        if (catError) throw catError;
+        if (allCatError) throw allCatError;
+
+        // Get only main categories (display_order <= 10 typically means parent)
+        // OR categories that are specifically parent level (no parent_id)
+        const mainCategories = (allCategoriesData || []).filter(cat => 
+          cat.parent_id === null && cat.display_order <= 10
+        ).slice(0, 4);
+
+        // Build a map of parent categories to their child slugs
+        const parentToChildSlugs: Record<string, string[]> = {};
+        mainCategories.forEach(parent => {
+          const children = (allCategoriesData || []).filter(cat => 
+            cat.parent_id === parent.id
+          );
+          parentToChildSlugs[parent.slug.toLowerCase()] = [
+            parent.slug.toLowerCase(),
+            parent.name.toLowerCase(),
+            ...children.map(c => c.slug.toLowerCase()),
+            ...children.map(c => c.name.toLowerCase()),
+          ];
+        });
 
         // Get products from Supabase
         const { data: products, error: prodError } = await supabase
           .from('products')
           .select('*')
           .eq('is_active', true)
-          .limit(50);
+          .limit(100);
 
         if (prodError) throw prodError;
 
-        // Map products to categories
-        const categoriesWithProducts = (categoriesData || []).map((cat) => {
+        // Map products to parent categories
+        const categoriesWithProducts = mainCategories.map((cat) => {
           const categorySlug = cat.slug.toLowerCase();
           const categoryName = cat.name.toLowerCase();
+          const childSlugs = parentToChildSlugs[categorySlug] || [categorySlug, categoryName];
           
+          // Match products that belong to this category or any of its children
           const matchedProducts = (products || []).filter((product) => {
             const prodCategory = product.category?.toLowerCase() || '';
-            return prodCategory === categorySlug || prodCategory === categoryName;
+            const prodSubcategory = product.subcategory?.toLowerCase() || '';
+            
+            // Check if product matches parent category directly
+            if (childSlugs.includes(prodCategory)) return true;
+            
+            // Check if product's subcategory matches any child category
+            if (prodSubcategory && childSlugs.includes(prodSubcategory)) return true;
+            
+            // Special case: match "Pots" parent with products that have "Pot" in category
+            if (categorySlug === 'pots' && prodCategory.includes('pot')) return true;
+            if (categorySlug === 'plants' && prodCategory.includes('plant')) return true;
+            if (categorySlug === 'flowers' && prodCategory.includes('flower')) return true;
+            
+            return false;
           });
 
           return {
@@ -97,7 +131,7 @@ export const FeaturedCategorySection = () => {
               href: `/shop?category=${cat.slug}`,
               image: cat.image || fallbackBanners[categorySlug] || ficusPlant,
             },
-            products: matchedProducts.slice(0, 6),
+            products: matchedProducts.slice(0, 8),
           };
         }).filter(cat => cat.products.length > 0);
 
