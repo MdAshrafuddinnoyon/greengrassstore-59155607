@@ -8,7 +8,6 @@ import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCartStore } from "@/stores/cartStore";
 import { SearchSuggestions } from "@/components/search/SearchSuggestions";
-import logo from "@/assets/logo-192.png";
 
 // Icon mapping
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -36,7 +35,7 @@ export const Header = () => {
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
   const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
   const { language, setLanguage } = useLanguage();
-  const { announcementBar, megaMenuCategories, branding, themeColors, footer } = useSiteSettings();
+  const { announcementBar, megaMenuCategories, branding, themeColors, footer, loading } = useSiteSettings();
   const items = useCartStore(state => state.items);
   const totalPrice = items.reduce((sum, item) => sum + parseFloat(item.price.amount) * item.quantity, 0);
   const megaMenuRef = useRef<HTMLDivElement>(null);
@@ -103,8 +102,8 @@ export const Header = () => {
 
   return (
     <>
-      {/* Announcement Bar */}
-      {announcementBar.enabled && activeAnnouncements.length > 0 && (
+      {/* Announcement Bar - Only show after settings loaded and if enabled */}
+      {!loading && announcementBar.enabled && activeAnnouncements.length > 0 && (
         <div 
           className="py-2.5"
           style={{ 
@@ -162,16 +161,18 @@ export const Header = () => {
 
             {/* Logo - Center */}
             <Link to="/" className="flex flex-col items-center justify-center flex-shrink-0 mx-4 lg:mx-8">
-              <img 
-                key={branding.logoUrl || 'header-logo'}
-                src={branding.logoUrl || logo} 
-                alt={branding.siteName || "Green Grass"} 
-                className="h-10 md:h-12 w-auto"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = logo;
-                }}
-              />
+              {branding.logoUrl ? (
+                <img 
+                  key={branding.logoUrl}
+                  src={branding.logoUrl} 
+                  alt={branding.siteName || "Green Grass"} 
+                  className="h-10 md:h-12 w-auto"
+                />
+              ) : (
+                <span className="text-xl md:text-2xl font-bold text-primary">
+                  {branding.siteName || "Green Grass"}
+                </span>
+              )}
               <span className="text-[10px] text-gray-500 hidden md:block">www.greengrassstore.com</span>
             </Link>
 
@@ -353,16 +354,18 @@ export const Header = () => {
               <div className="p-5">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex flex-col">
-                    <img 
-                      key={branding.logoUrl || 'mobile-logo'}
-                      src={branding.logoUrl || logo} 
-                      alt={branding.siteName || "Green Grass"} 
-                      className="h-8 w-auto max-w-[140px] object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = logo;
-                      }}
-                    />
+                    {branding.logoUrl ? (
+                      <img 
+                        key={branding.logoUrl}
+                        src={branding.logoUrl} 
+                        alt={branding.siteName || "Green Grass"} 
+                        className="h-8 w-auto max-w-[140px] object-contain"
+                      />
+                    ) : (
+                      <span className="text-lg font-bold text-primary">
+                        {branding.siteName || "Green Grass"}
+                      </span>
+                    )}
                     <span className="text-[9px] text-gray-500">www.greengrassstore.com</span>
                   </div>
                   <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
