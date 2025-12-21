@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { useState, useMemo } from "react";
-=======
-import { useState } from "react";
->>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,10 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-<<<<<<< HEAD
 import { useRolePermissions } from "@/hooks/useRolePermissions";
-=======
->>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -28,10 +21,7 @@ import {
   LayoutTemplate,
   Menu,
   BookOpen,
-<<<<<<< HEAD
   HelpCircle,
-=======
->>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   Palette,
   Bell,
   Ticket,
@@ -72,10 +62,7 @@ const contentNavItems: NavItem[] = [
   { id: "homepage", label: "Homepage", icon: LayoutTemplate },
   { id: "megamenu", label: "Menu", icon: Menu },
   { id: "pages", label: "Pages", icon: BookOpen },
-<<<<<<< HEAD
   { id: "faq", label: "FAQ", icon: HelpCircle },
-=======
->>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   { id: "content", label: "Branding", icon: Palette },
   { id: "footer", label: "Footer", icon: Menu },
   { id: "popups", label: "Popups", icon: Bell },
@@ -92,7 +79,6 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-<<<<<<< HEAD
   const { permissions, role } = useRolePermissions();
 
   // Filter navigation items based on permissions
@@ -156,8 +142,6 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
       }
     });
   }, [permissions]);
-=======
->>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -237,15 +221,9 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-2 lg:px-3 py-3 lg:py-4">
-<<<<<<< HEAD
         {filteredMainNav.length > 0 && <NavSection title="Main" items={filteredMainNav} />}
         {filteredContentNav.length > 0 && <NavSection title="Content" items={filteredContentNav} />}
         {filteredSettingsNav.length > 0 && <NavSection title="System" items={filteredSettingsNav} />}
-=======
-        <NavSection title="Main" items={mainNavItems} />
-        <NavSection title="Content" items={contentNavItems} />
-        <NavSection title="System" items={settingsNavItems} />
->>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         
         {/* Logout Button */}
         <div className="mt-4 px-1">
