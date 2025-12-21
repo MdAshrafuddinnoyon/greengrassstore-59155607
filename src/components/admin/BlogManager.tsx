@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+<<<<<<< HEAD
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
 import {
@@ -17,13 +18,19 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+=======
+import { Plus, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MediaPicker } from "./MediaPicker";
 import { ExportButtons } from "./ExportButtons";
 import { RichTextEditor } from "./RichTextEditor";
 import { AIContentGenerator } from "./AIContentGenerator";
+<<<<<<< HEAD
 import { WordPressImporter } from "./WordPressImporter";
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
 interface BlogPost {
   id: string;
@@ -47,6 +54,7 @@ export const BlogManager = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+<<<<<<< HEAD
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [categories, setCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState<string>("");
@@ -54,6 +62,8 @@ export const BlogManager = () => {
   const [bulkCategory, setBulkCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -80,6 +90,7 @@ export const BlogManager = () => {
     setLoading(false);
   };
 
+<<<<<<< HEAD
   const fetchCategories = async (fallbackPosts?: BlogPost[]) => {
     try {
       const { data, error } = await supabase
@@ -105,6 +116,10 @@ export const BlogManager = () => {
       await fetchCategories();
     };
     load();
+=======
+  useEffect(() => {
+    fetchPosts();
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
     // Real-time subscription for blog posts
     const channel = supabase
@@ -123,10 +138,13 @@ export const BlogManager = () => {
     };
   }, []);
 
+<<<<<<< HEAD
   useEffect(() => {
     setCurrentPage(1);
   }, [categoryFilter, posts.length, itemsPerPage]);
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -228,6 +246,7 @@ export const BlogManager = () => {
     setIsDialogOpen(true);
   };
 
+<<<<<<< HEAD
   const handleAddCategory = async () => {
     const name = newCategory.trim();
     if (!name) return;
@@ -303,6 +322,8 @@ export const BlogManager = () => {
   const pageStart = (currentPage - 1) * itemsPerPage;
   const displayedPosts = filteredPosts.slice(pageStart, pageStart + itemsPerPage);
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   return (
     <Card>
       <CardHeader>
@@ -311,6 +332,7 @@ export const BlogManager = () => {
             <CardTitle>Blog Posts</CardTitle>
             <CardDescription>Manage your blog content</CardDescription>
           </div>
+<<<<<<< HEAD
           <div className="flex gap-2 flex-wrap justify-end">
             <WordPressImporter />
             <ExportButtons data={posts} filename="blog_posts" />
@@ -325,6 +347,10 @@ export const BlogManager = () => {
                 ))}
               </SelectContent>
             </Select>
+=======
+          <div className="flex gap-2">
+            <ExportButtons data={posts} filename="blog_posts" />
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={openNewPostDialog}>
@@ -386,6 +412,7 @@ export const BlogManager = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Category</Label>
+<<<<<<< HEAD
                     <Input
                       list="blog-category-options"
                       placeholder="e.g. Plant Care"
@@ -397,6 +424,23 @@ export const BlogManager = () => {
                         <option key={cat} value={cat} />
                       ))}
                     </datalist>
+=======
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="General">General</SelectItem>
+                        <SelectItem value="Plant Care">Plant Care</SelectItem>
+                        <SelectItem value="Tips & Tricks">Tips & Tricks</SelectItem>
+                        <SelectItem value="Inspiration">Inspiration</SelectItem>
+                        <SelectItem value="News">News</SelectItem>
+                      </SelectContent>
+                    </Select>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                   </div>
                   <div className="space-y-2">
                     <Label>Status</Label>
@@ -451,6 +495,7 @@ export const BlogManager = () => {
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
+<<<<<<< HEAD
         ) : filteredPosts.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">No blog posts yet</p>
         ) : (
@@ -515,6 +560,15 @@ export const BlogManager = () => {
                       aria-label="Select all"
                     />
                   </TableHead>
+=======
+        ) : posts.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">No blog posts yet</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                   <TableHead>Title</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Status</TableHead>
@@ -523,6 +577,7 @@ export const BlogManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
+<<<<<<< HEAD
                 {displayedPosts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
@@ -532,6 +587,10 @@ export const BlogManager = () => {
                         aria-label="Select row"
                       />
                     </TableCell>
+=======
+                {posts.map((post) => (
+                  <TableRow key={post.id}>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                     <TableCell className="font-medium">{post.title}</TableCell>
                     <TableCell>{post.category}</TableCell>
                     <TableCell>
@@ -559,6 +618,7 @@ export const BlogManager = () => {
                 ))}
               </TableBody>
             </Table>
+<<<<<<< HEAD
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
               <div className="text-sm text-muted-foreground">
                 Showing {displayedPosts.length} of {filteredPosts.length} posts
@@ -605,6 +665,8 @@ export const BlogManager = () => {
                 </PaginationContent>
               </Pagination>
             </div>
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
           </div>
         )}
       </CardContent>

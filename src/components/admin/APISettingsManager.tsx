@@ -45,11 +45,16 @@ export const APISettingsManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+<<<<<<< HEAD
   const defaultGoogleSettings: GoogleSettings = {
+=======
+  const [googleSettings, setGoogleSettings] = useState<GoogleSettings>({
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     enabled: false,
     analyticsId: "",
     recaptchaSiteKey: "",
     mapsApiKey: ""
+<<<<<<< HEAD
   };
   const [googleSettings, setGoogleSettings] = useState<GoogleSettings>(defaultGoogleSettings);
 
@@ -68,6 +73,23 @@ export const APISettingsManager = () => {
   const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>(defaultIntegrationSettings);
 
   const defaultAISettings: AISettings = {
+=======
+  });
+
+  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
+    recaptchaEnabled: false,
+    adminUrlPath: "admin",
+    maintenanceMode: false
+  });
+
+  const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>({
+    mailchimpApiKey: "",
+    sendgridApiKey: "",
+    cloudinaryCloudName: ""
+  });
+
+  const [aiSettings, setAiSettings] = useState<AISettings>({
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     enabled: true,
     provider: 'lovable',
     openaiApiKey: "",
@@ -76,8 +98,12 @@ export const APISettingsManager = () => {
     enableBlogGeneration: true,
     enableProductGeneration: true,
     enableImageGeneration: true
+<<<<<<< HEAD
   };
   const [aiSettings, setAiSettings] = useState<AISettings>(defaultAISettings);
+=======
+  });
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -91,6 +117,7 @@ export const APISettingsManager = () => {
       data?.forEach((setting) => {
         const value = setting.setting_value as Record<string, unknown>;
         if (setting.setting_key === 'google_settings') {
+<<<<<<< HEAD
           setGoogleSettings({ ...defaultGoogleSettings, ...value });
         } else if (setting.setting_key === 'security_settings') {
           setSecuritySettings({ ...defaultSecuritySettings, ...value });
@@ -98,6 +125,15 @@ export const APISettingsManager = () => {
           setIntegrationSettings({ ...defaultIntegrationSettings, ...value });
         } else if (setting.setting_key === 'ai_settings') {
           setAiSettings({ ...defaultAISettings, ...value });
+=======
+          setGoogleSettings(value as unknown as GoogleSettings);
+        } else if (setting.setting_key === 'security_settings') {
+          setSecuritySettings(value as unknown as SecuritySettings);
+        } else if (setting.setting_key === 'integration_settings') {
+          setIntegrationSettings(value as unknown as IntegrationSettings);
+        } else if (setting.setting_key === 'ai_settings') {
+          setAiSettings(value as unknown as AISettings);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         }
       });
     } catch (error) {
@@ -402,7 +438,7 @@ export const APISettingsManager = () => {
                       placeholder="G-XXXXXXXXXX"
                     />
                     <Button variant="outline" size="icon" asChild>
-                      <a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer">
+                      <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     </Button>
@@ -418,7 +454,7 @@ export const APISettingsManager = () => {
                       onChange={(e) => 
                         setGoogleSettings(prev => ({ ...prev, recaptchaSiteKey: e.target.value }))
                       }
-                      placeholder="6LcXXXXXXXXXXXXXXXXXXXXXX"
+                      placeholder="6Lc..."
                     />
                     <Button variant="outline" size="icon" asChild>
                       <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer">
@@ -470,14 +506,14 @@ export const APISettingsManager = () => {
                 Security Settings
               </CardTitle>
               <CardDescription>
-                Configure security options for your store
+                Configure security options and admin access
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                 <div>
                   <Label>Enable reCAPTCHA</Label>
-                  <p className="text-sm text-muted-foreground">Protect forms with reCAPTCHA</p>
+                  <p className="text-sm text-muted-foreground">Protect forms with Google reCAPTCHA</p>
                 </div>
                 <Switch
                   checked={securitySettings.recaptchaEnabled}
@@ -487,13 +523,13 @@ export const APISettingsManager = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                    <Label>Maintenance Mode</Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Temporarily disable site for visitors</p>
+                  <Label className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    Maintenance Mode
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Show maintenance page to visitors</p>
                 </div>
                 <Switch
                   checked={securitySettings.maintenanceMode}
@@ -504,21 +540,25 @@ export const APISettingsManager = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="admin-path">Admin URL Path</Label>
-                <div className="flex gap-2 items-center">
-                  <span className="text-muted-foreground">/</span>
+                <Label htmlFor="admin-url">Admin URL Path</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">/</span>
                   <Input
-                    id="admin-path"
+                    id="admin-url"
                     value={securitySettings.adminUrlPath}
                     onChange={(e) => 
-                      setSecuritySettings(prev => ({ ...prev, adminUrlPath: e.target.value }))
+                      setSecuritySettings(prev => ({ ...prev, adminUrlPath: e.target.value.replace(/[^a-z0-9-]/gi, '') }))
                     }
                     placeholder="admin"
+                    className="flex-1"
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Custom path for admin panel access (default: admin)
+                  Change the admin panel URL for security (e.g., /dashboard, /manage)
                 </p>
+                <Badge variant="outline" className="text-xs">
+                  Current: /{securitySettings.adminUrlPath}
+                </Badge>
               </div>
 
               <Button 
@@ -533,19 +573,32 @@ export const APISettingsManager = () => {
           </Card>
         </TabsContent>
 
-        {/* Other Integrations */}
+        {/* Integrations */}
         <TabsContent value="integrations">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Key className="w-5 h-5 text-primary" />
-                Other Integrations
+                Third-Party Integrations
               </CardTitle>
               <CardDescription>
-                Configure third-party service integrations
+                Configure API keys for external services
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-blue-900">API Keys Security</p>
+                    <p className="text-sm text-blue-700">
+                      API keys are stored securely in the database. For maximum security, 
+                      consider using environment variables for sensitive keys.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="mailchimp-key">Mailchimp API Key</Label>
@@ -555,7 +608,7 @@ export const APISettingsManager = () => {
                     onChange={(e) => 
                       setIntegrationSettings(prev => ({ ...prev, mailchimpApiKey: e.target.value }))
                     }
-                    placeholder="xxxxxxxx-us00"
+                    placeholder="xxxxxxxx-us1"
                     type="password"
                   />
                 </div>
@@ -568,7 +621,7 @@ export const APISettingsManager = () => {
                     onChange={(e) => 
                       setIntegrationSettings(prev => ({ ...prev, sendgridApiKey: e.target.value }))
                     }
-                    placeholder="SG.xxxxxxxx"
+                    placeholder="SG.xxxxx"
                     type="password"
                   />
                 </div>
@@ -598,6 +651,13 @@ export const APISettingsManager = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={fetchSettings}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh Settings
+        </Button>
+      </div>
     </div>
   );
 };
