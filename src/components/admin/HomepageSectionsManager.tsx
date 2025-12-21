@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Save, RefreshCw, Image as ImageIcon, Gift, Tag, Sparkles, Grid, Package, Instagram, X, Plus } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
+<<<<<<< HEAD
 import { plantsProducts, potsProducts, plantersProducts, vasesProducts, homecareProducts } from "@/data/products";
 // Build a map of categoryId to products for use in the category config UI
 function getProductsByCategory(categories: {id: string, name: string}[]) {
@@ -35,6 +36,8 @@ function getProductsByCategory(categories: {id: string, name: string}[]) {
   });
   return map;
 }
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
 interface HeroSettings {
   enabled: boolean;
@@ -62,6 +65,7 @@ interface GiftSectionSettings {
   buttonText: string;
   buttonTextAr: string;
   buttonLink: string;
+<<<<<<< HEAD
   itemsLimit: number;
   categorySlug: string; // নতুন ক্যাটাগরি সিলেক্টর
   backgroundImage: string; // ব্যাকগ্রাউন্ড ইমেজ
@@ -89,6 +93,8 @@ interface FeaturedCategorySectionSettings {
   categoryConfigs: {
     [categoryId: string]: CategoryConfig;
   };
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 }
 
 interface PromoSectionSettings {
@@ -117,8 +123,11 @@ interface FeaturedCategorySectionSettings {
   productsPerCategory: number;
   showBadges: boolean;
   selectedCategories: string[];
+<<<<<<< HEAD
   layout: 'grid' | 'carousel';
   showCategoryBanner: boolean;
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 }
 
 interface CollectionSectionSettings {
@@ -129,8 +138,11 @@ interface CollectionSectionSettings {
   subtitleAr: string;
   productsLimit: number;
   showFeaturedOnly: boolean;
+<<<<<<< HEAD
   layout: 'grid-3' | 'grid-4' | 'grid-5';
   showQuickView: boolean;
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 }
 
 interface InstagramSectionSettings {
@@ -146,9 +158,12 @@ export const HomepageSectionsManager = () => {
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
 
+<<<<<<< HEAD
   // Build productsByCategory for use in select dropdowns (after categories is defined)
   const productsByCategory = getProductsByCategory(categories);
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   const [heroSettings, setHeroSettings] = useState<HeroSettings>({
     enabled: true,
     title: "Bring Nature",
@@ -174,8 +189,12 @@ export const HomepageSectionsManager = () => {
     subtitleAr: "مجموعات هدايا منسقة بعناية لمحبي النباتات",
     buttonText: "View All Gifts",
     buttonTextAr: "عرض جميع الهدايا",
+<<<<<<< HEAD
     buttonLink: "/shop?category=gifts",
     itemsLimit: 6
+=======
+    buttonLink: "/shop?category=gifts"
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   });
 
   const [promoSettings, setPromoSettings] = useState<PromoSectionSettings>({
@@ -203,9 +222,13 @@ export const HomepageSectionsManager = () => {
     categoriesLimit: 4,
     productsPerCategory: 6,
     showBadges: true,
+<<<<<<< HEAD
     selectedCategories: [],
     layout: 'carousel',
     showCategoryBanner: true
+=======
+    selectedCategories: []
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   });
 
   const [collectionSettings, setCollectionSettings] = useState<CollectionSectionSettings>({
@@ -215,9 +238,13 @@ export const HomepageSectionsManager = () => {
     subtitle: "Discover our curated selection of premium plants and home décor",
     subtitleAr: "اكتشف مجموعتنا المختارة من النباتات الفاخرة وديكور المنزل",
     productsLimit: 8,
+<<<<<<< HEAD
     showFeaturedOnly: false,
     layout: 'grid-4',
     showQuickView: true
+=======
+    showFeaturedOnly: false
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   });
 
   const [instagramSettings, setInstagramSettings] = useState<InstagramSectionSettings>({
@@ -237,7 +264,12 @@ export const HomepageSectionsManager = () => {
         .select('id, name')
         .eq('is_active', true)
         .order('display_order');
+<<<<<<< HEAD
       if (Array.isArray(catData)) setCategories(catData);
+=======
+      
+      if (catData) setCategories(catData);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
       const { data, error } = await supabase
         .from('site_settings')
@@ -246,6 +278,7 @@ export const HomepageSectionsManager = () => {
       if (error) throw error;
 
       data?.forEach((setting) => {
+<<<<<<< HEAD
         const value = setting?.setting_value || {};
         if (setting?.setting_key === 'hero_section') {
           setHeroSettings({ ...heroSettings, ...value });
@@ -276,6 +309,25 @@ export const HomepageSectionsManager = () => {
         // eslint-disable-next-line no-console
         console.error('Error fetching settings:', error);
       }
+=======
+        const value = setting.setting_value as Record<string, unknown>;
+        if (setting.setting_key === 'hero_section') {
+          setHeroSettings(value as unknown as HeroSettings);
+        } else if (setting.setting_key === 'gift_section') {
+          setGiftSettings(value as unknown as GiftSectionSettings);
+        } else if (setting.setting_key === 'promo_section') {
+          setPromoSettings(value as unknown as PromoSectionSettings);
+        } else if (setting.setting_key === 'featured_category_section') {
+          setFeaturedCategorySettings(value as unknown as FeaturedCategorySectionSettings);
+        } else if (setting.setting_key === 'collection_section') {
+          setCollectionSettings(value as unknown as CollectionSectionSettings);
+        } else if (setting.setting_key === 'instagram_section') {
+          setInstagramSettings(value as unknown as InstagramSectionSettings);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     } finally {
       setLoading(false);
     }
@@ -288,6 +340,7 @@ export const HomepageSectionsManager = () => {
   const saveSettings = async (key: string, value: object) => {
     setSaving(true);
     try {
+<<<<<<< HEAD
       // For featured_category_section, clean up configs for only selected categories
       let toSave = value;
       if (key === 'featured_category_section') {
@@ -303,6 +356,8 @@ export const HomepageSectionsManager = () => {
         });
         toSave = { ...v, categoryConfigs: cleanedConfigs };
       }
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       const { data: existing } = await supabase
         .from('site_settings')
         .select('id')
@@ -312,13 +367,21 @@ export const HomepageSectionsManager = () => {
       if (existing) {
         const { error } = await supabase
           .from('site_settings')
+<<<<<<< HEAD
           .update({ setting_value: JSON.parse(JSON.stringify(toSave)) })
+=======
+          .update({ setting_value: JSON.parse(JSON.stringify(value)) })
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
           .eq('setting_key', key);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('site_settings')
+<<<<<<< HEAD
           .insert({ setting_key: key, setting_value: JSON.parse(JSON.stringify(toSave)) });
+=======
+          .insert({ setting_key: key, setting_value: JSON.parse(JSON.stringify(value)) });
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         if (error) throw error;
       }
       
@@ -537,11 +600,16 @@ export const HomepageSectionsManager = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+<<<<<<< HEAD
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-muted/30 rounded-lg">
+=======
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 <div>
                   <Label>Enable Featured Categories</Label>
                   <p className="text-sm text-muted-foreground">Show category banners with products</p>
                 </div>
+<<<<<<< HEAD
                 <div className="flex flex-col md:flex-row gap-4 md:gap-8 items-center">
                   <div className="flex items-center gap-2">
                     <Switch
@@ -562,6 +630,14 @@ export const HomepageSectionsManager = () => {
                     <Label className="text-sm">Show Only Featured Products</Label>
                   </div>
                 </div>
+=======
+                <Switch
+                  checked={featuredCategorySettings.enabled}
+                  onCheckedChange={(checked) => 
+                    setFeaturedCategorySettings(prev => ({ ...prev, enabled: checked }))
+                  }
+                />
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -582,7 +658,11 @@ export const HomepageSectionsManager = () => {
                 </div>
               </div>
 
+<<<<<<< HEAD
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+=======
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 <div className="space-y-2">
                   <Label>Categories to Show</Label>
                   <Input
@@ -592,7 +672,10 @@ export const HomepageSectionsManager = () => {
                     value={featuredCategorySettings.categoriesLimit}
                     onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, categoriesLimit: parseInt(e.target.value) || 4 }))}
                   />
+<<<<<<< HEAD
                   <p className="text-xs text-muted-foreground">Max categories to display</p>
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 </div>
                 <div className="space-y-2">
                   <Label>Products per Category</Label>
@@ -603,6 +686,7 @@ export const HomepageSectionsManager = () => {
                     value={featuredCategorySettings.productsPerCategory}
                     onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, productsPerCategory: parseInt(e.target.value) || 6 }))}
                   />
+<<<<<<< HEAD
                   <p className="text-xs text-muted-foreground">Products shown in each category</p>
                 </div>
                 <div className="space-y-2">
@@ -639,10 +723,22 @@ export const HomepageSectionsManager = () => {
                     />
                     <Label className="text-sm">Show Category Banner</Label>
                   </div>
+=======
+                </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    checked={featuredCategorySettings.showBadges}
+                    onCheckedChange={(checked) => 
+                      setFeaturedCategorySettings(prev => ({ ...prev, showBadges: checked }))
+                    }
+                  />
+                  <Label>Show Sale/New Badges</Label>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 </div>
               </div>
 
               <div className="space-y-2">
+<<<<<<< HEAD
                 <Label>Configure Categories</Label>
                 <p className="text-sm text-muted-foreground mb-2">For each category, set banner image, button, and select products to feature.</p>
                 <div className="space-y-4">
@@ -754,6 +850,33 @@ export const HomepageSectionsManager = () => {
                       <Button key={cat.id} variant="outline" onClick={() => setFeaturedCategorySettings(prev => ({ ...prev, selectedCategories: [...prev.selectedCategories, cat.id] }))}>{cat.name}</Button>
                     ))}
                   </div>
+=======
+                <Label>Select Categories to Display</Label>
+                <p className="text-sm text-muted-foreground mb-2">Leave empty to auto-select from active categories</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {categories.map(cat => (
+                    <label key={cat.id} className="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-muted/50">
+                      <input
+                        type="checkbox"
+                        checked={featuredCategorySettings.selectedCategories.includes(cat.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFeaturedCategorySettings(prev => ({
+                              ...prev,
+                              selectedCategories: [...prev.selectedCategories, cat.id]
+                            }));
+                          } else {
+                            setFeaturedCategorySettings(prev => ({
+                              ...prev,
+                              selectedCategories: prev.selectedCategories.filter(id => id !== cat.id)
+                            }));
+                          }
+                        }}
+                      />
+                      <span className="text-sm">{cat.name}</span>
+                    </label>
+                  ))}
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 </div>
               </div>
 
@@ -833,13 +956,18 @@ export const HomepageSectionsManager = () => {
                 </div>
               </div>
 
+<<<<<<< HEAD
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+=======
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 <div className="space-y-2">
                   <Label>Products to Display</Label>
                   <Input
                     type="number"
                     min={4}
                     max={24}
+<<<<<<< HEAD
                     step={4}
                     value={collectionSettings.productsLimit}
                     onChange={(e) => setCollectionSettings(prev => ({ ...prev, productsLimit: parseInt(e.target.value) || 8 }))}
@@ -881,6 +1009,20 @@ export const HomepageSectionsManager = () => {
                     />
                     <Label className="text-sm">Enable Quick View</Label>
                   </div>
+=======
+                    value={collectionSettings.productsLimit}
+                    onChange={(e) => setCollectionSettings(prev => ({ ...prev, productsLimit: parseInt(e.target.value) || 8 }))}
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    checked={collectionSettings.showFeaturedOnly}
+                    onCheckedChange={(checked) => 
+                      setCollectionSettings(prev => ({ ...prev, showFeaturedOnly: checked }))
+                    }
+                  />
+                  <Label>Show Featured Products Only</Label>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 </div>
               </div>
 
@@ -960,6 +1102,7 @@ export const HomepageSectionsManager = () => {
                 </div>
               </div>
 
+<<<<<<< HEAD
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -998,6 +1141,8 @@ export const HomepageSectionsManager = () => {
                 </div>
               </div>
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Button Text (EN)</Label>

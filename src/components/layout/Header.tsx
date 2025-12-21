@@ -8,7 +8,10 @@ import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCartStore } from "@/stores/cartStore";
 import { SearchSuggestions } from "@/components/search/SearchSuggestions";
+<<<<<<< HEAD
 import logo from "@/assets/logo-192.png";
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
 // Icon mapping
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -30,10 +33,88 @@ const getIconComponent = (iconName: string) => {
 };
 
 export const Header = () => {
+<<<<<<< HEAD
   return (
     <>
       {/* Announcement Bar */}
       {(!!announcementBar?.enabled && Array.isArray(activeAnnouncements) && activeAnnouncements.length > 0) ? (
+=======
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentAnnouncement, setCurrentAnnouncement] = useState(0);
+  const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
+  const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
+  const { language, setLanguage } = useLanguage();
+  const { announcementBar, megaMenuCategories, branding, themeColors, footer, loading } = useSiteSettings();
+  const items = useCartStore(state => state.items);
+  const totalPrice = items.reduce((sum, item) => sum + parseFloat(item.price.amount) * item.quantity, 0);
+  const megaMenuRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isArabic = language === "ar";
+
+  // Filter active categories and sort by order
+  const categories = megaMenuCategories
+    .filter(cat => cat.isActive)
+    .sort((a, b) => a.order - b.order);
+
+  // Get active announcements
+  const activeAnnouncements = announcementBar.announcements
+    .filter(a => a.isActive)
+    .sort((a, b) => a.order - b.order);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!announcementBar.autoRotate || activeAnnouncements.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentAnnouncement(prev => (prev + 1) % activeAnnouncements.length);
+    }, announcementBar.rotationSpeed || 5000);
+    return () => clearInterval(interval);
+  }, [announcementBar.autoRotate, announcementBar.rotationSpeed, activeAnnouncements.length]);
+
+  const toggleLanguage = () => {
+    setLanguage(language === "en" ? "ar" : "en");
+  };
+
+  const nextAnnouncement = () => {
+    setCurrentAnnouncement(prev => (prev + 1) % activeAnnouncements.length);
+  };
+
+  const prevAnnouncement = () => {
+    setCurrentAnnouncement(prev => (prev - 1 + activeAnnouncements.length) % activeAnnouncements.length);
+  };
+
+  const handleMouseEnter = (categoryId: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setActiveMegaMenu(categoryId);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setActiveMegaMenu(null);
+    }, 150);
+  };
+
+  const toggleMobileCategory = (categoryId: string) => {
+    setExpandedMobileCategory(prev => prev === categoryId ? null : categoryId);
+  };
+
+  const activeCategory = categories.find(c => c.id === activeMegaMenu);
+
+  return (
+    <>
+      {/* Announcement Bar - Only show after settings loaded and if enabled */}
+      {!loading && announcementBar.enabled && activeAnnouncements.length > 0 && (
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         <div 
           className="py-2.5"
           style={{ 
@@ -66,7 +147,11 @@ export const Header = () => {
             </button>
           </div>
         </div>
+<<<<<<< HEAD
       ) : null}
+=======
+      )}
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
       {/* Main Header */}
       <header 
@@ -91,18 +176,31 @@ export const Header = () => {
 
             {/* Logo - Center */}
             <Link to="/" className="flex flex-col items-center justify-center flex-shrink-0 mx-4 lg:mx-8">
+<<<<<<< HEAD
               {(branding.logoUrl && branding.logoUrl.trim() !== "") ? (
+=======
+              {branding.logoUrl ? (
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 <img 
                   key={branding.logoUrl}
                   src={branding.logoUrl} 
                   alt={branding.siteName || "Green Grass"} 
                   className="h-10 md:h-12 w-auto"
+<<<<<<< HEAD
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";
                   }}
                 />
               ) : null}
+=======
+                />
+              ) : (
+                <span className="text-xl md:text-2xl font-bold text-primary">
+                  {branding.siteName || "Green Grass"}
+                </span>
+              )}
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
               <span className="text-[10px] text-gray-500 hidden md:block">www.greengrassstore.com</span>
             </Link>
 
@@ -169,6 +267,7 @@ export const Header = () => {
                 initial={{ opacity: 0, y: -10 }} 
                 animate={{ opacity: 1, y: 0 }} 
                 exit={{ opacity: 0, y: -10 }} 
+<<<<<<< HEAD
               >
                 {/* ...existing mega menu dropdown code... */}
               </motion.div>
@@ -215,6 +314,8 @@ export const Header = () => {
                 initial={{ opacity: 0, y: -10 }} 
                 animate={{ opacity: 1, y: 0 }} 
                 exit={{ opacity: 0, y: -10 }} 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 transition={{ duration: 0.2 }} 
                 className="absolute left-0 right-0 bg-white shadow-2xl border-t border-gray-100 z-[100]" 
                 onMouseEnter={() => handleMouseEnter(activeMegaMenu)} 
@@ -307,6 +408,11 @@ export const Header = () => {
             )}
           </AnimatePresence>
         </nav>
+<<<<<<< HEAD
+=======
+      </header>
+
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
@@ -326,6 +432,7 @@ export const Header = () => {
               className={cn("fixed top-0 bottom-0 w-[320px] bg-white z-50 lg:hidden shadow-2xl overflow-y-auto", language === "ar" ? "right-0" : "left-0")}
             >
               <div className="p-5">
+<<<<<<< HEAD
                 {/* ...existing code... */}
               </div>
             </motion.div>
@@ -333,6 +440,124 @@ export const Header = () => {
         )}
       </AnimatePresence>
       </header>
+=======
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col">
+                    {branding.logoUrl ? (
+                      <img 
+                        key={branding.logoUrl}
+                        src={branding.logoUrl} 
+                        alt={branding.siteName || "Green Grass"} 
+                        className="h-8 w-auto max-w-[140px] object-contain"
+                      />
+                    ) : (
+                      <span className="text-lg font-bold text-primary">
+                        {branding.siteName || "Green Grass"}
+                      </span>
+                    )}
+                    <span className="text-[9px] text-gray-500">www.greengrassstore.com</span>
+                  </div>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Mobile Search */}
+                <div className="mb-6">
+                  <SearchSuggestions onClose={() => setIsMobileMenuOpen(false)} />
+                </div>
+
+                {/* Categories Navigation */}
+                <div className="space-y-1">
+                  {categories.map(category => {
+                    const IconComponent = getIconComponent(category.icon);
+                    const hasSubcategories = category.subcategories.length > 0;
+                    const isExpanded = expandedMobileCategory === category.id;
+
+                    return (
+                      <div key={category.id}>
+                        <div className="flex items-center">
+                          <Link
+                            to={category.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={cn(
+                              "flex-1 flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors",
+                              category.isSale && "text-red-600"
+                            )}
+                          >
+                            <IconComponent className="w-5 h-5" />
+                            <span className="font-medium">
+                              {isArabic ? category.nameAr : category.name}
+                            </span>
+                          </Link>
+                          {hasSubcategories && (
+                            <button
+                              onClick={() => toggleMobileCategory(category.id)}
+                              className="p-3 hover:bg-gray-100 rounded-lg"
+                            >
+                              <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Mobile Subcategories */}
+                        <AnimatePresence>
+                          {hasSubcategories && isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="pl-11 py-2 space-y-1">
+                                {category.subcategories.sort((a, b) => a.order - b.order).map(sub => (
+                                  <Link
+                                    key={sub.id}
+                                    to={sub.href}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="block px-3 py-2 text-sm text-gray-600 hover:text-[#2d5a3d] hover:bg-gray-50 rounded-lg transition-colors"
+                                  >
+                                    {isArabic ? sub.nameAr : sub.name}
+                                  </Link>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile Footer Links */}
+                <div className="mt-8 pt-6 border-t border-gray-100 space-y-3">
+                  <Link 
+                    to="/account" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900"
+                  >
+                    <User className="w-5 h-5" />
+                    {isArabic ? "حسابي" : "My Account"}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      toggleLanguage();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 w-full"
+                  >
+                    <span className="w-5 h-5 flex items-center justify-center text-sm font-bold">
+                      {language === "en" ? "ع" : "En"}
+                    </span>
+                    {language === "en" ? "العربية" : "English"}
+                  </button>
+                  
+                  {/* Social Media Icons */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 mb-3 px-3">{isArabic ? "تابعنا" : "Follow Us"}</p>
+                    <div className="flex items-center gap-2 px-3">
+                      {footer.socialLinks?.instagram && (
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                         <a 
                           href={footer.socialLinks.instagram} 
                           target="_blank" 

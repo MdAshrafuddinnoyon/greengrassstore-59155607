@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
+<<<<<<< HEAD
 import { Leaf, Heart, Globe2, Award, Loader2 } from "lucide-react";
 import womanPlant from "@/assets/woman-plant.jpg";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -25,6 +26,13 @@ const About = () => {
   // Use database content if available, otherwise use fallback
   const pageContent = content || {};
 
+=======
+import { Leaf, Heart, Globe2, Award } from "lucide-react";
+import womanPlant from "@/assets/woman-plant.jpg";
+import heroBg from "@/assets/hero-bg.jpg";
+
+const About = () => {
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
@@ -46,11 +54,17 @@ const About = () => {
               animate={{ opacity: 1, x: 0 }}
               className="max-w-2xl text-white"
             >
+<<<<<<< HEAD
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
                 {pageContent.title || 'About Green Grass'}
               </h1>
               <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
                 {pageContent.description || 'Bringing nature into every home across the UAE with premium plants, pots, and home decor since 2018.'}
+=======
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">About Green Grass</h1>
+              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
+                Bringing nature into every home across the UAE with premium plants, pots, and home decor since 2018.
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
               </p>
             </motion.div>
           </div>
@@ -67,6 +81,7 @@ const About = () => {
               >
                 <span className="text-[#2d5a3d] font-semibold text-xs sm:text-sm uppercase tracking-wider">Our Story</span>
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-gray-900 mt-2 md:mt-3 mb-4 md:mb-6">
+<<<<<<< HEAD
                   {pageContent.storyTitle || 'A Passion for Plants & Beautiful Spaces'}
                 </h2>
                 <div className="space-y-3 md:space-y-4 text-gray-600 leading-relaxed text-sm md:text-base">
@@ -85,6 +100,20 @@ const About = () => {
                       </p>
                     </>
                   )}
+=======
+                  A Passion for Plants & Beautiful Spaces
+                </h2>
+                <div className="space-y-3 md:space-y-4 text-gray-600 leading-relaxed text-sm md:text-base">
+                  <p>
+                    Founded in Dubai in 2018, Green Grass Store began with a simple mission: to make high-quality plants and home decor accessible to everyone in the UAE.
+                  </p>
+                  <p>
+                    What started as a small nursery has grown into a beloved destination for plant enthusiasts, interior designers, and anyone looking to add a touch of nature to their space.
+                  </p>
+                  <p>
+                    Today, we offer an extensive collection of indoor and outdoor plants, premium pots and planters, and carefully curated home accessories – all selected to help you create your perfect green oasis.
+                  </p>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 </div>
               </motion.div>
               <motion.div

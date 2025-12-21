@@ -9,7 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+<<<<<<< HEAD
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { Loader2, MessageSquare, Bot, Store, Save, RefreshCw, Truck, RotateCcw, CreditCard, MapPin, Plus, Trash2, Percent } from "lucide-react";
 
 interface WhatsAppSettings {
@@ -65,6 +68,7 @@ const iconOptions = [
 ];
 
 export const SiteSettingsManager = () => {
+<<<<<<< HEAD
   const { whatsapp, salesAgent, storeInfo, footerFeatures, paymentBanner, shippingSettings: contextShippingSettings, loading: contextLoading, refetch } = useSiteSettings();
   const [saving, setSaving] = useState(false);
   
@@ -83,11 +87,44 @@ export const SiteSettingsManager = () => {
   };
   const [paymentBannerLocal, setPaymentBannerLocal] = useState(paymentBanner && typeof paymentBanner === 'object' ? { ...defaultPaymentBanner, ...paymentBanner } : defaultPaymentBanner);
   const [taxSettings, setTaxSettings] = useState({
+=======
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  const [whatsappSettings, setWhatsappSettings] = useState<WhatsAppSettings>({
+    phone: "+971547751901",
+    enabled: true,
+    welcomeMessage: "Hello! Welcome to Green Grass Store. How can we help you today?"
+  });
+
+  const [salesAgentSettings, setSalesAgentSettings] = useState<SalesAgentSettings>({
+    enabled: true,
+    name: "Sales Assistant",
+    responses: {}
+  });
+
+  const [storeInfo, setStoreInfo] = useState<StoreInfo>({
+    name: "Green Grass Store",
+    email: "info@greengrassstore.com",
+    phone: "+971547751901",
+    address: "Dubai, UAE"
+  });
+
+  const [footerFeatures, setFooterFeatures] = useState<FooterFeature[]>([
+    { id: '1', icon: 'truck', title: 'Free Delivery', titleAr: 'توصيل مجاني', description: 'Free Delivery On Orders Over 300 AED', descriptionAr: 'توصيل مجاني للطلبات فوق 300 درهم', enabled: true },
+    { id: '2', icon: 'rotate', title: 'Hassle-Free Returns', titleAr: 'إرجاع سهل', description: 'Within 7 days of delivery.', descriptionAr: 'خلال 7 أيام من التسليم', enabled: true },
+    { id: '3', icon: 'credit-card', title: 'Easy Installments', titleAr: 'أقساط سهلة', description: 'Pay Later with tabby.', descriptionAr: 'ادفع لاحقاً مع تابي', enabled: true },
+    { id: '4', icon: 'map-pin', title: 'Visit Us In-Store', titleAr: 'زورنا في المتجر', description: 'In Abu Dhabi and Dubai.', descriptionAr: 'في أبوظبي ودبي', enabled: true },
+  ]);
+
+  const [taxSettings, setTaxSettings] = useState<TaxSettings>({
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     enabled: false,
     rate: 5,
     label: "VAT",
     includedInPrice: true
   });
+<<<<<<< HEAD
   const [shippingSettings, setShippingSettings] = useState(contextShippingSettings);
 
   // Update local state when context data changes
@@ -119,6 +156,70 @@ export const SiteSettingsManager = () => {
     await refetch();
   };
 
+=======
+
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>({
+    freeShippingEnabled: true,
+    freeShippingThreshold: 200,
+    shippingCost: 25,
+    shippingLabel: "Shipping",
+    shippingLabelAr: "الشحن"
+  });
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*');
+
+      if (error) throw error;
+
+      data?.forEach((setting) => {
+        const value = setting.setting_value as Record<string, unknown>;
+        if (setting.setting_key === 'whatsapp') {
+          setWhatsappSettings(value as unknown as WhatsAppSettings);
+        } else if (setting.setting_key === 'sales_agent') {
+          setSalesAgentSettings(value as unknown as SalesAgentSettings);
+        } else if (setting.setting_key === 'store_info') {
+          setStoreInfo(value as unknown as StoreInfo);
+        } else if (setting.setting_key === 'footer_features') {
+          setFooterFeatures(value as unknown as FooterFeature[]);
+        } else if (setting.setting_key === 'tax_settings') {
+          setTaxSettings(value as unknown as TaxSettings);
+        } else if (setting.setting_key === 'shipping_settings') {
+          setShippingSettings(value as unknown as ShippingSettings);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast.error('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+
+    // Real-time subscription for site settings
+    const channel = supabase
+      .channel('admin-site-settings-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_settings' },
+        () => {
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   const saveSettings = async (key: string, value: object) => {
     setSaving(true);
     try {
@@ -141,7 +242,10 @@ export const SiteSettingsManager = () => {
         if (error) throw error;
       }
       toast.success('Settings saved successfully');
+<<<<<<< HEAD
       await refetch();
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error('Failed to save settings');
@@ -151,6 +255,7 @@ export const SiteSettingsManager = () => {
   };
 
   const addFooterFeature = () => {
+<<<<<<< HEAD
     setFooterFeaturesLocal(prev => [
       ...prev,
       {
@@ -174,6 +279,28 @@ export const SiteSettingsManager = () => {
   };
 
   if (contextLoading) {
+=======
+    setFooterFeatures([...footerFeatures, {
+      id: Date.now().toString(),
+      icon: 'truck',
+      title: 'New Feature',
+      titleAr: 'ميزة جديدة',
+      description: 'Feature description',
+      descriptionAr: 'وصف الميزة',
+      enabled: true
+    }]);
+  };
+
+  const removeFooterFeature = (id: string) => {
+    setFooterFeatures(footerFeatures.filter(f => f.id !== id));
+  };
+
+  const updateFooterFeature = (id: string, field: keyof FooterFeature, value: string | boolean) => {
+    setFooterFeatures(footerFeatures.map(f => f.id === id ? { ...f, [field]: value } : f));
+  };
+
+  if (loading) {
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -392,9 +519,15 @@ export const SiteSettingsManager = () => {
                   <Label htmlFor="store-name">Store Name</Label>
                   <Input
                     id="store-name"
+<<<<<<< HEAD
                     value={storeInfoLocal.name}
                     onChange={(e) => 
                       setStoreInfoLocal(prev => ({ ...prev, name: e.target.value }))
+=======
+                    value={storeInfo.name}
+                    onChange={(e) => 
+                      setStoreInfo(prev => ({ ...prev, name: e.target.value }))
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                     }
                   />
                 </div>
@@ -404,9 +537,15 @@ export const SiteSettingsManager = () => {
                   <Input
                     id="store-email"
                     type="email"
+<<<<<<< HEAD
                     value={storeInfoLocal.email}
                     onChange={(e) => 
                       setStoreInfoLocal(prev => ({ ...prev, email: e.target.value }))
+=======
+                    value={storeInfo.email}
+                    onChange={(e) => 
+                      setStoreInfo(prev => ({ ...prev, email: e.target.value }))
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                     }
                   />
                 </div>
@@ -415,9 +554,15 @@ export const SiteSettingsManager = () => {
                   <Label htmlFor="store-phone">Phone</Label>
                   <Input
                     id="store-phone"
+<<<<<<< HEAD
                     value={storeInfoLocal.phone}
                     onChange={(e) => 
                       setStoreInfoLocal(prev => ({ ...prev, phone: e.target.value }))
+=======
+                    value={storeInfo.phone}
+                    onChange={(e) => 
+                      setStoreInfo(prev => ({ ...prev, phone: e.target.value }))
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                     }
                   />
                 </div>
@@ -426,16 +571,26 @@ export const SiteSettingsManager = () => {
                   <Label htmlFor="store-address">Address</Label>
                   <Input
                     id="store-address"
+<<<<<<< HEAD
                     value={storeInfoLocal.address}
                     onChange={(e) => 
                       setStoreInfoLocal(prev => ({ ...prev, address: e.target.value }))
+=======
+                    value={storeInfo.address}
+                    onChange={(e) => 
+                      setStoreInfo(prev => ({ ...prev, address: e.target.value }))
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                     }
                   />
                 </div>
               </div>
 
               <Button 
+<<<<<<< HEAD
                 onClick={() => saveSettings('store_info', storeInfoLocal)}
+=======
+                onClick={() => saveSettings('store_info', storeInfo)}
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 disabled={saving}
                 className="w-full"
               >
@@ -459,7 +614,11 @@ export const SiteSettingsManager = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+<<<<<<< HEAD
               {footerFeaturesLocal.map((feature, index) => (
+=======
+              {footerFeatures.map((feature, index) => (
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 <div key={feature.id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Feature #{index + 1}</span>
@@ -541,7 +700,11 @@ export const SiteSettingsManager = () => {
               </Button>
 
               <Button 
+<<<<<<< HEAD
                 onClick={() => saveSettings('footer_features', footerFeaturesLocal)}
+=======
+                onClick={() => saveSettings('footer_features', footerFeatures)}
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 disabled={saving}
                 className="w-full"
               >
@@ -712,6 +875,7 @@ export const SiteSettingsManager = () => {
             </CardContent>
           </Card>
         </TabsContent>
+<<<<<<< HEAD
 
         <TabsContent value="payment-banner">
           <Card>
@@ -793,6 +957,8 @@ export const SiteSettingsManager = () => {
             </CardContent>
           </Card>
         </TabsContent>
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       </Tabs>
 
       <div className="flex justify-end">

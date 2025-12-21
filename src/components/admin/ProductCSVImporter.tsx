@@ -447,11 +447,14 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
         const mainCategory = categoryParts[0] || 'general';
         const subCategory = categoryParts[1] || product.subcategory || null;
 
+<<<<<<< HEAD
         const isOnSale =
           typeof product.is_on_sale !== 'undefined'
             ? toBool(product.is_on_sale)
             : !!(finalComparePrice && finalComparePrice > price);
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         const productData = {
           name: product.name,
           name_ar: product.name_ar || null,
@@ -468,9 +471,15 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
           featured_image: product.featured_image || null,
           images: imagesArray,
           tags: tagsArray,
+<<<<<<< HEAD
           is_featured: toBool(product.is_featured),
           is_on_sale: isOnSale,
           is_new: toBool(product.is_new),
+=======
+          is_featured: Boolean(toBool(product.is_featured)),
+          is_on_sale: Boolean(toBool(product.is_on_sale) || (finalComparePrice && finalComparePrice > price)),
+          is_new: Boolean(toBool(product.is_new)),
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
           is_active: true,
           product_type: 'simple' as const,
         };

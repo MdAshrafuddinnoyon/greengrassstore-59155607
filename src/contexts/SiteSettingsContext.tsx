@@ -275,6 +275,7 @@ export interface ContactPageContent {
   mapEmbedUrl: string;
 }
 
+<<<<<<< HEAD
 interface PaymentGatewaySettings {
   type: string;
   displayName: string;
@@ -283,6 +284,8 @@ interface PaymentGatewaySettings {
   instructions?: string;
 }
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 interface SiteSettingsContextType {
   announcementBar: AnnouncementBarSettings;
   hero: HeroSettings;
@@ -307,7 +310,10 @@ interface SiteSettingsContextType {
   termsSections: PolicySection[];
   aboutContent: AboutPageContent;
   contactContent: ContactPageContent;
+<<<<<<< HEAD
   paymentGateways: PaymentGatewaySettings[];
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   loading: boolean;
   refetch: () => Promise<void>;
 }
@@ -725,7 +731,10 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   termsSections: defaultPolicySections,
   aboutContent: defaultAboutContent,
   contactContent: defaultContactContent,
+<<<<<<< HEAD
   paymentGateways: [],
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   loading: true,
   refetch: async () => {}
 });
@@ -741,7 +750,10 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [featuredCategorySection, setFeaturedCategorySection] = useState(defaultFeaturedCategorySection);
   const [collectionSection, setCollectionSection] = useState(defaultCollectionSection);
   const [footer, setFooter] = useState(defaultFooter);
+<<<<<<< HEAD
   const [footerFeatures, setFooterFeatures] = useState(defaultFooterFeatures);
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   const [branding, setBranding] = useState(defaultBranding);
   const [themeColors, setThemeColors] = useState(defaultThemeColors);
   const [typography, setTypography] = useState(defaultTypography);
@@ -757,7 +769,10 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [termsSections, setTermsSections] = useState(defaultPolicySections);
   const [aboutContent, setAboutContent] = useState(defaultAboutContent);
   const [contactContent, setContactContent] = useState(defaultContactContent);
+<<<<<<< HEAD
   const [paymentGateways, setPaymentGateways] = useState<PaymentGatewaySettings[]>([]);
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
   const fetchSettings = async () => {
     try {
@@ -770,6 +785,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
       data?.forEach((setting) => {
         const value = setting.setting_value as Record<string, unknown>;
         switch (setting.setting_key) {
+<<<<<<< HEAD
                     case 'footer_features':
                       setFooterFeatures(Array.isArray(value) ? value : defaultFooterFeatures);
                       break;
@@ -842,6 +858,74 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
             break;
           case 'payment_gateways':
             setPaymentGateways(Array.isArray(value) ? value as PaymentGatewaySettings[] : []);
+=======
+          case 'announcement_bar':
+            setAnnouncementBar(value as unknown as AnnouncementBarSettings);
+            break;
+          case 'hero_section':
+            setHero(value as unknown as HeroSettings);
+            break;
+          case 'gift_section':
+            setGiftSection(value as unknown as GiftSectionSettings);
+            break;
+          case 'promo_section':
+            setPromoSection(value as unknown as PromoSectionSettings);
+            break;
+          case 'featured_category_section':
+            setFeaturedCategorySection(value as unknown as FeaturedCategorySectionSettings);
+            break;
+          case 'collection_section':
+            setCollectionSection(value as unknown as CollectionSectionSettings);
+            break;
+          case 'footer_content':
+          case 'footer_menu':
+            setFooter(value as unknown as FooterSettings);
+            break;
+          case 'branding':
+            setBranding(value as unknown as BrandingSettings);
+            break;
+          case 'theme_colors':
+            setThemeColors(value as unknown as ThemeColors);
+            break;
+          case 'typography':
+            setTypography(value as unknown as TypographySettings);
+            break;
+          case 'whatsapp':
+            setWhatsapp(value as unknown as WhatsAppSettings);
+            break;
+          case 'sales_agent':
+            setSalesAgent(value as unknown as SalesAgentSettings);
+            break;
+          case 'store_info':
+            setStoreInfo(value as unknown as StoreInfo);
+            break;
+          case 'shipping_settings':
+            setShippingSettings(value as unknown as ShippingSettings);
+            break;
+          case 'mega_menu_categories':
+            setMegaMenuCategories(value as unknown as MegaMenuCategory[]);
+            break;
+          case 'faq_items':
+            setFaqItems(value as unknown as FAQItem[]);
+            break;
+          case 'return_policy_sections':
+            setReturnPolicySections(value as unknown as PolicySection[]);
+            break;
+          case 'privacy_sections':
+            setPrivacySections(value as unknown as PolicySection[]);
+            break;
+          case 'terms_sections':
+            setTermsSections(value as unknown as PolicySection[]);
+            break;
+          case 'about_content':
+            setAboutContent(value as unknown as AboutPageContent);
+            break;
+          case 'contact_content':
+            setContactContent(value as unknown as ContactPageContent);
+            break;
+          case 'security_settings':
+            setSecuritySettings(value as unknown as SecuritySettings);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
             break;
         }
       });
@@ -894,7 +978,11 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         salesAgent,
         storeInfo,
         shippingSettings,
+<<<<<<< HEAD
         footerFeatures,
+=======
+        footerFeatures: defaultFooterFeatures,
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         securitySettings,
         megaMenuCategories,
         faqItems,
@@ -903,7 +991,10 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         termsSections,
         aboutContent,
         contactContent,
+<<<<<<< HEAD
         paymentGateways,
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         loading,
         refetch: fetchSettings
       }}

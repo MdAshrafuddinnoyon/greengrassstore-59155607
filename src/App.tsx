@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+<<<<<<< HEAD
 import React from "react";
 // Global error boundary for catching render errors
 class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
@@ -25,6 +26,8 @@ class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode },
     return this.props.children;
   }
 }
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -57,7 +60,10 @@ import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
 import Maintenance from "./pages/Maintenance";
 import Install from "./pages/Install";
+<<<<<<< HEAD
 import Support from "./pages/Support";
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
 const queryClient = new QueryClient();
 
@@ -150,11 +156,14 @@ const MaintenanceWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppContent = () => {
+<<<<<<< HEAD
   // Hide install route once installation is complete
   const shouldShowInstall = typeof window !== 'undefined'
     ? localStorage.getItem('installation_complete') !== 'true'
     : true;
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   return (
     <BrowserRouter>
       <ScrollToTop />
@@ -174,7 +183,10 @@ const AppContent = () => {
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/returns" element={<ReturnPolicy />} />
+<<<<<<< HEAD
           <Route path="/support" element={<Support />} />
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
           <Route path="/vip" element={<VIPProgram />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/checkout" element={<Checkout />} />
@@ -183,7 +195,11 @@ const AppContent = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/account" element={<Account />} />
           <Route path="/maintenance" element={<Maintenance />} />
+<<<<<<< HEAD
           {shouldShowInstall && <Route path="/install" element={<Install />} />}
+=======
+          <Route path="/install" element={<Install />} />
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -195,6 +211,7 @@ const AppContent = () => {
   );
 };
 
+<<<<<<< HEAD
 
 const App = () => (
   <GlobalErrorBoundary>
@@ -210,6 +227,20 @@ const App = () => (
       </LanguageProvider>
     </QueryClientProvider>
   </GlobalErrorBoundary>
+=======
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
+      <SiteSettingsProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </TooltipProvider>
+      </SiteSettingsProvider>
+    </LanguageProvider>
+  </QueryClientProvider>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 );
 
 export default App;

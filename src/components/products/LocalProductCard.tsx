@@ -55,6 +55,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
     e.preventDefault();
     e.stopPropagation();
     
+<<<<<<< HEAD
     // Create a minimal ShopifyProduct-like structure for cart compatibility
     const cartItem = {
       product: {
@@ -94,6 +95,10 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
           options: []
         }
       },
+=======
+    addItem({
+      product: { ...product, featured_image: displayImage },
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       variantId: product.id,
       variantTitle: 'Default',
       price: {
@@ -102,9 +107,13 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
       },
       quantity: 1,
       selectedOptions: []
+<<<<<<< HEAD
     };
     
     addItem(cartItem);
+=======
+    });
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     toast.success(isArabic ? 'تمت الإضافة إلى السلة' : 'Added to cart');
   };
 
@@ -140,6 +149,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
       removeFromCompare(product.id);
       toast.success(isArabic ? 'تمت الإزالة من المقارنة' : 'Removed from compare');
     } else {
+<<<<<<< HEAD
       const shopifyLikeProduct = {
         node: {
           id: product.id,
@@ -160,6 +170,9 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
         }
       };
       const added = addToCompare(shopifyLikeProduct);
+=======
+      const added = addToCompare({ ...product, featured_image: displayImage });
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       if (added) {
         toast.success(isArabic ? 'تمت الإضافة للمقارنة' : 'Added to compare');
       } else {
@@ -178,8 +191,13 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+<<<<<<< HEAD
       {/* Image Container - Fixed height */}
       <Link to={`/product/${product.slug}`}>
+=======
+      <Link to={`/product/${product.slug}`}>
+        {/* Image Container - Fixed height */}
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         <div className="relative aspect-[4/5] overflow-hidden bg-muted/30">
           <img
             src={displayImage}
@@ -271,6 +289,7 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
             </div>
           </div>
         </div>
+<<<<<<< HEAD
       </Link>
 
       {/* Content - Fixed height for consistent cards */}
@@ -305,6 +324,41 @@ export const LocalProductCard = ({ product, isArabic = false }: LocalProductCard
           </p>
         )}
       </div>
+=======
+
+        {/* Content - Fixed height for consistent cards */}
+        <div className="p-3 sm:p-4 flex flex-col h-[140px] sm:h-[160px]">
+          <Link 
+            to={`/shop?category=${product.category.toLowerCase()}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-0.5 sm:mb-1 hover:text-primary transition-colors"
+          >
+            {product.category}
+          </Link>
+          <h3 className="font-medium text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-colors flex-shrink-0">
+            {displayName}
+          </h3>
+          
+          <div className="mt-auto pt-2 flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
+            <span className="text-sm sm:text-lg font-bold text-primary">
+              {product.currency} {product.price.toFixed(2)}
+            </span>
+            {product.compare_at_price && product.compare_at_price > product.price && (
+              <span className="text-xs sm:text-sm text-muted-foreground line-through">
+                {product.currency} {product.compare_at_price.toFixed(2)}
+              </span>
+            )}
+          </div>
+
+          {/* Stock Status */}
+          {product.stock_quantity !== undefined && product.stock_quantity <= 5 && product.stock_quantity > 0 && (
+            <p className="mt-1 text-[10px] sm:text-xs text-amber-600 font-medium">
+              {isArabic ? `${product.stock_quantity} فقط متبقي` : `Only ${product.stock_quantity} left`}
+            </p>
+          )}
+        </div>
+      </Link>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     </motion.div>
     
     <LocalQuickViewModal

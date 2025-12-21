@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
 // Image resize helper
 function resizeImage(file, maxSize = 512) {
   return new Promise((resolve, reject) => {
@@ -40,6 +41,8 @@ function resizeImage(file, maxSize = 512) {
     reader.readAsDataURL(file);
   });
 }
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +51,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+<<<<<<< HEAD
 import { Loader2, Image, Upload, Link as LinkIcon, Check, X, Folder, CheckSquare } from "lucide-react";
+=======
+import { Loader2, Image, Upload, Link as LinkIcon, Check, X, Folder } from "lucide-react";
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
 interface MediaFile {
   id: string;
@@ -60,10 +67,15 @@ interface MediaFile {
 }
 
 interface MediaPickerProps {
+<<<<<<< HEAD
   value?: string | string[];
   onChange: (url: string) => void;
   onChangeMultiple?: (urls: string[]) => void;
   multiple?: boolean;
+=======
+  value?: string;
+  onChange: (url: string) => void;
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   label?: string;
   placeholder?: string;
   folder?: string; // Default folder for uploads
@@ -83,8 +95,11 @@ export const MEDIA_FOLDERS = {
 export const MediaPicker = ({ 
   value, 
   onChange, 
+<<<<<<< HEAD
   onChangeMultiple,
   multiple = false,
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   label = "Image", 
   placeholder = "Select or enter image URL",
   folder = 'uploads'
@@ -97,6 +112,7 @@ export const MediaPicker = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [uploadFolder, setUploadFolder] = useState(folder);
+<<<<<<< HEAD
 
   // Always sync uploadFolder with the folder prop if it changes
   useEffect(() => {
@@ -107,6 +123,9 @@ export const MediaPicker = ({
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
   const normalizedValue = Array.isArray(value) ? value : value ? [value] : [];
+=======
+  const [availableFolders, setAvailableFolders] = useState<string[]>([]);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
   const fetchFiles = async () => {
     setLoading(true);
@@ -152,6 +171,7 @@ export const MediaPicker = ({
     // Convert FileList to array
     const filesToUpload = Array.from(fileList);
     
+<<<<<<< HEAD
 
     // Only allow PNG, SVG, ICO for logo uploads
     const allowedTypes = ["image/png", "image/svg+xml", "image/x-icon"];
@@ -190,6 +210,17 @@ export const MediaPicker = ({
     const finalFiles = processedFiles.filter(Boolean);
     if (finalFiles.length === 0) return;
 
+=======
+    // Validate all files are images
+    const invalidFiles = filesToUpload.filter(f => !f.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      toast.error(`${invalidFiles.length} file(s) are not images and will be skipped`);
+    }
+    
+    const validFiles = filesToUpload.filter(f => f.type.startsWith('image/'));
+    if (validFiles.length === 0) return;
+
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -197,8 +228,12 @@ export const MediaPicker = ({
 
       const uploadedUrls: string[] = [];
       
+<<<<<<< HEAD
 
       for (const file of finalFiles) {
+=======
+      for (const file of validFiles) {
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         const fileName = `${Date.now()}-${file.name}`;
         const filePath = `${uploadFolder}/${fileName}`;
 
@@ -235,6 +270,7 @@ export const MediaPicker = ({
       }
 
       if (uploadedUrls.length > 0) {
+<<<<<<< HEAD
         if (multiple && onChangeMultiple) {
           onChangeMultiple(uploadedUrls);
           setUrlInput(uploadedUrls.join(', '));
@@ -242,12 +278,21 @@ export const MediaPicker = ({
           onChange(uploadedUrls[uploadedUrls.length - 1]);
           setUrlInput(uploadedUrls[uploadedUrls.length - 1]);
         }
+=======
+        // For single file mode, use last uploaded file
+        onChange(uploadedUrls[uploadedUrls.length - 1]);
+        setUrlInput(uploadedUrls[uploadedUrls.length - 1]);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         toast.success(`${uploadedUrls.length} image(s) uploaded to ${uploadFolder} folder`);
         fetchFiles(); // Refresh file list
       }
       
       if (uploadedUrls.length === validFiles.length) {
+<<<<<<< HEAD
         if (!multiple) setOpen(false);
+=======
+        setOpen(false);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -257,6 +302,7 @@ export const MediaPicker = ({
     }
   };
 
+<<<<<<< HEAD
   // Enhanced toggle for keyboard multi-select
   const toggleSelectFile = (file: MediaFile, index: number, event?: React.MouseEvent | React.KeyboardEvent) => {
     if (!multiple) {
@@ -308,6 +354,14 @@ export const MediaPicker = ({
     setUrlInput(selected.join(', '));
     setSelectedLibraryIds([]);
     setOpen(false);
+=======
+  const handleSelectFile = (file: MediaFile) => {
+    if (file.publicUrl) {
+      onChange(file.publicUrl);
+      setUrlInput(file.publicUrl);
+      setOpen(false);
+    }
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   };
 
   const handleUrlSubmit = () => {
@@ -328,11 +382,18 @@ export const MediaPicker = ({
       <Label>{label}</Label>
       <div className="flex gap-2">
         <Input
+<<<<<<< HEAD
           value={normalizedValue.join(', ')}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className="flex-1"
           disabled={multiple}
+=======
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1"
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -373,6 +434,7 @@ export const MediaPicker = ({
                     </SelectContent>
                   </Select>
                 </div>
+<<<<<<< HEAD
                 {multiple && (
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs text-muted-foreground">Multi-select is enabled</p>
@@ -381,6 +443,8 @@ export const MediaPicker = ({
                     </Button>
                   </div>
                 )}
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 
                 {loading ? (
                   <div className="flex justify-center py-8">
@@ -391,6 +455,7 @@ export const MediaPicker = ({
                     No images found
                   </div>
                 ) : (
+<<<<<<< HEAD
                   <>
                     {multiple && (
                       <div className="flex items-center gap-2 mb-2">
@@ -464,6 +529,33 @@ export const MediaPicker = ({
                       ))}
                     </div>
                   </>
+=======
+                  <div className="grid grid-cols-4 md:grid-cols-5 gap-3 overflow-y-auto max-h-[400px] p-1">
+                    {filteredFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        onClick={() => handleSelectFile(file)}
+                        className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all hover:border-primary group ${
+                          value === file.publicUrl ? 'border-primary ring-2 ring-primary/30' : 'border-transparent'
+                        }`}
+                      >
+                        <img
+                          src={file.publicUrl}
+                          alt={file.file_name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                          <span className="text-white text-xs truncate capitalize">{file.folder}</span>
+                        </div>
+                        {value === file.publicUrl && (
+                          <div className="absolute top-1 right-1 bg-primary text-white rounded-full p-1">
+                            <Check className="w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                 )}
               </TabsContent>
 
@@ -555,6 +647,7 @@ export const MediaPicker = ({
         </Dialog>
       </div>
       
+<<<<<<< HEAD
       {/* Bulk Preview & Delete */}
       {normalizedValue.length > 0 && (
         <div className="mb-2">
@@ -615,6 +708,19 @@ export const MediaPicker = ({
               </div>
             ))}
           </div>
+=======
+      {/* Preview */}
+      {value && (
+        <div className="relative w-20 h-20 rounded-lg overflow-hidden border bg-muted">
+          <img src={value} alt="Preview" className="w-full h-full object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 hover:bg-black/70"
+          >
+            <X className="w-3 h-3" />
+          </button>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         </div>
       )}
     </div>

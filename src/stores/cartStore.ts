@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+<<<<<<< HEAD
 import { ShopifyProduct, storefrontApiRequest } from '@/lib/shopify';
 
 export interface CartItem {
@@ -14,6 +15,12 @@ export interface CartItem {
     featuredImage?: any;
     node?: any;
   };
+=======
+import { LocalProduct } from '@/components/products/LocalProductCard';
+
+export interface CartItem {
+  product: LocalProduct;
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   variantId: string;
   variantTitle: string;
   price: {
@@ -25,23 +32,30 @@ export interface CartItem {
     name: string;
     value: string;
   }>;
+<<<<<<< HEAD
   id?: string;
   title?: string;
   handle?: string;
   description?: string;
   image?: string;
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 }
 
 interface CartStore {
   items: CartItem[];
+<<<<<<< HEAD
   cartId: string | null;
   checkoutUrl: string | null;
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   isLoading: boolean;
   
   addItem: (item: CartItem) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
   clearCart: () => void;
+<<<<<<< HEAD
   setCartId: (cartId: string) => void;
   setCheckoutUrl: (url: string) => void;
   setLoading: (loading: boolean) => void;
@@ -119,14 +133,20 @@ async function createStorefrontCheckout(items: CartItem[]): Promise<string> {
   const url = new URL(cart.checkoutUrl);
   url.searchParams.set('channel', 'online_store');
   return url.toString();
+=======
+  setLoading: (loading: boolean) => void;
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+<<<<<<< HEAD
       cartId: null,
       checkoutUrl: null,
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       isLoading: false,
 
       addItem: (item) => {
@@ -166,6 +186,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => {
+<<<<<<< HEAD
         set({ items: [], cartId: null, checkoutUrl: null });
       },
 
@@ -191,6 +212,15 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'shopify-cart',
+=======
+        set({ items: [] });
+      },
+
+      setLoading: (isLoading) => set({ isLoading }),
+    }),
+    {
+      name: 'local-cart',
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       storage: createJSONStorage(() => localStorage),
     }
   )

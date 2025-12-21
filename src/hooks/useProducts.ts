@@ -25,10 +25,19 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         .eq('is_active', true);
 
       if (options.category) {
+<<<<<<< HEAD
         query = query.eq('category', options.category);
       }
       if (options.subcategory) {
         query = query.eq('subcategory', options.subcategory);
+=======
+        // Case-insensitive category matching
+        query = query.ilike('category', options.category);
+      }
+      if (options.subcategory) {
+        // Case-insensitive subcategory matching
+        query = query.ilike('subcategory', options.subcategory);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       }
       if (options.featured) {
         query = query.eq('is_featured', true);

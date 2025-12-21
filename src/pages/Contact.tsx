@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -494,7 +497,10 @@ const Contact = () => {
         </section>
       </main>
 
+<<<<<<< HEAD
       <MobileBottomNav />
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       <Footer />
     </div>
   );

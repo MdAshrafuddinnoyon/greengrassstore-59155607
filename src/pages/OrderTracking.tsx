@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useEffect, useMemo, useState } from "react";
+=======
+import { useState } from "react";
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,7 +23,10 @@ import {
   AlertCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+<<<<<<< HEAD
 import { buildInvoiceHtml, fetchInvoiceTemplate } from "@/lib/invoiceTemplate";
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { toast } from "sonner";
 
 interface OrderData {
@@ -54,6 +61,7 @@ const OrderTracking = () => {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [notFound, setNotFound] = useState(false);
 
+<<<<<<< HEAD
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
 
   useEffect(() => {
@@ -85,6 +93,8 @@ const OrderTracking = () => {
     }
   }, [params]);
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   const handleTrackOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderNumber.trim()) {
@@ -129,6 +139,7 @@ const OrderTracking = () => {
 
   const currentStatusIndex = order ? getStatusIndex(order.status) : -1;
 
+<<<<<<< HEAD
   const handlePrintInvoice = async () => {
     if (!order) return;
     const printWindow = window.open('', '_blank');
@@ -143,6 +154,8 @@ const OrderTracking = () => {
     printWindow.print();
   };
 
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   return (
     <div className="min-h-screen flex flex-col bg-gray-50" dir={isArabic ? "rtl" : "ltr"}>
       <Header />
@@ -372,9 +385,12 @@ const OrderTracking = () => {
                     <p className="text-xs text-gray-400">
                       {isArabic ? "تاريخ الطلب:" : "Order Date:"} {new Date(order.created_at).toLocaleDateString()}
                     </p>
+<<<<<<< HEAD
                     <Button onClick={handlePrintInvoice} className="mt-2 w-full sm:w-auto bg-[#2d5a3d] hover:bg-[#234830]">
                       {isArabic ? "تحميل الفاتورة PDF" : "Download Invoice (PDF)"}
                     </Button>
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                   </CardContent>
                 </Card>
               </div>

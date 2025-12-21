@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+<<<<<<< HEAD
 import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound, Crown, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+=======
+import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound, Crown } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { useWishlistStore, WishlistItem } from "@/stores/wishlistStore";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -90,7 +96,10 @@ const Account = () => {
   
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+<<<<<<< HEAD
   const { paymentBanner, paymentGateways } = useSiteSettings();
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   const isArabic = language === "ar";
   const { items: wishlistItems, fetchWishlist, removeFromWishlist, loading: wishlistLoading } = useWishlistStore();
 
@@ -639,6 +648,7 @@ const Account = () => {
             {/* Content */}
             <div className="md:col-span-3">
               {activeTab === "profile" && (
+<<<<<<< HEAD
                 <>
                   {/* Payment Methods Section */}
                   <motion.div
@@ -724,6 +734,129 @@ const Account = () => {
                     </div>
                   </motion.div>
                 </>
+=======
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-card rounded-2xl border border-border p-4 sm:p-6"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      {t("account.personalInfo")}
+                    </h2>
+                    {!isEditing ? (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        {t("account.edit")}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSaveProfile}
+                        disabled={saving}
+                        className="flex items-center gap-2 text-sm bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                      >
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        {t("account.save")}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.fullName")}
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{fullName || "-"}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.email")}
+                      </label>
+                      <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-foreground">{user?.email}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.phone")}
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <Phone className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{phone || "-"}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.city")}
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{city || "-"}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.address")}
+                      </label>
+                      {isEditing ? (
+                        <textarea
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          rows={2}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                        />
+                      ) : (
+                        <div className="flex items-start gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                          <span className="text-foreground">{address || "-"}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
               )}
 
               {activeTab === "vip" && user && (
@@ -1161,6 +1294,7 @@ const Account = () => {
           </div>
         </div>
       </main>
+<<<<<<< HEAD
 
       {paymentBanner?.enabled && paymentBanner.imageUrl && (
         <div className="container mx-auto px-4 mb-10">
@@ -1187,6 +1321,8 @@ const Account = () => {
           </Link>
         </div>
       )}
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       <Footer />
       
       {/* Custom Request Modal */}

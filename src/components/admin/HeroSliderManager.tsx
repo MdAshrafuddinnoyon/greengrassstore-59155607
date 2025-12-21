@@ -35,7 +35,11 @@ interface HeroSliderSettings {
 export const HeroSliderManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+<<<<<<< HEAD
   const defaultSettings: HeroSliderSettings = {
+=======
+  const [settings, setSettings] = useState<HeroSliderSettings>({
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     enabled: true,
     autoPlay: true,
     autoPlayInterval: 5000,
@@ -53,8 +57,12 @@ export const HeroSliderManager = () => {
       backgroundImage: '',
       order: 1
     }]
+<<<<<<< HEAD
   };
   const [settings, setSettings] = useState<HeroSliderSettings>(defaultSettings);
+=======
+  });
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -68,9 +76,13 @@ export const HeroSliderManager = () => {
       if (error) throw error;
       
       if (data?.setting_value) {
+<<<<<<< HEAD
         setSettings({ ...defaultSettings, ...data.setting_value });
       } else {
         setSettings(defaultSettings);
+=======
+        setSettings(data.setting_value as unknown as HeroSliderSettings);
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       }
     } catch (error) {
       console.error('Error fetching settings:', error);

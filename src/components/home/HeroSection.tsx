@@ -208,7 +208,11 @@ export const HeroSection = () => {
     const backgroundImage = slide.backgroundImage || heroBg;
 
     return (
+<<<<<<< HEAD
       <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden" dir={isArabic ? "rtl" : "ltr"}>
+=======
+      <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         {/* Background Image with Animation */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -233,6 +237,7 @@ export const HeroSection = () => {
           <>
             <button
               onClick={prevSlide}
+<<<<<<< HEAD
               className={isArabic ? "absolute right-2 md:right-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors" : "absolute left-2 md:left-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors"}
               aria-label={isArabic ? "السابق" : "Previous slide"}
             >
@@ -252,6 +257,19 @@ export const HeroSection = () => {
               ) : (
                 <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
               )}
+=======
+              className="absolute left-2 md:left-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-2 md:right-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
             </button>
           </>
         )}
@@ -335,7 +353,11 @@ export const HeroSection = () => {
     const backgroundImage = bannerSettings.backgroundImage || heroBg;
 
     return (
+<<<<<<< HEAD
       <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden" dir={isArabic ? "rtl" : "ltr"}>
+=======
+      <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <img

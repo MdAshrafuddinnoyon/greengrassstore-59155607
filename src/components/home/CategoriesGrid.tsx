@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback, useMemo } from "react";
+=======
+import { useState, useEffect, useCallback } from "react";
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
@@ -90,6 +94,7 @@ export const CategoriesGrid = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
+<<<<<<< HEAD
   const emblaOptions = useMemo(() => ({
     loop: true,
     align: "start",
@@ -101,6 +106,14 @@ export const CategoriesGrid = () => {
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     emblaOptions,
+=======
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { 
+      loop: true, 
+      align: "start",
+      dragFree: true,
+    },
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
     [Autoplay({ delay: 3000, stopOnInteraction: true })]
   );
 
@@ -157,7 +170,11 @@ export const CategoriesGrid = () => {
   }
 
   return (
+<<<<<<< HEAD
     <section className="py-10 md:py-14 bg-background border-b border-border/50" dir={isArabic ? "rtl" : "ltr"}>
+=======
+    <section className="py-10 md:py-14 bg-background border-b border-border/50">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div
@@ -180,6 +197,7 @@ export const CategoriesGrid = () => {
           {/* Previous Button */}
           <button
             onClick={scrollPrev}
+<<<<<<< HEAD
             className={
               isArabic
                 ? "absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hidden md:flex items-center justify-center"
@@ -192,11 +210,17 @@ export const CategoriesGrid = () => {
             ) : (
               <ChevronLeft className="w-5 h-5 text-foreground" />
             )}
+=======
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-1/2 hidden md:flex items-center justify-center"
+          >
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
           </button>
 
           {/* Next Button */}
           <button
             onClick={scrollNext}
+<<<<<<< HEAD
             className={
               isArabic
                 ? "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hidden md:flex items-center justify-center"
@@ -214,6 +238,16 @@ export const CategoriesGrid = () => {
           {/* Embla Carousel */}
           <div className="overflow-hidden py-2" ref={emblaRef}>
             <div className="flex gap-4 md:gap-6">
+=======
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-1/2 hidden md:flex items-center justify-center"
+          >
+            <ChevronRight className="w-5 h-5 text-foreground" />
+          </button>
+
+          {/* Embla Carousel */}
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex gap-6 md:gap-8">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
               {displayCategories.map((category, index) => {
                 const IconComponent = category.icon;
                 return (
@@ -223,6 +257,7 @@ export const CategoriesGrid = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.03 }}
                     viewport={{ once: true }}
+<<<<<<< HEAD
                     className="flex-[0_0_calc(33.333%-0.67rem)] min-[480px]:flex-[0_0_calc(25%-0.75rem)] sm:flex-[0_0_calc(20%-0.8rem)] md:flex-[0_0_calc(16.666%-1rem)] lg:flex-[0_0_calc(14.285%-1.14rem)]"
                   >
                     <Link
@@ -231,6 +266,16 @@ export const CategoriesGrid = () => {
                     >
                       {/* Icon Circle or Image */}
                       <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#f8f8f5] group-hover/item:bg-primary/10 border border-border/50 group-hover/item:border-primary/30 flex items-center justify-center transition-all duration-300 group-hover/item:-translate-y-1 group-hover/item:shadow-lg overflow-hidden">
+=======
+                    className="flex-shrink-0"
+                  >
+                    <Link
+                      to={category.href}
+                      className="group/item flex flex-col items-center gap-3 min-w-[80px]"
+                    >
+                      {/* Icon Circle or Image */}
+                      <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#f8f8f5] group-hover/item:bg-primary/10 border border-border/50 group-hover/item:border-primary/30 flex items-center justify-center transition-all duration-300 group-hover/item:scale-110 group-hover/item:shadow-lg overflow-hidden">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                         {category.image ? (
                           <img 
                             src={category.image} 

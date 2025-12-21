@@ -8,14 +8,21 @@ import { PromoSection } from "@/components/home/PromoSection";
 import { BlogSection } from "@/components/home/BlogSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { FAQSection } from "@/components/home/FAQSection";
+<<<<<<< HEAD
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
 import { GiftSection } from "@/components/home/GiftSection";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+<<<<<<< HEAD
       <main className="pb-20 md:pb-0">
+=======
+      <main className="pb-16 md:pb-0">
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
         {/* Hero Section */}
         <HeroSection />
 
@@ -51,7 +58,10 @@ const Index = () => {
         {/* Instagram Feed */}
         <InstagramSection />
       </main>
+<<<<<<< HEAD
       <MobileBottomNav />
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
       <Footer />
     </div>
   );

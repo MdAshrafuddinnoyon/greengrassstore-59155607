@@ -12,6 +12,7 @@ import { MediaPicker } from "./MediaPicker";
 import type { Json } from "@/integrations/supabase/types";
 
 interface BrandingSettings {
+<<<<<<< HEAD
   logoUrl: string; // fallback/default
   desktopLogoUrl?: string;
   mobileLogoUrl?: string;
@@ -19,6 +20,9 @@ interface BrandingSettings {
   logoHeight?: number; // px (desktop)
   mobileLogoWidth?: number; // px (mobile)
   mobileLogoHeight?: number; // px (mobile)
+=======
+  logoUrl: string;
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   faviconUrl: string;
   siteName: string;
   siteNameAr: string;
@@ -46,10 +50,13 @@ interface TypographySettings {
 
 const defaultBranding: BrandingSettings = {
   logoUrl: "",
+<<<<<<< HEAD
   desktopLogoUrl: "",
   mobileLogoUrl: "",
   logoWidth: 112, // default 112px (w-28)
   logoHeight: 40, // default 40px (h-10)
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
   faviconUrl: "",
   siteName: "Green Grass",
   siteNameAr: "جرين جراس",
@@ -263,6 +270,7 @@ export const BrandingManager = () => {
         </TabsList>
 
         {/* Logo & Identity Tab */}
+<<<<<<< HEAD
 
         <TabsContent value="branding" className="space-y-6">
           <Card>
@@ -319,10 +327,39 @@ export const BrandingManager = () => {
                     value={branding.logoUrl}
                     onChange={(url) => setBranding(prev => ({ ...prev, logoUrl: url }))}
                     label="Default Logo"
+=======
+        <TabsContent value="branding" className="space-y-6">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">Site Logo</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
+                Upload your logo for header and footer
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="w-32 h-20 border rounded-lg flex items-center justify-center bg-muted overflow-hidden">
+                  {branding.logoUrl ? (
+                    <img 
+                      src={branding.logoUrl} 
+                      alt="Logo" 
+                      className="max-w-full max-h-full object-contain" 
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No logo</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <MediaPicker
+                    value={branding.logoUrl}
+                    onChange={(url) => setBranding(prev => ({ ...prev, logoUrl: url }))}
+                    label="Logo"
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
                     folder="logos"
                   />
                 </div>
               </div>
+<<<<<<< HEAD
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="flex flex-col gap-2">
                   <Label className="text-xs md:text-sm">Desktop Logo Width (px)</Label>
@@ -365,6 +402,8 @@ export const BrandingManager = () => {
                   />
                 </div>
               </div>
+=======
+>>>>>>> dfcf12d2b1fa1c8d28b54c9344caef07b69c8066
             </CardContent>
           </Card>
 
