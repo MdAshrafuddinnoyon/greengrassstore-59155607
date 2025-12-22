@@ -26,12 +26,12 @@ const Index = () => {
 
         {/* Local Products - All Products */}
         <section className="py-12 md:py-20 bg-background">
-          <LocalProductGrid 
-            title="Our Collection" 
+          <LocalProductGrid
+            title="Our Collection"
             titleAr="مجموعتنا"
             subtitle="Discover our curated selection of premium plants and home décor"
             subtitleAr="اكتشف مجموعتنا المختارة من النباتات الفاخرة وديكور المنزل"
-            limit={8} 
+            limit={8}
           />
         </section>
 
