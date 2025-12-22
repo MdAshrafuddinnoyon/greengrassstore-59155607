@@ -555,8 +555,9 @@ const ProductDetail = () => {
                         name: product.name,
                         price: currentPrice,
                         currency: product.currency,
-                        image: product.featured_image || '',
+                        featured_image: product.featured_image || '',
                         category: product.category,
+                        slug: product.slug,
                       });
                       toast.success(isArabic ? 'تمت الإضافة للمقارنة' : 'Added to compare');
                     }}
