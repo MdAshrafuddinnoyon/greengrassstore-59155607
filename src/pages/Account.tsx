@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound, Crown, CreditCard } from "lucide-react";
+import { User, MapPin, Phone, Mail, Package, Heart, LogOut, Edit2, Save, Loader2, ChevronRight, Settings, Trash2, ShoppingBag, FileText, Clock, CheckCircle, AlertCircle, Plus, Download, Eye, Lock, Bell, X, KeyRound, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { useWishlistStore, WishlistItem } from "@/stores/wishlistStore";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -90,7 +89,6 @@ const Account = () => {
   
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const { paymentBanner, paymentGateways } = useSiteSettings();
   const isArabic = language === "ar";
   const { items: wishlistItems, fetchWishlist, removeFromWishlist, loading: wishlistLoading } = useWishlistStore();
 
@@ -639,91 +637,127 @@ const Account = () => {
             {/* Content */}
             <div className="md:col-span-3">
               {activeTab === "profile" && (
-                <>
-                  {/* Payment Methods Section */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="bg-card rounded-2xl border border-border p-4 sm:p-6 mb-6"
-                  >
-                    <h2 className="text-lg font-semibold text-foreground mb-4">
-                      {isArabic ? "طرق الدفع المتاحة" : "Available Payment Methods"}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-card rounded-2xl border border-border p-4 sm:p-6"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      {t("account.personalInfo")}
                     </h2>
-                    <div className="flex flex-wrap gap-3">
-                      {paymentGateways && paymentGateways.filter(gw => gw.enabled).length > 0 ? (
-                        paymentGateways.filter(gw => gw.enabled).map(gw => (
-                          <span key={gw.type} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted text-foreground border border-border text-sm font-medium">
-                            {gw.displayName || gw.type}
-                            {gw.type === 'cod' && (
-                              <span className="ml-2 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-                                {isArabic ? "الدفع عند الاستلام" : "Cash on Delivery"}
-                              </span>
-                            )}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-muted-foreground text-sm">{isArabic ? "لا توجد طرق دفع مفعلة حالياً" : "No payment methods enabled currently."}</span>
-                      )}
-                    </div>
-                  </motion.div>
-                  {/* Personal Info Section */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="bg-card rounded-2xl border border-border p-4 sm:p-6"
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-lg font-semibold text-foreground">
-                        {t("account.personalInfo")}
-                      </h2>
-                      {!isEditing ? (
-                        <button
-                          onClick={() => setIsEditing(true)}
-                          className="flex items-center gap-2 text-sm text-primary hover:underline"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          {t("account.edit")}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleSaveProfile}
-                          disabled={saving}
-                          className="flex items-center gap-2 text-sm bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                          {saving ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Save className="w-4 h-4" />
-                          )}
-                          {t("account.save")}
-                        </button>
-                      )}
-                    </div>
-                    {/* ...existing code for personal info... */}
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {/* ...existing code for personal info fields... */}
-                      <div>
-                        <label className="block text-sm font-medium text-muted-foreground mb-1.5">
-                          {t("account.fullName")}
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
+                    {!isEditing ? (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        {t("account.edit")}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSaveProfile}
+                        disabled={saving}
+                        className="flex items-center gap-2 text-sm bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                      >
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-foreground">{fullName || "-"}</span>
-                          </div>
+                          <Save className="w-4 h-4" />
                         )}
-                      </div>
-                      {/* ...rest of personal info fields... */}
+                        {t("account.save")}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.fullName")}
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{fullName || "-"}</span>
+                        </div>
+                      )}
                     </div>
-                  </motion.div>
-                </>
+
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.email")}
+                      </label>
+                      <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-foreground">{user?.email}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.phone")}
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <Phone className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{phone || "-"}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.city")}
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{city || "-"}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                        {t("account.address")}
+                      </label>
+                      {isEditing ? (
+                        <textarea
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          rows={2}
+                          className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                        />
+                      ) : (
+                        <div className="flex items-start gap-2 px-4 py-3 bg-muted rounded-xl">
+                          <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                          <span className="text-foreground">{address || "-"}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
               )}
 
               {activeTab === "vip" && user && (
@@ -1161,32 +1195,6 @@ const Account = () => {
           </div>
         </div>
       </main>
-
-      {paymentBanner?.enabled && paymentBanner.imageUrl && (
-        <div className="container mx-auto px-4 mb-10">
-          <Link to={paymentBanner.link || "/checkout"} className="group block overflow-hidden rounded-2xl border bg-muted/50">
-            <div className="relative">
-              <img
-                src={paymentBanner.imageUrl}
-                alt={isArabic ? paymentBanner.titleAr : paymentBanner.title}
-                className="w-full h-48 sm:h-60 object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-black/20" />
-              <div className="absolute inset-0 flex items-center px-6 sm:px-10">
-                <div className="flex items-center gap-3 text-white">
-                  <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur flex items-center justify-center">
-                    <CreditCard className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm sm:text-base font-semibold">{isArabic ? paymentBanner.titleAr : paymentBanner.title}</p>
-                    <p className="text-xs sm:text-sm text-white/80">{isArabic ? "تابع للدفع الآمن" : "Proceed to secure checkout"}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      )}
       <Footer />
       
       {/* Custom Request Modal */}

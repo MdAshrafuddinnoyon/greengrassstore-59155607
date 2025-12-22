@@ -26,47 +26,35 @@ export const GiftSection = () => {
   useEffect(() => {
     const fetchGiftProducts = async () => {
       try {
-        // Fetch all active products
+        // Fetch products that have 'gift' tag, 'gift'/'gifts' in category/subcategory
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, name_ar, price, featured_image, slug, category, subcategory, tags, is_featured')
+          .select('id, name, name_ar, price, featured_image, slug, category, subcategory, tags')
           .eq('is_active', true)
-          .order('created_at', { ascending: false });
+          .limit(50);
+        
         if (error) throw error;
-
-        let filteredProducts = data || [];
-
-        // ক্যাটাগরি সিলেক্ট করা থাকলে সেই ক্যাটাগরির প্রোডাক্ট দেখাবে
-        if (giftSection.categorySlug && giftSection.categorySlug !== "") {
-          filteredProducts = filteredProducts.filter(product => {
-            return (
-              product.category === giftSection.categorySlug ||
-              product.subcategory === giftSection.categorySlug ||
-              (product.tags || []).includes(giftSection.categorySlug)
-            );
-          });
-        } else {
-          // না থাকলে আগের মতো গিফট/ট্যাগ ফিল্টার
-          filteredProducts = filteredProducts.filter(product => {
-            const categoryMatch = product.category?.toLowerCase().includes('gift');
-            const subcategoryMatch = product.subcategory?.toLowerCase().includes('gift');
-            const tagsMatch = (product.tags || []).some((tag: string) => tag.toLowerCase().includes('gift'));
-            return categoryMatch || subcategoryMatch || tagsMatch;
-          });
-        }
-
-        // If no products found, fallback to all
-        if (filteredProducts.length === 0) {
-          filteredProducts = data || [];
-        }
-
-        setGiftProducts(filteredProducts);
+        
+        // Filter products that match gift criteria (case-insensitive)
+        const giftProducts = (data || []).filter(product => {
+          const categoryLower = product.category?.toLowerCase() || '';
+          const subcategoryLower = product.subcategory?.toLowerCase() || '';
+          const categoryMatch = categoryLower.includes('gift') || categoryLower === 'gifts';
+          const subcategoryMatch = subcategoryLower.includes('gift') || subcategoryLower === 'gifts';
+          const tagsMatch = product.tags?.some((tag: string) => 
+            tag.toLowerCase().includes('gift') || tag.toLowerCase() === 'gifts'
+          );
+          return categoryMatch || subcategoryMatch || tagsMatch;
+        }).slice(0, 6);
+        
+        setGiftProducts(giftProducts);
       } catch (error) {
         console.error('Error fetching gift products:', error);
       } finally {
         setProductsLoading(false);
       }
     };
+
     fetchGiftProducts();
 
     // Real-time subscription for product updates
@@ -91,7 +79,6 @@ export const GiftSection = () => {
   const title = isArabic ? giftSection.titleAr : giftSection.title;
   const subtitle = isArabic ? giftSection.subtitleAr : giftSection.subtitle;
   const buttonText = isArabic ? giftSection.buttonTextAr : giftSection.buttonText;
-  const itemsLimit = giftSection.itemsLimit || 6;
   
   // Use products from database, fallback to custom items from settings
   const displayItems = giftProducts.length > 0 
@@ -107,18 +94,10 @@ export const GiftSection = () => {
       ? giftSection.items 
       : [];
 
-  const limitedItems = displayItems.slice(0, Math.max(itemsLimit, 1));
-  const skeletonCount = Math.max(itemsLimit || 3, 3);
-
   if (displayItems.length === 0 && !productsLoading) return null;
 
-  // ব্যাকগ্রাউন্ড ইমেজ থাকলে সেট করুন, না থাকলে আগের গ্র্যাডিয়েন্ট
-  const sectionBg = giftSection.backgroundImage && giftSection.backgroundImage !== ""
-    ? { backgroundImage: `url(${giftSection.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : { background: 'linear-gradient(to bottom, var(--background), var(--muted))' };
-
   return (
-    <section className="py-8 md:py-16" style={sectionBg}>
+    <section className="py-8 md:py-16 bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -143,7 +122,7 @@ export const GiftSection = () => {
 
         {productsLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[...Array(skeletonCount)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="aspect-square bg-muted rounded-xl mb-2" />
                 <div className="h-4 bg-muted rounded w-3/4 mb-1" />
@@ -156,7 +135,7 @@ export const GiftSection = () => {
             {/* Mobile Horizontal Scroll */}
             <div className="md:hidden -mx-4 px-4">
               <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-                {limitedItems.map((item, index) => (
+                {displayItems.slice(0, 6).map((item, index) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, x: 20 }}
@@ -184,8 +163,8 @@ export const GiftSection = () => {
             </div>
 
             {/* Desktop Grid */}
-            <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 gap-6">
-              {limitedItems.map((item, index) => (
+            <div className="hidden md:grid grid-cols-3 gap-6">
+              {displayItems.slice(0, 3).map((item, index) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 20 }}

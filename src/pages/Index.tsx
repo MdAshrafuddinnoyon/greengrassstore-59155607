@@ -8,14 +8,13 @@ import { PromoSection } from "@/components/home/PromoSection";
 import { BlogSection } from "@/components/home/BlogSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { FAQSection } from "@/components/home/FAQSection";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { GiftSection } from "@/components/home/GiftSection";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pb-20 md:pb-0">
+      <main className="pb-16 md:pb-0">
         {/* Hero Section */}
         <HeroSection />
 
@@ -51,7 +50,6 @@ const Index = () => {
         {/* Instagram Feed */}
         <InstagramSection />
       </main>
-      <MobileBottomNav />
       <Footer />
     </div>
   );

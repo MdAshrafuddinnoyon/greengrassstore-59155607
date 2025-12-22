@@ -6,23 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Shield, User, RefreshCw, Pencil, Trash2, Ban, Plus, ShieldX, Key } from "lucide-react";
+import { Loader2, Shield, User, RefreshCw, Pencil, Trash2, Ban, Plus, ShieldX, Key, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ExportButtons } from "./ExportButtons";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface UserWithRole {
   id: string;
@@ -57,6 +47,16 @@ export const UsersManager = () => {
   // Blocked IPs state (stored in site_settings)
   const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
   const [newIP, setNewIP] = useState({ ip: "", reason: "" });
+
+  // Password reset state
+  const [passwordResetUser, setPasswordResetUser] = useState<UserWithRole | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
+
+  // User emails from auth
+  const [userEmails, setUserEmails] = useState<Record<string, string>>({});
 
   const fetchUsers = async () => {
     try {
@@ -106,9 +106,93 @@ export const UsersManager = () => {
     }
   };
 
+  const fetchUserEmails = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await supabase.functions.invoke('admin-user-management', {
+        body: { action: 'list_users' }
+      });
+
+      if (response.data?.users) {
+        const emailMap: Record<string, string> = {};
+        response.data.users.forEach((u: { id: string; email: string }) => {
+          emailMap[u.id] = u.email;
+        });
+        setUserEmails(emailMap);
+      }
+    } catch (error) {
+      console.error("Error fetching user emails:", error);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!passwordResetUser) return;
+    
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const response = await supabase.functions.invoke('admin-user-management', {
+        body: {
+          action: 'update_password',
+          userId: passwordResetUser.user_id,
+          password: newPassword
+        }
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+
+      toast.success("Password updated successfully");
+      setShowPasswordResetDialog(false);
+      setPasswordResetUser(null);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      toast.error(error.message || "Failed to reset password");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleDeleteUserViaAdmin = async (userId: string) => {
+    if (!confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
+
+    try {
+      const response = await supabase.functions.invoke('admin-user-management', {
+        body: {
+          action: 'delete_user',
+          userId: userId
+        }
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+
+      toast.success("User deleted successfully");
+      fetchUsers();
+      fetchUserEmails();
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast.error(error.message || "Failed to delete user");
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchBlockedIPs();
+    fetchUserEmails();
 
     // Real-time subscription for users and roles
     const channel = supabase
@@ -147,7 +231,7 @@ export const UsersManager = () => {
           await supabase.from("user_roles").delete().eq("user_id", userId);
         }
       } else {
-        const roleValue = newRole as "admin" | "moderator" | "user";
+        const roleValue = newRole as "admin" | "moderator" | "store_manager" | "user";
         if (existingRole) {
           await supabase.from("user_roles").update({ role: roleValue }).eq("user_id", userId);
         } else {
@@ -299,184 +383,85 @@ export const UsersManager = () => {
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserFullName, setNewUserFullName] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"admin" | "moderator" | "store_manager">("moderator");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "moderator" | "store_manager">("store_manager");
   const [addingUser, setAddingUser] = useState(false);
-
-  // Password management state
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [userForPasswordChange, setUserForPasswordChange] = useState<UserWithRole | null>(null);
-  const [newPassword, setNewPassword] = useState("");
-  const [passwordLoading, setPasswordLoading] = useState(false);
-
-  // Status update state
-  const [statusUpdateDialogOpen, setStatusUpdateDialogOpen] = useState(false);
-  const [userForStatusUpdate, setUserForStatusUpdate] = useState<UserWithRole | null>(null);
-  const [newStatus, setNewStatus] = useState<string>("");
-  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{email: string, password: string, role: string} | null>(null);
 
   const handleAddUserWithRole = async () => {
     if (!newUserEmail.trim()) {
       toast.error("Please enter an email address");
       return;
     }
-
     if (!newUserPassword.trim() || newUserPassword.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
     }
 
-    if (!newUserFullName.trim()) {
-      toast.error("Please enter full name");
-      return;
-    }
-
     setAddingUser(true);
     try {
-      // Create new user account via Supabase Auth Admin API
+      // Create user via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUserEmail,
+        email: newUserEmail.trim(),
         password: newUserPassword,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
-            full_name: newUserFullName,
-          },
-          emailRedirectTo: `${window.location.origin}/auth`,
-        },
+            full_name: newUserName || newUserEmail.split('@')[0]
+          }
+        }
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create user");
-
-      // Create profile
-      const { error: profileError } = await supabase.from("profiles").insert({
-        user_id: authData.user.id,
-        full_name: newUserFullName,
-        email: newUserEmail,
-      });
-
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw profileError;
-      }
-
-      // Assign role
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: authData.user.id,
-        role: newUserRole,
-      });
-
-      if (roleError) {
-        console.error("Role creation error:", roleError);
-        throw roleError;
-      }
-
-      toast.success(`${newUserRole.replace('_', ' ')} account created successfully!`, {
-        description: `Email: ${newUserEmail}`,
-        duration: 4000
-      });
       
-      // Reset form and close dialog
-      setShowAddUser(false);
-      setNewUserEmail("");
-      setNewUserPassword("");
-      setNewUserFullName("");
-      setNewUserRole("moderator");
-      
-      // Refresh user list
-      await new Promise(resolve => setTimeout(resolve, 500));
-      fetchUsers();
+      if (authData.user) {
+        // Wait a moment for the profile trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Assign role
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert([{ user_id: authData.user.id, role: newUserRole }]);
+
+        if (roleError) {
+          console.error("Role assignment error:", roleError);
+        }
+
+        // Update profile name if provided
+        if (newUserName) {
+          await supabase
+            .from("profiles")
+            .update({ full_name: newUserName })
+            .eq("user_id", authData.user.id);
+        }
+
+        setCreatedCredentials({
+          email: newUserEmail,
+          password: newUserPassword,
+          role: newUserRole
+        });
+
+        toast.success(`${newUserRole} account created successfully!`);
+        fetchUsers();
+      }
     } catch (error: any) {
       console.error("Error creating user:", error);
       if (error.message?.includes("already registered")) {
-        toast.error("This email is already registered");
+        toast.error("This email is already registered. Please assign the role from the user list.");
       } else {
-        toast.error("Failed to create user: " + (error.message || "Unknown error"));
+        toast.error(error.message || "Failed to create user");
       }
     } finally {
       setAddingUser(false);
     }
   };
 
-  const handleChangePassword = async () => {
-    if (!userForPasswordChange) return;
-    if (!newPassword || newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
-    setPasswordLoading(true);
-    try {
-      const { error } = await supabase.auth.admin.updateUserById(
-        userForPasswordChange.user_id,
-        { password: newPassword }
-      );
-
-      if (error) throw error;
-
-      toast.success(`Password updated successfully for ${userForPasswordChange.full_name}`);
-      setPasswordDialogOpen(false);
-      setUserForPasswordChange(null);
-      setNewPassword("");
-      fetchUsers();
-    } catch (error: any) {
-      console.error("Error updating password:", error);
-      toast.error(`Failed to update password: ${error.message || "Unknown error"}`);
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
-
-  const handleStatusUpdate = async () => {
-    if (!userForStatusUpdate) return;
-
-    setStatusUpdating(true);
-    try {
-      // Update role in user_roles table
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userForStatusUpdate.user_id)
-        .maybeSingle();
-
-      if (newStatus === "user") {
-        if (existingRole) {
-          const { error } = await supabase
-            .from("user_roles")
-            .delete()
-            .eq("user_id", userForStatusUpdate.user_id);
-          if (error) throw error;
-        }
-      } else {
-        const roleValue = newStatus as "admin" | "moderator" | "store_manager" | "user";
-        if (existingRole) {
-          const { error } = await supabase
-            .from("user_roles")
-            .update({ role: roleValue })
-            .eq("user_id", userForStatusUpdate.user_id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from("user_roles")
-            .insert({
-              user_id: userForStatusUpdate.user_id,
-              role: roleValue,
-            });
-          if (error) throw error;
-        }
-      }
-
-      toast.success(`User status updated to ${newStatus}`);
-      setStatusUpdateDialogOpen(false);
-      setUserForStatusUpdate(null);
-      setNewStatus("");
-      fetchUsers();
-    } catch (error: any) {
-      console.error("Error updating status:", error);
-      toast.error(`Failed to update status: ${error.message || "Unknown error"}`);
-    } finally {
-      setStatusUpdating(false);
-    }
+  const resetAddUserForm = () => {
+    setNewUserEmail("");
+    setNewUserPassword("");
+    setNewUserName("");
+    setNewUserRole("store_manager");
+    setCreatedCredentials(null);
   };
 
   return (
@@ -491,9 +476,9 @@ export const UsersManager = () => {
             <CardDescription>Manage user accounts, roles, and security settings</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setShowAddUser(true)} className="gap-1">
+            <Button onClick={() => { resetAddUserForm(); setShowAddUser(true); }} className="gap-1">
               <Plus className="w-4 h-4" />
-              Add Admin/Moderator
+              Add Staff Account
             </Button>
             <Button variant="outline" size="sm" onClick={() => { fetchUsers(); fetchBlockedIPs(); }}>
               <RefreshCw className="w-4 h-4 mr-1" />
@@ -515,108 +500,118 @@ export const UsersManager = () => {
       </CardHeader>
       <CardContent>
         {/* Add User Dialog */}
-        <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
+        <Dialog open={showAddUser} onOpenChange={(open) => { if (!open) resetAddUserForm(); setShowAddUser(open); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Create New Staff Account</DialogTitle>
+              <DialogTitle>Add Staff Account</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  value={newUserFullName}
-                  onChange={(e) => setNewUserFullName(e.target.value)}
-                  placeholder="Enter full name"
-                  disabled={addingUser}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="staff@greengrassstore.com"
-                  disabled={addingUser}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  disabled={addingUser}
-                />
-                <p className="text-xs text-muted-foreground">User can change this later from their account</p>
-              </div>
-              <div className="space-y-2">
-                <Label>Select Role *</Label>
-                <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "moderator" | "store_manager")} disabled={addingUser}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin (Full Access)</SelectItem>
-                    <SelectItem value="store_manager">Store Manager (Product & Order Management)</SelectItem>
-                    <SelectItem value="moderator">Moderator (Limited Access)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Role Permissions</Label>
-                <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
-                  {newUserRole === "admin" ? (
-                    <ul className="space-y-0.5 text-muted-foreground">
-                      <li>✓ Full access to all admin features</li>
-                      <li>✓ Manage products, orders, users</li>
-                      <li>✓ Site settings and configuration</li>
-                      <li>✓ Create/remove staff accounts</li>
-                    </ul>
-                  ) : newUserRole === "store_manager" ? (
-                    <ul className="space-y-0.5 text-muted-foreground">
-                      <li>✓ Manage products and inventory</li>
-                      <li>✓ Process and manage orders</li>
-                      <li>✓ View customer information</li>
-                      <li>✓ Manage blog and content</li>
-                      <li>✗ Cannot change site settings</li>
-                      <li>✗ Cannot manage users</li>
-                    </ul>
-                  ) : (
-                    <ul className="space-y-0.5 text-muted-foreground">
-                      <li>✓ View and update orders</li>
-                      <li>✓ Manage blog posts</li>
-                      <li>✓ View customer information</li>
-                      <li>✗ Cannot manage products</li>
-                      <li>✗ Cannot change settings</li>
-                      <li>✗ Cannot manage users</li>
-                    </ul>
-                  )}
+            
+            {createdCredentials ? (
+              <div className="space-y-4 py-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800 font-medium mb-2">✓ Account Created Successfully!</p>
+                  <p className="text-xs text-green-700">Share these credentials securely with the staff member:</p>
+                </div>
+                <div className="space-y-3 p-4 bg-muted rounded-lg">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <p className="font-mono text-sm">{createdCredentials.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Password</Label>
+                    <p className="font-mono text-sm">{createdCredentials.password}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Role</Label>
+                    <Badge className={getRoleBadgeColor(createdCredentials.role)}>{createdCredentials.role}</Badge>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={() => { resetAddUserForm(); setShowAddUser(false); }}>Done</Button>
                 </div>
               </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAddUser(false)} disabled={addingUser}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddUserWithRole} disabled={addingUser}>
-                {addingUser ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
+            ) : (
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input
+                    placeholder="Staff member name"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Address *</Label>
+                  <Input
+                    type="email"
+                    placeholder="staff@example.com"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password *</Label>
+                  <Input
+                    type="text"
+                    placeholder="Minimum 6 characters"
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Staff member will use this to login</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Select Role *</Label>
+                  <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "moderator" | "store_manager")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin (Full Access)</SelectItem>
+                      <SelectItem value="store_manager">Store Manager (Products & Orders)</SelectItem>
+                      <SelectItem value="moderator">Moderator (Content Only)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Role Permissions</Label>
+                  <div className="p-3 bg-muted rounded-lg text-sm space-y-2">
+                    {newUserRole === "admin" ? (
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>✓ Full access to all admin features</li>
+                        <li>✓ Manage products, orders, users</li>
+                        <li>✓ Site settings and configuration</li>
+                        <li>✓ Create/remove other staff</li>
+                      </ul>
+                    ) : newUserRole === "store_manager" ? (
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>✓ Manage products and inventory</li>
+                        <li>✓ View and manage orders</li>
+                        <li>✓ View customer information</li>
+                        <li>✓ Manage categories</li>
+                        <li>✗ Cannot change site settings</li>
+                        <li>✗ Cannot manage other users</li>
+                      </ul>
+                    ) : (
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>✓ Manage blog posts</li>
+                        <li>✓ View orders (read-only)</li>
+                        <li>✓ View customer information</li>
+                        <li>✗ Cannot manage products</li>
+                        <li>✗ Cannot change site settings</li>
+                        <li>✗ Cannot manage other users</li>
+                      </ul>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => { resetAddUserForm(); setShowAddUser(false); }}>Cancel</Button>
+                  <Button onClick={handleAddUserWithRole} disabled={addingUser}>
+                    {addingUser ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Create Account
-                  </>
-                )}
-              </Button>
-            </div>
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -671,32 +666,40 @@ export const UsersManager = () => {
                             <span className="font-medium">{user.full_name || "Unknown User"}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{user.email || "-"}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {userEmails[user.user_id] || "-"}
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{user.phone || "-"}</TableCell>
                         <TableCell className="text-muted-foreground">{user.city || "-"}</TableCell>
                         <TableCell className="text-muted-foreground">{formatDate(user.created_at)}</TableCell>
                         <TableCell>
-                          <Select value={user.role || "user"} onValueChange={(v) => updateUserRole(user.user_id, v)}>
-                            <SelectTrigger className="w-[110px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="admin">Admin</SelectItem>
-                              <SelectItem value="store_manager">Store Manager</SelectItem>
-                              <SelectItem value="moderator">Moderator</SelectItem>
-                              <SelectItem value="user">User</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Badge className={getRoleBadgeColor(user.role || "user")}>{user.role || "user"}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
+                            <Select
+                              value={user.role || "user"}
+                              onValueChange={(value) => updateUserRole(user.user_id, value)}
+                            >
+                              <SelectTrigger className="w-28 h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="moderator">Moderator</SelectItem>
+                                <SelectItem value="store_manager">Store Manager</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <Button
                               variant="ghost"
                               size="icon"
                               title="Reset Password"
                               onClick={() => {
-                                setUserForPasswordChange(user);
-                                setPasswordDialogOpen(true);
+                                setPasswordResetUser(user);
+                                setNewPassword("");
+                                setConfirmPassword("");
+                                setShowPasswordResetDialog(true);
                               }}
                             >
                               <Key className="w-4 h-4" />
@@ -704,6 +707,7 @@ export const UsersManager = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              title="Edit Profile"
                               onClick={() => {
                                 setEditingUser(user);
                                 setIsDialogOpen(true);
@@ -715,7 +719,8 @@ export const UsersManager = () => {
                               variant="ghost"
                               size="icon"
                               className="text-destructive"
-                              onClick={() => deleteUser(user.user_id)}
+                              title="Delete User"
+                              onClick={() => handleDeleteUserViaAdmin(user.user_id)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -868,116 +873,60 @@ export const UsersManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Change Password Dialog */}
-      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-        <DialogContent className="max-w-md">
+      {/* Password Reset Dialog */}
+      <Dialog open={showPasswordResetDialog} onOpenChange={setShowPasswordResetDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Reset Password
+            </DialogTitle>
+            <DialogDescription>
+              Set a new password for {passwordResetUser?.full_name || 'this user'}
+              {userEmails[passwordResetUser?.user_id || ''] && (
+                <span className="block text-sm mt-1">
+                  Email: {userEmails[passwordResetUser?.user_id || '']}
+                </span>
+              )}
+            </DialogDescription>
           </DialogHeader>
-          {userForPasswordChange && (
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Set a new password for <strong>{userForPasswordChange.full_name}</strong><br />
-                Email: {userForPasswordChange.email}
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password *</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  disabled={passwordLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  disabled={passwordLoading}
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setPasswordDialogOpen(false)} disabled={passwordLoading}>
-                  Cancel
-                </Button>
-                <Button onClick={handleChangePassword} disabled={passwordLoading || !newPassword.trim()}>
-                  {passwordLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Reset Password
-                </Button>
-              </div>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Minimum 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Update Status Dialog */}
-      <Dialog open={statusUpdateDialogOpen} onOpenChange={setStatusUpdateDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Update User Status</DialogTitle>
-          </DialogHeader>
-          {userForStatusUpdate && (
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Change role for <strong>{userForStatusUpdate.full_name}</strong>
-              </p>
-              <div className="space-y-2">
-                <Label>Select New Status *</Label>
-                <Select value={newStatus} onValueChange={setNewStatus} disabled={statusUpdating}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User (No Admin Access)</SelectItem>
-                    <SelectItem value="moderator">Moderator (Limited Access)</SelectItem>
-                    <SelectItem value="store_manager">Store Manager (Product & Order Management)</SelectItem>
-                    <SelectItem value="admin">Admin (Full Access)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
-                <p className="font-medium">Role Permissions:</p>
-                {newStatus === "admin" ? (
-                  <ul className="space-y-0.5 text-muted-foreground">
-                    <li>✓ Full access to all admin features</li>
-                    <li>✓ Manage products, orders, users</li>
-                    <li>✓ Site settings and configuration</li>
-                  </ul>
-                ) : newStatus === "store_manager" ? (
-                  <ul className="space-y-0.5 text-muted-foreground">
-                    <li>✓ Manage products and inventory</li>
-                    <li>✓ Process and manage orders</li>
-                    <li>✓ View customer information</li>
-                  </ul>
-                ) : newStatus === "moderator" ? (
-                  <ul className="space-y-0.5 text-muted-foreground">
-                    <li>✓ View and update orders</li>
-                    <li>✓ Manage blog posts</li>
-                    <li>✓ Limited dashboard access</li>
-                  </ul>
-                ) : (
-                  <ul className="space-y-0.5 text-muted-foreground">
-                    <li>✗ No admin access</li>
-                  </ul>
-                )}
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setStatusUpdateDialogOpen(false)} disabled={statusUpdating}>
-                  Cancel
-                </Button>
-                <Button onClick={handleStatusUpdate} disabled={statusUpdating || newStatus === userForStatusUpdate.role}>
-                  {statusUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Update Status
-                </Button>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
             </div>
-          )}
+            {newPassword && confirmPassword && newPassword !== confirmPassword && (
+              <p className="text-sm text-destructive">Passwords do not match</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordResetDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePasswordReset} 
+              disabled={resetLoading || !newPassword || newPassword !== confirmPassword}
+            >
+              {resetLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Reset Password
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>

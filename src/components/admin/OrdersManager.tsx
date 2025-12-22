@@ -65,8 +65,6 @@ export const OrdersManager = () => {
     tax: 0,
     payment_method: "cash",
     notes: "",
-    water_type: "",
-    bulb_type: ""
   });
 
   // Pagination
@@ -679,7 +677,6 @@ export const OrdersManager = () => {
                   </div>
                 </div>
 
-
                 <div className="space-y-2">
                   <Label>Order Items</Label>
                   {newOrder.items.map((item, index) => (
@@ -730,35 +727,6 @@ export const OrdersManager = () => {
                   >
                     Add Item
                   </Button>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Water Type</Label>
-                    <select
-                      className="w-full border rounded px-2 py-2 text-sm"
-                      value={newOrder.water_type}
-                      onChange={e => setNewOrder(prev => ({ ...prev, water_type: e.target.value }))}
-                    >
-                      <option value="">Select Water Type</option>
-                      <option value="RO">RO</option>
-                      <option value="Mineral">Mineral</option>
-                      <option value="Distilled">Distilled</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Bulb Type</Label>
-                    <select
-                      className="w-full border rounded px-2 py-2 text-sm"
-                      value={newOrder.bulb_type}
-                      onChange={e => setNewOrder(prev => ({ ...prev, bulb_type: e.target.value }))}
-                    >
-                      <option value="">Select Bulb Type</option>
-                      <option value="LED">LED</option>
-                      <option value="CFL">CFL</option>
-                      <option value="Halogen">Halogen</option>
-                    </select>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">

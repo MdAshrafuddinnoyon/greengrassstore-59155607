@@ -45,29 +45,26 @@ export const APISettingsManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const defaultGoogleSettings: GoogleSettings = {
+  const [googleSettings, setGoogleSettings] = useState<GoogleSettings>({
     enabled: false,
     analyticsId: "",
     recaptchaSiteKey: "",
     mapsApiKey: ""
-  };
-  const [googleSettings, setGoogleSettings] = useState<GoogleSettings>(defaultGoogleSettings);
+  });
 
-  const defaultSecuritySettings: SecuritySettings = {
+  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
     recaptchaEnabled: false,
     adminUrlPath: "admin",
     maintenanceMode: false
-  };
-  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>(defaultSecuritySettings);
+  });
 
-  const defaultIntegrationSettings: IntegrationSettings = {
+  const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>({
     mailchimpApiKey: "",
     sendgridApiKey: "",
     cloudinaryCloudName: ""
-  };
-  const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>(defaultIntegrationSettings);
+  });
 
-  const defaultAISettings: AISettings = {
+  const [aiSettings, setAiSettings] = useState<AISettings>({
     enabled: true,
     provider: 'lovable',
     openaiApiKey: "",
@@ -76,8 +73,7 @@ export const APISettingsManager = () => {
     enableBlogGeneration: true,
     enableProductGeneration: true,
     enableImageGeneration: true
-  };
-  const [aiSettings, setAiSettings] = useState<AISettings>(defaultAISettings);
+  });
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -91,13 +87,13 @@ export const APISettingsManager = () => {
       data?.forEach((setting) => {
         const value = setting.setting_value as Record<string, unknown>;
         if (setting.setting_key === 'google_settings') {
-          setGoogleSettings({ ...defaultGoogleSettings, ...value });
+          setGoogleSettings(value as unknown as GoogleSettings);
         } else if (setting.setting_key === 'security_settings') {
-          setSecuritySettings({ ...defaultSecuritySettings, ...value });
+          setSecuritySettings(value as unknown as SecuritySettings);
         } else if (setting.setting_key === 'integration_settings') {
-          setIntegrationSettings({ ...defaultIntegrationSettings, ...value });
+          setIntegrationSettings(value as unknown as IntegrationSettings);
         } else if (setting.setting_key === 'ai_settings') {
-          setAiSettings({ ...defaultAISettings, ...value });
+          setAiSettings(value as unknown as AISettings);
         }
       });
     } catch (error) {

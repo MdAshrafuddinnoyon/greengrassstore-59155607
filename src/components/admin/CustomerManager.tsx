@@ -10,11 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useRolePermissions } from "@/hooks/useRolePermissions";
-import { triggerCustomerSync } from "@/lib/migrations/syncOrderCustomers";
 import { 
   Loader2, Users, Search, Eye, Phone, MapPin, Calendar, ShoppingBag, 
-  Trash2, UserPlus, Download, Upload, FileSpreadsheet, RefreshCw, Crown, Key, Pencil
+  Trash2, UserPlus, Download, Upload, FileSpreadsheet, RefreshCw, Crown
 } from "lucide-react";
 import { ExportButtons } from "./ExportButtons";
 import {
@@ -65,17 +63,12 @@ interface VIPTier {
 }
 
 export const CustomerManager = () => {
-  const { permissions, loading: permLoading, hasPermission } = useRolePermissions();
-  const canViewCustomers = permissions.canViewCustomers;
-  const canManageCustomers = permissions.canEditCustomers;
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [autoSynced, setAutoSynced] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [permissionGranted, setPermissionGranted] = useState(canViewCustomers);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -89,31 +82,16 @@ export const CustomerManager = () => {
   const [addLoading, setAddLoading] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
     full_name: "",
-    email: "",
     phone: "",
     address: "",
     city: "",
     country: ""
   });
-  const [generatePassword, setGeneratePassword] = useState(true);
-  const [manualPassword, setManualPassword] = useState("");
   
   // Delete confirmation
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // Password Reset
-  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
-  const [customerForReset, setCustomerForReset] = useState<Customer | null>(null);
-  const [resetLoading, setResetLoading] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [passwordChangeType, setPasswordChangeType] = useState<'link' | 'direct'>('link');
-
-  // Edit Customer
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [customerForEdit, setCustomerForEdit] = useState<Customer | null>(null);
-  const [editLoading, setEditLoading] = useState(false);
 
   // CSV Import
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -123,12 +101,10 @@ export const CustomerManager = () => {
   const [vipDialogOpen, setVipDialogOpen] = useState(false);
   const [customerForVip, setCustomerForVip] = useState<Customer | null>(null);
   const [selectedTier, setSelectedTier] = useState<string>("");
-  const [syncLoading, setSyncLoading] = useState(false);
 
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles (includes email column)
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -136,7 +112,6 @@ export const CustomerManager = () => {
 
       if (profilesError) throw profilesError;
 
-      // Fetch orders for spend and count
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('user_id, total');
@@ -157,7 +132,6 @@ export const CustomerManager = () => {
 
       if (tiersData) setVipTiers(tiersData);
 
-      // Build stats map from orders
       const statsMap = new Map<string, { count: number; total: number }>();
       orders?.forEach(order => {
         if (order.user_id) {
@@ -169,36 +143,28 @@ export const CustomerManager = () => {
         }
       });
 
-      // Build VIP map
       const vipMap = new Map<string, { tier_id: string | null; is_active: boolean }>();
       vipMembers?.forEach(member => {
         vipMap.set(member.user_id, { tier_id: member.tier_id, is_active: member.is_active });
       });
 
-      // Merge everything together
       const customersWithStats = profiles?.map(profile => {
         const vipInfo = vipMap.get(profile.user_id);
         const tierInfo = vipInfo?.tier_id ? tiersData?.find(t => t.id === vipInfo.tier_id) : null;
         return {
           ...profile,
-          email: profile.email || '',
+          email: '',
           orders_count: statsMap.get(profile.user_id)?.count || 0,
           total_spent: statsMap.get(profile.user_id)?.total || 0,
           is_vip: vipInfo?.is_active || false,
-          vip_tier: tierInfo?.name || null,
+          vip_tier: tierInfo?.name || null
         };
       }) || [];
 
       setCustomers(customersWithStats);
-
-      // If no customers are present, attempt a one-time auto-sync from orders
-      if (customersWithStats.length === 0 && !autoSynced) {
-        setAutoSynced(true);
-        await handleSyncCustomersFromOrders();
-      }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching customers:', error);
-      toast.error(`Failed to load customers: ${error.message || 'Unknown error'}`);
+      toast.error('Failed to load customers');
     } finally {
       setLoading(false);
     }
@@ -221,25 +187,6 @@ export const CustomerManager = () => {
       setOrdersLoading(false);
     }
   };
-
-  const handleSyncCustomersFromOrders = async () => {
-    setSyncLoading(true);
-    try {
-      const result = await triggerCustomerSync();
-      if (result.success) {
-        // Refresh customers list
-        await fetchCustomers();
-      }
-    } finally {
-      setSyncLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // Update permission state when permissions change
-    setPermissionGranted(canViewCustomers);
-    console.log('✅ Customer permission updated:', canViewCustomers);
-  }, [canViewCustomers]);
 
   useEffect(() => {
     fetchCustomers();
@@ -291,63 +238,31 @@ export const CustomerManager = () => {
       toast.error("Customer name is required");
       return;
     }
-    if (!newCustomer.email.trim()) {
-      toast.error("Customer email is required");
-      return;
-    }
-    const password = generatePassword ? Math.random().toString(36).slice(-10) : manualPassword;
-    if (!password || password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
 
     setAddLoading(true);
     try {
-      // Create auth user via Admin API
-      const { data: created, error: createErr } = await supabase.auth.admin.createUser({
-        email: newCustomer.email.trim(),
-        password,
-        email_confirm: true
-      });
-      if (createErr) throw createErr;
-      const userId = created.user?.id;
-      if (!userId) throw new Error('Failed to obtain new user id');
-
-      // Insert profile row
-      const { error: profileErr } = await supabase
+      const tempUserId = crypto.randomUUID();
+      
+      const { error } = await supabase
         .from('profiles')
         .insert({
-          user_id: userId,
+          user_id: tempUserId,
           full_name: newCustomer.full_name,
-          email: newCustomer.email.trim(),
           phone: newCustomer.phone || null,
           address: newCustomer.address || null,
           city: newCustomer.city || null,
-          country: newCustomer.country || null,
-          role: 'customer'
+          country: newCustomer.country || null
         });
-      if (profileErr) throw profileErr;
 
-      // Ensure user_roles includes customer
-      await supabase
-        .from('user_roles')
-        .upsert({ user_id: userId, role: 'customer' }, { onConflict: 'user_id' });
-
-      // Copy password to clipboard for the admin to share
-      try {
-        await navigator.clipboard.writeText(password);
-        toast.success('Password copied to clipboard');
-      } catch {}
+      if (error) throw error;
 
       toast.success("Customer added successfully");
       setIsAddDialogOpen(false);
-      setNewCustomer({ full_name: "", email: "", phone: "", address: "", city: "", country: "" });
-      setManualPassword("");
-      setGeneratePassword(true);
+      setNewCustomer({ full_name: "", phone: "", address: "", city: "", country: "" });
       fetchCustomers();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding customer:', error);
-      toast.error(error?.message || "Failed to add customer");
+      toast.error("Failed to add customer");
     } finally {
       setAddLoading(false);
     }
@@ -389,103 +304,6 @@ export const CustomerManager = () => {
       fetchCustomers();
     } catch (error) {
       toast.error('Failed to delete customers');
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!customerForReset?.email) return;
-
-    setResetLoading(true);
-    try {
-      if (passwordChangeType === 'direct') {
-        // Direct password change
-        if (!newPassword || newPassword.length < 6) {
-          toast.error('Password must be at least 6 characters');
-          setResetLoading(false);
-          return;
-        }
-
-        const { error } = await supabase.auth.admin.updateUserById(
-          customerForReset.user_id,
-          { password: newPassword }
-        );
-
-        if (error) throw error;
-        toast.success(`Password updated successfully for ${customerForReset.email}`);
-      } else {
-        // Send reset link
-        const { data, error } = await supabase.auth.admin.generateLink({
-          type: 'recovery',
-          email: customerForReset.email,
-          options: {
-            redirectTo: `${window.location.origin}/auth?type=reset_password`
-          }
-        });
-
-        if (error) throw error;
-
-        const resetLink = data?.properties?.action_link;
-        if (resetLink) {
-          await navigator.clipboard.writeText(resetLink);
-          toast.success(`Password reset link copied to clipboard for ${customerForReset.email}`);
-        } else {
-          toast.success(`Password reset email sent to ${customerForReset.email}`);
-        }
-      }
-
-      setResetPasswordDialogOpen(false);
-      setCustomerForReset(null);
-      setNewPassword('');
-      setPasswordChangeType('link');
-    } catch (error: any) {
-      console.error('Error resetting password:', error);
-      toast.error(error?.message || 'Failed to reset password');
-    } finally {
-      setResetLoading(false);
-    }
-  };
-
-  const handleEditCustomer = async () => {
-    if (!customerForEdit) return;
-    if (!customerForEdit.full_name?.trim()) {
-      toast.error('Customer name is required');
-      return;
-    }
-
-    setEditLoading(true);
-    try {
-      // Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: customerForEdit.full_name,
-          phone: customerForEdit.phone || null,
-          address: customerForEdit.address || null,
-          city: customerForEdit.city || null,
-          country: customerForEdit.country || null,
-        })
-        .eq('user_id', customerForEdit.user_id);
-
-      if (profileError) throw profileError;
-
-      // Update email if changed
-      if (customerForEdit.email && customerForEdit.email !== customers.find(c => c.user_id === customerForEdit.user_id)?.email) {
-        const { error: emailError } = await supabase.auth.admin.updateUserById(
-          customerForEdit.user_id,
-          { email: customerForEdit.email }
-        );
-        if (emailError) throw emailError;
-      }
-
-      toast.success('Customer updated successfully');
-      setEditDialogOpen(false);
-      setCustomerForEdit(null);
-      fetchCustomers();
-    } catch (error: any) {
-      console.error('Error updating customer:', error);
-      toast.error(error?.message || 'Failed to update customer');
-    } finally {
-      setEditLoading(false);
     }
   };
 
@@ -651,20 +469,6 @@ export const CustomerManager = () => {
     );
   }
 
-  if (!permissionGranted) {
-    return (
-      <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <div className="text-center py-8">
-            <Users className="w-12 h-12 mx-auto text-destructive mb-3 opacity-50" />
-            <h3 className="font-semibold mb-1">Access Denied</h3>
-            <p className="text-sm text-muted-foreground">You don't have permission to view customer information.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <Card>
@@ -680,42 +484,28 @@ export const CustomerManager = () => {
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSyncCustomersFromOrders}
-                disabled={syncLoading}
-                title="Sync customers from existing orders"
-              >
-                <RefreshCw className="w-4 h-4 mr-1" />
-                {syncLoading ? 'Syncing...' : 'Sync Orders'}
-              </Button>
               <Button variant="outline" size="sm" onClick={fetchCustomers}>
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Refresh
               </Button>
-              {canManageCustomers && (
-                <>
-                  <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    Add Customer
+              <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                <UserPlus className="w-4 h-4 mr-1" />
+                Add Customer
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Upload className="w-4 h-4 mr-1" />
+                    Import
                   </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Upload className="w-4 h-4 mr-1" />
-                        Import
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
-                        <FileSpreadsheet className="w-4 h-4 mr-2" />
-                        Import from CSV
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Import from CSV
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <ExportButtons 
                 data={getExportData()} 
                 filename="customers" 
@@ -752,7 +542,7 @@ export const CustomerManager = () => {
           </div>
 
           {/* Bulk Actions */}
-          {selectedIds.length > 0 && canManageCustomers && (
+          {selectedIds.length > 0 && (
             <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg mb-4">
               <span className="text-sm font-medium">{selectedIds.length} selected</span>
               <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
@@ -769,14 +559,12 @@ export const CustomerManager = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  {canManageCustomers && (
-                    <TableHead className="w-12">
-                      <Checkbox 
-                        checked={selectedIds.length === paginatedCustomers.length && paginatedCustomers.length > 0}
-                        onCheckedChange={toggleSelectAll}
-                      />
-                    </TableHead>
-                  )}
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedIds.length === paginatedCustomers.length && paginatedCustomers.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>VIP Status</TableHead>
@@ -789,7 +577,7 @@ export const CustomerManager = () => {
               <TableBody>
                 {paginatedCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={canManageCustomers ? 8 : 7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <Users className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-muted-foreground">No customers found</p>
                     </TableCell>
@@ -797,14 +585,12 @@ export const CustomerManager = () => {
                 ) : (
                   paginatedCustomers.map((customer) => (
                     <TableRow key={customer.id}>
-                      {canManageCustomers && (
-                        <TableCell>
-                          <Checkbox 
-                            checked={selectedIds.includes(customer.id)}
-                            onCheckedChange={() => toggleSelectOne(customer.id)}
-                          />
-                        </TableCell>
-                      )}
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedIds.includes(customer.id)}
+                          onCheckedChange={() => toggleSelectOne(customer.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="font-medium">{customer.full_name || 'No name'}</div>
                         <div className="text-xs text-muted-foreground">{customer.phone || '-'}</div>
@@ -858,40 +644,9 @@ export const CustomerManager = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewCustomer(customer)}
-                            title="View details"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          {canManageCustomers && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-green-600 hover:text-green-700"
-                                onClick={() => {
-                                  setCustomerForEdit(customer);
-                                  setEditDialogOpen(true);
-                                }}
-                                title="Edit customer"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-blue-600 hover:text-blue-700"
-                                onClick={() => {
-                                  setCustomerForReset(customer);
-                                  setPasswordChangeType('link');
-                                  setNewPassword('');
-                                  setResetPasswordDialogOpen(true);
-                                }}
-                                title="Reset password"
-                              >
-                                <Key className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
                           {customer.is_vip && (
                             <Button
                               variant="ghost"
@@ -903,19 +658,17 @@ export const CustomerManager = () => {
                               <Crown className="w-4 h-4" />
                             </Button>
                           )}
-                          {canManageCustomers && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => {
-                                setCustomerToDelete(customer);
-                                setDeleteConfirmOpen(true);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              setCustomerToDelete(customer);
+                              setDeleteConfirmOpen(true);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -976,8 +729,7 @@ export const CustomerManager = () => {
       </Card>
 
       {/* Add Customer Dialog */}
-      {canManageCustomers && (
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -986,33 +738,6 @@ export const CustomerManager = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="customer-email">Email *</Label>
-              <Input
-                id="customer-email"
-                value={newCustomer.email}
-                onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="customer@example.com"
-                type="email"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="customer-password">Password</Label>
-                <div className="flex items-center gap-2">
-                  <Checkbox id="gen-pass" checked={generatePassword} onCheckedChange={(v) => setGeneratePassword(Boolean(v))} />
-                  <span className="text-xs text-muted-foreground">Generate automatically</span>
-                </div>
-              </div>
-              <Input
-                id="customer-password"
-                value={manualPassword}
-                onChange={(e) => setManualPassword(e.target.value)}
-                placeholder={generatePassword ? "Will be auto-generated" : "Enter password (min 6 chars)"}
-                disabled={generatePassword}
-                type="text"
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="customer-name">Full Name *</Label>
               <Input
@@ -1072,7 +797,6 @@ export const CustomerManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      )}
 
       {/* View Customer Dialog */}
       <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
@@ -1145,8 +869,7 @@ export const CustomerManager = () => {
       </Dialog>
 
       {/* Delete Confirmation */}
-      {canManageCustomers && (
-        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Customer</AlertDialogTitle>
@@ -1167,167 +890,9 @@ export const CustomerManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      )}
-
-      {/* Password Reset Dialog */}
-      {canManageCustomers && (
-        <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              Reset Password for {customerForReset?.full_name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Choose Method</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={passwordChangeType === 'link' ? 'default' : 'outline'}
-                  onClick={() => setPasswordChangeType('link')}
-                  className="w-full"
-                >
-                  Send Link
-                </Button>
-                <Button
-                  variant={passwordChangeType === 'direct' ? 'default' : 'outline'}
-                  onClick={() => setPasswordChangeType('direct')}
-                  className="w-full"
-                >
-                  Direct Change
-                </Button>
-              </div>
-            </div>
-
-            {passwordChangeType === 'link' ? (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  A password reset link will be sent to <strong>{customerForReset?.email}</strong>. 
-                  The link will also be copied to your clipboard.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password *</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password (min 6 characters)"
-                />
-                <p className="text-xs text-muted-foreground">
-                  The customer will be able to login immediately with this new password.
-                </p>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleResetPassword}
-              disabled={resetLoading}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {resetLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {passwordChangeType === 'link' ? 'Send Reset Link' : 'Change Password'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      )}
-
-      {/* Edit Customer Dialog */}
-      {canManageCustomers && (
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-5 h-5" />
-              Edit Customer
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Full Name *</Label>
-              <Input
-                id="edit-name"
-                value={customerForEdit?.full_name || ''}
-                onChange={(e) => setCustomerForEdit(prev => prev ? { ...prev, full_name: e.target.value } : null)}
-                placeholder="Enter customer name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email Address</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={customerForEdit?.email || ''}
-                onChange={(e) => setCustomerForEdit(prev => prev ? { ...prev, email: e.target.value } : null)}
-                placeholder="customer@example.com"
-              />
-              <p className="text-xs text-amber-600">
-                Changing email will require customer to verify the new address.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-phone">Phone</Label>
-              <Input
-                id="edit-phone"
-                value={customerForEdit?.phone || ''}
-                onChange={(e) => setCustomerForEdit(prev => prev ? { ...prev, phone: e.target.value } : null)}
-                placeholder="+971 XX XXX XXXX"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-address">Address</Label>
-              <Input
-                id="edit-address"
-                value={customerForEdit?.address || ''}
-                onChange={(e) => setCustomerForEdit(prev => prev ? { ...prev, address: e.target.value } : null)}
-                placeholder="Full address"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-city">City</Label>
-                <Input
-                  id="edit-city"
-                  value={customerForEdit?.city || ''}
-                  onChange={(e) => setCustomerForEdit(prev => prev ? { ...prev, city: e.target.value } : null)}
-                  placeholder="Dubai"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-country">Country</Label>
-                <Input
-                  id="edit-country"
-                  value={customerForEdit?.country || ''}
-                  onChange={(e) => setCustomerForEdit(prev => prev ? { ...prev, country: e.target.value } : null)}
-                  placeholder="UAE"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleEditCustomer} disabled={editLoading}>
-              {editLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      )}
 
       {/* Import Dialog */}
-      {canManageCustomers && (
-        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Import Customers from CSV</DialogTitle>
@@ -1344,7 +909,6 @@ export const CustomerManager = () => {
           </div>
         </DialogContent>
       </Dialog>
-      )}
 
       {/* VIP Assignment Dialog */}
       <Dialog open={vipDialogOpen} onOpenChange={setVipDialogOpen}>

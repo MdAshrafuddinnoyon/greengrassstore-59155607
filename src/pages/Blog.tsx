@@ -1,4 +1,3 @@
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, User, Clock, Loader2, Search, TrendingUp } from "lucide-react";
@@ -322,7 +321,6 @@ export default function Blog() {
         </div>
       </main>
 
-      <MobileBottomNav />
       <Footer />
     </div>
   );

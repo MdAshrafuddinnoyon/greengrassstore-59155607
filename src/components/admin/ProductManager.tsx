@@ -54,7 +54,6 @@ interface Product {
   currency: string;
   category: string;
   subcategory?: string;
-  additional_categories?: { category: string; subcategory?: string }[];
   featured_image?: string;
   images?: string[];
   is_featured: boolean;
@@ -100,55 +99,15 @@ export const ProductManager = () => {
 
   // Bulk Selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkCategory, setBulkCategory] = useState<string>("");
+  const [bulkSubcategory, setBulkSubcategory] = useState<string>("");
 
   const fetchCategories = async () => {
     const { data } = await supabase.from('categories').select('*').eq('is_active', true).order('display_order');
     setCategories(data || []);
-    const [bulkCategory, setBulkCategory] = useState<string>("");
-
-    // Bulk assign selected products to a category
-    const handleBulkAssignCategory = async () => {
-      if (selectedIds.length === 0 || !bulkCategory) return;
-      try {
-        const { error } = await supabase
-          .from('products')
-          .update({ category: bulkCategory, category_slug: bulkCategory })
-          .in('id', selectedIds);
-        if (error) throw error;
-        toast.success(`${selectedIds.length} products assigned to category`);
-        setSelectedIds([]);
-        setBulkCategory("");
-        fetchProducts();
-      } catch (error) {
-        toast.error('Failed to assign category');
-      }
-    };
   };
 
   const fetchProducts = async () => {
-        {/* Bulk Category Assignment Bar */}
-        {selectedIds.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mb-4 p-3 bg-muted/50 border border-muted rounded-lg">
-            <span className="font-medium">Bulk Actions:</span>
-            <Select value={bulkCategory} onValueChange={setBulkCategory}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(cat => (
-                  <SelectItem key={cat.slug} value={cat.slug}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="default"
-              onClick={handleBulkAssignCategory}
-              disabled={!bulkCategory}
-            >
-              Assign to Category
-            </Button>
-          </div>
-        )}
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -164,26 +123,13 @@ export const ProductManager = () => {
           product_type: (product.product_type || 'simple') as 'simple' | 'variable',
         };
         
-        // Load variants
         if (typedProduct.product_type === 'variable') {
           const { data: variants } = await supabase
             .from('product_variants')
             .select('*')
             .eq('product_id', product.id);
-          typedProduct.variants = variants || [];
+          return { ...typedProduct, variants: variants || [] };
         }
-        
-        // Load additional categories
-        const { data: categories } = await supabase
-          .from('product_categories')
-          .select('*')
-          .eq('product_id', product.id)
-          .order('display_order');
-        typedProduct.additional_categories = categories?.map(c => ({
-          category: c.category,
-          subcategory: c.subcategory
-        })) || [];
-        
         return typedProduct;
       }));
       
@@ -313,31 +259,6 @@ export const ProductManager = () => {
         }
       }
 
-      // Save additional categories
-      if (productId && (editingProduct.additional_categories || []).length > 0) {
-        // Delete existing additional categories
-        await supabase.from('product_categories').delete().eq('product_id', productId);
-        
-        // Insert new additional categories
-        const categoriesToInsert = editingProduct.additional_categories?.map((cat, idx) => ({
-          product_id: productId,
-          category: cat.category,
-          subcategory: cat.subcategory || null,
-          display_order: idx,
-        })) || [];
-        
-        if (categoriesToInsert.length > 0) {
-          const { error: catError } = await supabase
-            .from('product_categories')
-            .insert(categoriesToInsert);
-          
-          if (catError) {
-            console.warn('Failed to save additional categories:', catError);
-            // Don't throw - product was saved successfully
-          }
-        }
-      }
-
       toast.success('Product saved successfully');
       setIsDialogOpen(false);
       setEditingProduct(null);
@@ -410,6 +331,51 @@ export const ProductManager = () => {
     } catch (error) {
       toast.error('Failed to update products');
     }
+  };
+
+  const handleBulkCategoryAssign = async () => {
+    if (selectedIds.length === 0) {
+      toast.error('No products selected');
+      return;
+    }
+    if (!bulkCategory) {
+      toast.error('Please select a category');
+      return;
+    }
+    
+    try {
+      const updateData: { category: string; subcategory?: string } = { 
+        category: bulkCategory 
+      };
+      
+      if (bulkSubcategory) {
+        updateData.subcategory = bulkSubcategory;
+      }
+      
+      const { error } = await supabase
+        .from('products')
+        .update(updateData)
+        .in('id', selectedIds);
+      
+      if (error) throw error;
+      
+      const categoryName = categories.find(c => c.slug === bulkCategory)?.name || bulkCategory;
+      toast.success(`${selectedIds.length} products moved to "${categoryName}"`);
+      setSelectedIds([]);
+      setBulkCategory("");
+      setBulkSubcategory("");
+      fetchProducts();
+    } catch (error) {
+      console.error('Bulk category error:', error);
+      toast.error('Failed to update product categories');
+    }
+  };
+
+  // Get subcategories for selected parent category
+  const getSubcategories = (parentSlug: string) => {
+    const parent = categories.find(c => c.slug === parentSlug);
+    if (!parent) return [];
+    return categories.filter(c => c.parent_id === parent.id);
   };
 
   const handleDuplicate = (product: Product) => {
@@ -518,27 +484,6 @@ export const ProductManager = () => {
     setEditingProduct({
       ...editingProduct,
       variants: editingProduct.variants.filter((_, i) => i !== index),
-    });
-  };
-
-  const addAdditionalCategory = (category: string, subcategory?: string) => {
-    if (!editingProduct) return;
-    const additional = editingProduct.additional_categories || [];
-    // Avoid duplicates
-    if (additional.some(c => c.category === category && c.subcategory === subcategory)) {
-      return;
-    }
-    setEditingProduct({
-      ...editingProduct,
-      additional_categories: [...additional, { category, subcategory }],
-    });
-  };
-
-  const removeAdditionalCategory = (index: number) => {
-    if (!editingProduct?.additional_categories) return;
-    setEditingProduct({
-      ...editingProduct,
-      additional_categories: editingProduct.additional_categories.filter((_, i) => i !== index),
     });
   };
 
@@ -670,24 +615,73 @@ export const ProductManager = () => {
 
             {/* Bulk Actions */}
             {selectedIds.length > 0 && (
-              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm font-medium">{selectedIds.length} selected</span>
-                <Button size="sm" variant="outline" onClick={() => handleBulkActivate(true)}>
-                  Activate
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleBulkActivate(false)}>
-                  Deactivate
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleBulkFeatured(true)}>
-                  Mark Featured
-                </Button>
-                <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  Delete
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
-                  Clear
-                </Button>
+              <div className="flex flex-col gap-3 p-4 bg-muted/50 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{selectedIds.length} product(s) selected</span>
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+                    <X className="w-4 h-4 mr-1" />
+                    Clear Selection
+                  </Button>
+                </div>
+                
+                {/* Bulk Category Assignment */}
+                <div className="flex flex-wrap items-end gap-3 p-3 bg-background rounded-md border">
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">Assign to Category</Label>
+                    <Select value={bulkCategory} onValueChange={(v) => { setBulkCategory(v); setBulkSubcategory(""); }}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.filter(c => !c.parent_id).map(cat => (
+                          <SelectItem key={cat.id} value={cat.slug}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {bulkCategory && getSubcategories(bulkCategory).length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-xs font-medium">Subcategory (Optional)</Label>
+                      <Select value={bulkSubcategory} onValueChange={setBulkSubcategory}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select subcategory" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {getSubcategories(bulkCategory).map(subcat => (
+                            <SelectItem key={subcat.id} value={subcat.slug}>{subcat.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  
+                  <Button size="sm" onClick={handleBulkCategoryAssign} disabled={!bulkCategory}>
+                    Move to Category
+                  </Button>
+                </div>
+
+                {/* Other Bulk Actions */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Quick Actions:</span>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkActivate(true)}>
+                    Activate
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkActivate(false)}>
+                    Deactivate
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkFeatured(true)}>
+                    Mark Featured
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkFeatured(false)}>
+                    Unmark Featured
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
               </div>
             )}
             
@@ -892,48 +886,6 @@ export const ProductManager = () => {
                 </div>
               </div>
 
-              {/* Additional Categories */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label>Additional Categories</Label>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      const cat = prompt("Enter category name:");
-                      if (cat) {
-                        addAdditionalCategory(cat);
-                      }
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add Category
-                  </Button>
-                </div>
-                {(editingProduct?.additional_categories || []).length > 0 && (
-                  <div className="space-y-2">
-                    {editingProduct?.additional_categories?.map((cat, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-2 border rounded bg-slate-50">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{cat.category}</p>
-                          {cat.subcategory && (
-                            <p className="text-xs text-muted-foreground">{cat.subcategory}</p>
-                          )}
-                        </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={() => removeAdditionalCategory(idx)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
@@ -984,23 +936,21 @@ export const ProductManager = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={editingProduct?.tags?.includes('gift') || false}
+                    checked={editingProduct?.category?.toLowerCase().includes('gift') || editingProduct?.subcategory?.toLowerCase().includes('gift') || false}
                     onCheckedChange={(v) => {
                       if (v) {
-                        // Add "gift" tag
-                        const tags = [...(editingProduct?.tags || [])];
-                        if (!tags.includes('gift')) {
-                          tags.push('gift');
-                        }
-                        setEditingProduct(p => ({ ...p, tags }));
+                        // Add "gift" to category or subcategory
+                        setEditingProduct(p => ({ ...p, subcategory: 'gift' }));
                       } else {
-                        // Remove "gift" tag
-                        const tags = (editingProduct?.tags || []).filter(t => t !== 'gift');
-                        setEditingProduct(p => ({ ...p, tags }));
+                        // Remove gift from subcategory if it was gift
+                        setEditingProduct(p => ({ 
+                          ...p, 
+                          subcategory: p?.subcategory?.toLowerCase() === 'gift' ? '' : p?.subcategory 
+                        }));
                       }
                     }}
                   />
-                  <Label className="text-amber-600 font-medium">🎁 Show in Gift Section</Label>
+                  <Label className="text-amber-600 font-medium">🎁 Gift Item</Label>
                 </div>
               </div>
 
@@ -1037,7 +987,7 @@ export const ProductManager = () => {
                     }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Press Enter to add. Add "gift" tag to show product in Gift Section on homepage.</p>
+                <p className="text-xs text-muted-foreground">Press Enter to add. Use tags to show product in multiple categories.</p>
               </div>
             </TabsContent>
 
@@ -1067,11 +1017,9 @@ export const ProductManager = () => {
                   ))}
                 </div>
                 <MediaPicker
-                  label="Add Gallery Images"
-                  value={editingProduct?.images || []}
-                  multiple
+                  label="Add Gallery Image"
+                  value=""
                   onChange={addGalleryImage}
-                  onChangeMultiple={(urls) => urls.forEach(addGalleryImage)}
                   folder="products"
                 />
               </div>

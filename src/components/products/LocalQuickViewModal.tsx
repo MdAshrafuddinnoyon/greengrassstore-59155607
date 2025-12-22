@@ -119,40 +119,8 @@ export const LocalQuickViewModal = ({ isOpen, onClose, product }: LocalQuickView
   };
 
   const handleAddToCart = () => {
-    const cartItem = {
-      product: {
-        node: {
-          id: product.id,
-          title: product.name,
-          description: product.description || '',
-          handle: product.slug,
-          priceRange: {
-            minVariantPrice: {
-              amount: currentPrice.toString(),
-              currencyCode: product.currency
-            }
-          },
-          images: {
-            edges: images.map(url => ({
-              node: { url, altText: product.name }
-            }))
-          },
-          variants: {
-            edges: [{
-              node: {
-                id: selectedVariant?.id || product.id,
-                title: selectedVariant 
-                  ? [selectedVariant.option1_value, selectedVariant.option2_value, selectedVariant.option3_value].filter(Boolean).join(' / ')
-                  : 'Default',
-                price: { amount: currentPrice.toString(), currencyCode: product.currency },
-                availableForSale: true,
-                selectedOptions: Object.entries(selectedOptions).map(([name, value]) => ({ name, value }))
-              }
-            }]
-          },
-          options: []
-        }
-      },
+    addItem({
+      product: { ...product, featured_image: displayImage },
       variantId: selectedVariant?.id || product.id,
       variantTitle: selectedVariant 
         ? [selectedVariant.option1_value, selectedVariant.option2_value, selectedVariant.option3_value].filter(Boolean).join(' / ')
@@ -160,9 +128,8 @@ export const LocalQuickViewModal = ({ isOpen, onClose, product }: LocalQuickView
       price: { amount: currentPrice.toString(), currencyCode: product.currency },
       quantity,
       selectedOptions: Object.entries(selectedOptions).map(([name, value]) => ({ name, value }))
-    };
+    });
     
-    addItem(cartItem);
     toast.success('Added to cart');
     onClose();
   };
@@ -187,26 +154,7 @@ export const LocalQuickViewModal = ({ isOpen, onClose, product }: LocalQuickView
       removeFromCompare(product.id);
       toast.success('Removed from compare');
     } else {
-      const shopifyLikeProduct = {
-        node: {
-          id: product.id,
-          title: product.name,
-          description: product.description || '',
-          handle: product.slug,
-          priceRange: {
-            minVariantPrice: {
-              amount: currentPrice.toString(),
-              currencyCode: product.currency
-            }
-          },
-          images: {
-            edges: [{ node: { url: displayImage, altText: product.name } }]
-          },
-          variants: { edges: [] },
-          options: []
-        }
-      };
-      const added = addToCompare(shopifyLikeProduct);
+      const added = addToCompare({ ...product, featured_image: displayImage });
       if (added) {
         toast.success('Added to compare');
       } else {

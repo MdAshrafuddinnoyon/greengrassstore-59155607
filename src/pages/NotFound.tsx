@@ -1,4 +1,3 @@
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useLocation, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -148,7 +147,6 @@ const NotFound = () => {
           </div>
         </div>
       </main>
-      <MobileBottomNav />
       <Footer />
     </div>
   );

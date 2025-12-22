@@ -34,68 +34,23 @@ const Auth = () => {
   const { checkPassword, isLeaked, count, isChecking: isCheckingPassword } = useLeakedPasswordCheck();
   const { t } = useLanguage();
 
-  // Check user role and redirect accordingly
-  const checkRoleAndRedirect = async (userId: string) => {
-    try {
-      // Ensure profiles row exists for this user (customer by default)
-      const { data: userRes } = await supabase.auth.getUser();
-      const email = userRes.user?.email || '';
-      const name = (userRes.user?.user_metadata as any)?.full_name || '';
-      await supabase
-        .from('profiles')
-        .upsert({
-          user_id: userId,
-          email,
-          full_name: name,
-          role: 'customer',
-          is_staff: false,
-          created_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
-
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      const userRole = roleData?.role;
-      
-      // If user has staff role (admin, store_manager, moderator), go to dashboard
-      if (userRole && ['admin', 'store_manager', 'moderator'].includes(userRole)) {
-        console.log('Staff member logged in with role:', userRole);
-        navigate('/admin');
-      } else {
-        // Regular customer, go to home
-        console.log('Customer logged in');
-        navigate('/');
-      }
-    } catch (error) {
-      console.error('Error checking role:', error);
-      navigate('/');
-    }
-  };
-
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          toast.success(t("auth.loginSuccess"), {
-            duration: 3000,
-            description: t("auth.welcomeBack")
-          });
-          await checkRoleAndRedirect(session.user.id);
+      (event, session) => {
+        if (session?.user) {
+          navigate("/account");
         }
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        await checkRoleAndRedirect(session.user.id);
+        navigate("/account");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, t]);
+  }, [navigate]);
 
   const validateForm = () => {
     try {
@@ -157,7 +112,7 @@ const Auth = () => {
         toast.success(t("auth.loginSuccess"));
       } else {
         const redirectUrl = `${window.location.origin}/`;
-        const { data: signUpData, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -168,23 +123,6 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        // Create customer profile on signup
-        if (signUpData.user) {
-          await supabase
-            .from('profiles')
-            .upsert({
-              user_id: signUpData.user.id,
-              email,
-              full_name: fullName,
-              role: 'customer',
-              is_staff: false,
-              created_at: new Date().toISOString()
-            }, { onConflict: 'user_id' });
-          // Ensure user_roles has customer role if using table-based roles
-          await supabase
-            .from('user_roles')
-            .upsert({ user_id: signUpData.user.id, role: 'customer' }, { onConflict: 'user_id' });
-        }
         toast.success(t("auth.signupSuccess"));
       }
     } catch (error: any) {
@@ -228,7 +166,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/account`,
         },
       });
       if (error) throw error;

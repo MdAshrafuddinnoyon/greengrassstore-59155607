@@ -275,14 +275,6 @@ export interface ContactPageContent {
   mapEmbedUrl: string;
 }
 
-interface PaymentGatewaySettings {
-  type: string;
-  displayName: string;
-  enabled: boolean;
-  config: Record<string, any>;
-  instructions?: string;
-}
-
 interface SiteSettingsContextType {
   announcementBar: AnnouncementBarSettings;
   hero: HeroSettings;
@@ -307,7 +299,6 @@ interface SiteSettingsContextType {
   termsSections: PolicySection[];
   aboutContent: AboutPageContent;
   contactContent: ContactPageContent;
-  paymentGateways: PaymentGatewaySettings[];
   loading: boolean;
   refetch: () => Promise<void>;
 }
@@ -725,7 +716,6 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   termsSections: defaultPolicySections,
   aboutContent: defaultAboutContent,
   contactContent: defaultContactContent,
-  paymentGateways: [],
   loading: true,
   refetch: async () => {}
 });
@@ -741,7 +731,6 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [featuredCategorySection, setFeaturedCategorySection] = useState(defaultFeaturedCategorySection);
   const [collectionSection, setCollectionSection] = useState(defaultCollectionSection);
   const [footer, setFooter] = useState(defaultFooter);
-  const [footerFeatures, setFooterFeatures] = useState(defaultFooterFeatures);
   const [branding, setBranding] = useState(defaultBranding);
   const [themeColors, setThemeColors] = useState(defaultThemeColors);
   const [typography, setTypography] = useState(defaultTypography);
@@ -757,7 +746,6 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [termsSections, setTermsSections] = useState(defaultPolicySections);
   const [aboutContent, setAboutContent] = useState(defaultAboutContent);
   const [contactContent, setContactContent] = useState(defaultContactContent);
-  const [paymentGateways, setPaymentGateways] = useState<PaymentGatewaySettings[]>([]);
 
   const fetchSettings = async () => {
     try {
@@ -770,78 +758,72 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
       data?.forEach((setting) => {
         const value = setting.setting_value as Record<string, unknown>;
         switch (setting.setting_key) {
-                    case 'footer_features':
-                      setFooterFeatures(Array.isArray(value) ? value : defaultFooterFeatures);
-                      break;
           case 'announcement_bar':
-            setAnnouncementBar(value ? (value as AnnouncementBarSettings) : defaultAnnouncementBar);
+            setAnnouncementBar(value as unknown as AnnouncementBarSettings);
             break;
           case 'hero_section':
-            setHero(value ? (value as HeroSettings) : defaultHero);
+            setHero(value as unknown as HeroSettings);
             break;
           case 'gift_section':
-            setGiftSection(value ? (value as GiftSectionSettings) : defaultGiftSection);
+            setGiftSection(value as unknown as GiftSectionSettings);
             break;
           case 'promo_section':
-            setPromoSection(value ? (value as PromoSectionSettings) : defaultPromoSection);
+            setPromoSection(value as unknown as PromoSectionSettings);
             break;
           case 'featured_category_section':
-            setFeaturedCategorySection(value ? (value as FeaturedCategorySectionSettings) : defaultFeaturedCategorySection);
+            setFeaturedCategorySection(value as unknown as FeaturedCategorySectionSettings);
             break;
           case 'collection_section':
-            setCollectionSection(value ? (value as CollectionSectionSettings) : defaultCollectionSection);
+            setCollectionSection(value as unknown as CollectionSectionSettings);
             break;
           case 'footer_content':
           case 'footer_menu':
-            setFooter(value ? (value as FooterSettings) : defaultFooter);
+            setFooter(value as unknown as FooterSettings);
             break;
           case 'branding':
-            setBranding(value ? (value as BrandingSettings) : defaultBranding);
+            setBranding(value as unknown as BrandingSettings);
             break;
           case 'theme_colors':
-            setThemeColors(value ? (value as ThemeColors) : defaultThemeColors);
+            setThemeColors(value as unknown as ThemeColors);
             break;
           case 'typography':
-            setTypography(value ? (value as TypographySettings) : defaultTypography);
+            setTypography(value as unknown as TypographySettings);
             break;
           case 'whatsapp':
-            setWhatsapp(value ? (value as WhatsAppSettings) : defaultWhatsApp);
+            setWhatsapp(value as unknown as WhatsAppSettings);
             break;
           case 'sales_agent':
-            setSalesAgent(value ? (value as SalesAgentSettings) : defaultSalesAgent);
+            setSalesAgent(value as unknown as SalesAgentSettings);
             break;
           case 'store_info':
-            setStoreInfo(value ? (value as StoreInfo) : defaultStoreInfo);
+            setStoreInfo(value as unknown as StoreInfo);
             break;
           case 'shipping_settings':
-            setShippingSettings(value ? (value as ShippingSettings) : defaultShippingSettings);
+            setShippingSettings(value as unknown as ShippingSettings);
             break;
           case 'mega_menu_categories':
-            setMegaMenuCategories(value ? (value as MegaMenuCategory[]) : defaultMegaMenuCategories);
+            setMegaMenuCategories(value as unknown as MegaMenuCategory[]);
             break;
           case 'faq_items':
-            setFaqItems(value ? (value as FAQItem[]) : defaultFaqItems);
+            setFaqItems(value as unknown as FAQItem[]);
             break;
           case 'return_policy_sections':
-            setReturnPolicySections(value ? (value as PolicySection[]) : defaultPolicySections);
+            setReturnPolicySections(value as unknown as PolicySection[]);
             break;
           case 'privacy_sections':
-            setPrivacySections(value ? (value as PolicySection[]) : defaultPolicySections);
+            setPrivacySections(value as unknown as PolicySection[]);
             break;
           case 'terms_sections':
-            setTermsSections(value ? (value as PolicySection[]) : defaultPolicySections);
+            setTermsSections(value as unknown as PolicySection[]);
             break;
           case 'about_content':
-            setAboutContent(value ? (value as AboutPageContent) : defaultAboutContent);
+            setAboutContent(value as unknown as AboutPageContent);
             break;
           case 'contact_content':
-            setContactContent(value ? (value as ContactPageContent) : defaultContactContent);
+            setContactContent(value as unknown as ContactPageContent);
             break;
           case 'security_settings':
-            setSecuritySettings(value ? (value as SecuritySettings) : defaultSecuritySettings);
-            break;
-          case 'payment_gateways':
-            setPaymentGateways(Array.isArray(value) ? value as PaymentGatewaySettings[] : []);
+            setSecuritySettings(value as unknown as SecuritySettings);
             break;
         }
       });
@@ -894,7 +876,7 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         salesAgent,
         storeInfo,
         shippingSettings,
-        footerFeatures,
+        footerFeatures: defaultFooterFeatures,
         securitySettings,
         megaMenuCategories,
         faqItems,
@@ -903,7 +885,6 @@ export const SiteSettingsProvider = ({ children }: { children: ReactNode }) => {
         termsSections,
         aboutContent,
         contactContent,
-        paymentGateways,
         loading,
         refetch: fetchSettings
       }}

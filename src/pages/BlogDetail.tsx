@@ -1,4 +1,3 @@
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -449,7 +448,6 @@ export default function BlogDetail() {
         </div>
       </main>
 
-      <MobileBottomNav />
       <Footer />
     </div>
   );

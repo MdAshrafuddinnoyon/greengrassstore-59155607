@@ -1,30 +1,4 @@
 import { useEffect, useState } from "react";
-import React from "react";
-// Global error boundary for catching render errors
-class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error: any, errorInfo: any) {
-    // Log error to console for debugging
-    console.error("Global error boundary caught: ", error, errorInfo);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: 32, color: 'red', background: '#fff0f0', fontFamily: 'monospace' }}>
-          <h1>Something went wrong.</h1>
-          <pre>{String(this.state.error)}</pre>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -57,7 +31,6 @@ import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
 import Maintenance from "./pages/Maintenance";
 import Install from "./pages/Install";
-import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -150,11 +123,6 @@ const MaintenanceWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppContent = () => {
-  // Hide install route once installation is complete
-  const shouldShowInstall = typeof window !== 'undefined'
-    ? localStorage.getItem('installation_complete') !== 'true'
-    : true;
-
   return (
     <BrowserRouter>
       <ScrollToTop />
@@ -174,7 +142,6 @@ const AppContent = () => {
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/returns" element={<ReturnPolicy />} />
-          <Route path="/support" element={<Support />} />
           <Route path="/vip" element={<VIPProgram />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/checkout" element={<Checkout />} />
@@ -183,7 +150,7 @@ const AppContent = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/account" element={<Account />} />
           <Route path="/maintenance" element={<Maintenance />} />
-          {shouldShowInstall && <Route path="/install" element={<Install />} />}
+          <Route path="/install" element={<Install />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -195,21 +162,18 @@ const AppContent = () => {
   );
 };
 
-
 const App = () => (
-  <GlobalErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <SiteSettingsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AppContent />
-          </TooltipProvider>
-        </SiteSettingsProvider>
-      </LanguageProvider>
-    </QueryClientProvider>
-  </GlobalErrorBoundary>
+  <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
+      <SiteSettingsProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </TooltipProvider>
+      </SiteSettingsProvider>
+    </LanguageProvider>
+  </QueryClientProvider>
 );
 
 export default App;

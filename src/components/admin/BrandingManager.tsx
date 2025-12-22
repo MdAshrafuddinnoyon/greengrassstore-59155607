@@ -12,13 +12,7 @@ import { MediaPicker } from "./MediaPicker";
 import type { Json } from "@/integrations/supabase/types";
 
 interface BrandingSettings {
-  logoUrl: string; // fallback/default
-  desktopLogoUrl?: string;
-  mobileLogoUrl?: string;
-  logoWidth?: number; // px (desktop)
-  logoHeight?: number; // px (desktop)
-  mobileLogoWidth?: number; // px (mobile)
-  mobileLogoHeight?: number; // px (mobile)
+  logoUrl: string;
   faviconUrl: string;
   siteName: string;
   siteNameAr: string;
@@ -46,10 +40,6 @@ interface TypographySettings {
 
 const defaultBranding: BrandingSettings = {
   logoUrl: "",
-  desktopLogoUrl: "",
-  mobileLogoUrl: "",
-  logoWidth: 112, // default 112px (w-28)
-  logoHeight: 40, // default 40px (h-10)
   faviconUrl: "",
   siteName: "Green Grass",
   siteNameAr: "جرين جراس",
@@ -263,105 +253,33 @@ export const BrandingManager = () => {
         </TabsList>
 
         {/* Logo & Identity Tab */}
-
         <TabsContent value="branding" className="space-y-6">
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Site Logo (Desktop & Mobile)</CardTitle>
+              <CardTitle className="text-lg">Site Logo</CardTitle>
               <CardDescription className="text-xs md:text-sm">
-                Upload separate logos for desktop and mobile, or use a default logo for both. Adjust logo size as needed.
+                Upload your logo for header and footer
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs font-medium">Desktop Logo</span>
-                  <div className="w-32 h-20 border rounded-lg flex items-center justify-center bg-muted overflow-hidden">
-                    {branding.desktopLogoUrl ? (
-                      <img src={branding.desktopLogoUrl} alt="Desktop Logo" className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">No logo</span>
-                    )}
-                  </div>
-                  <MediaPicker
-                    value={branding.desktopLogoUrl || ""}
-                    onChange={(url) => setBranding(prev => ({ ...prev, desktopLogoUrl: url }))}
-                    label="Desktop Logo"
-                    folder="logos"
-                  />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="w-32 h-20 border rounded-lg flex items-center justify-center bg-muted overflow-hidden">
+                  {branding.logoUrl ? (
+                    <img 
+                      src={branding.logoUrl} 
+                      alt="Logo" 
+                      className="max-w-full max-h-full object-contain" 
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No logo</span>
+                  )}
                 </div>
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs font-medium">Mobile Logo</span>
-                  <div className="w-24 h-14 border rounded-lg flex items-center justify-center bg-muted overflow-hidden">
-                    {branding.mobileLogoUrl ? (
-                      <img src={branding.mobileLogoUrl} alt="Mobile Logo" className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">No logo</span>
-                    )}
-                  </div>
-                  <MediaPicker
-                    value={branding.mobileLogoUrl || ""}
-                    onChange={(url) => setBranding(prev => ({ ...prev, mobileLogoUrl: url }))}
-                    label="Mobile Logo"
-                    folder="logos"
-                  />
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs font-medium">Default Logo (Fallback)</span>
-                  <div className="w-24 h-14 border rounded-lg flex items-center justify-center bg-muted overflow-hidden">
-                    {branding.logoUrl ? (
-                      <img src={branding.logoUrl} alt="Default Logo" className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">No logo</span>
-                    )}
-                  </div>
+                <div className="flex-1">
                   <MediaPicker
                     value={branding.logoUrl}
                     onChange={(url) => setBranding(prev => ({ ...prev, logoUrl: url }))}
-                    label="Default Logo"
+                    label="Logo"
                     folder="logos"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs md:text-sm">Desktop Logo Width (px)</Label>
-                  <Input
-                    type="number"
-                    min={40}
-                    max={400}
-                    value={branding.logoWidth ?? 112}
-                    onChange={e => setBranding(prev => ({ ...prev, logoWidth: Number(e.target.value) }))}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs md:text-sm">Desktop Logo Height (px)</Label>
-                  <Input
-                    type="number"
-                    min={20}
-                    max={200}
-                    value={branding.logoHeight ?? 40}
-                    onChange={e => setBranding(prev => ({ ...prev, logoHeight: Number(e.target.value) }))}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs md:text-sm">Mobile Logo Width (px)</Label>
-                  <Input
-                    type="number"
-                    min={40}
-                    max={400}
-                    value={branding.mobileLogoWidth ?? 112}
-                    onChange={e => setBranding(prev => ({ ...prev, mobileLogoWidth: Number(e.target.value) }))}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs md:text-sm">Mobile Logo Height (px)</Label>
-                  <Input
-                    type="number"
-                    min={20}
-                    max={200}
-                    value={branding.mobileLogoHeight ?? 40}
-                    onChange={e => setBranding(prev => ({ ...prev, mobileLogoHeight: Number(e.target.value) }))}
                   />
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useRolePermissions } from "@/hooks/useRolePermissions";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -21,7 +20,6 @@ import {
   LayoutTemplate,
   Menu,
   BookOpen,
-  HelpCircle,
   Palette,
   Bell,
   Ticket,
@@ -62,7 +60,6 @@ const contentNavItems: NavItem[] = [
   { id: "homepage", label: "Homepage", icon: LayoutTemplate },
   { id: "megamenu", label: "Menu", icon: Menu },
   { id: "pages", label: "Pages", icon: BookOpen },
-  { id: "faq", label: "FAQ", icon: HelpCircle },
   { id: "content", label: "Branding", icon: Palette },
   { id: "footer", label: "Footer", icon: Menu },
   { id: "popups", label: "Popups", icon: Bell },
@@ -79,69 +76,6 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const { permissions, role } = useRolePermissions();
-
-  // Filter navigation items based on permissions
-  const filteredMainNav = useMemo(() => {
-    return mainNavItems.filter(item => {
-      switch (item.id) {
-        case 'products':
-          return permissions.canViewProducts;
-        case 'categories':
-          return permissions.canViewCategories;
-        case 'orders':
-          return permissions.canViewOrders;
-        case 'customers':
-          return permissions.canViewCustomers;
-        case 'blog':
-          return permissions.canViewBlog;
-        case 'subscribers':
-        case 'requests':
-          return permissions.canViewOrders; // Moderators can view these
-        default:
-          return true;
-      }
-    });
-  }, [permissions]);
-
-  const filteredContentNav = useMemo(() => {
-    return contentNavItems.filter(item => {
-      switch (item.id) {
-        case 'media':
-          return permissions.canManageMedia;
-        case 'announcements':
-          return permissions.canManageAnnouncements;
-        case 'homepage':
-          return permissions.canEditHomepage;
-        case 'popups':
-          return permissions.canManagePopups;
-        case 'coupons':
-          return permissions.canManageCoupons;
-        case 'megamenu':
-        case 'pages':
-        case 'content':
-        case 'footer':
-          return permissions.canEditBranding;
-        default:
-          return false;
-      }
-    });
-  }, [permissions]);
-
-  const filteredSettingsNav = useMemo(() => {
-    return settingsNavItems.filter(item => {
-      switch (item.id) {
-        case 'vip':
-          return permissions.canManageVIP;
-        case 'settings':
-          return permissions.canEditSettings || permissions.canViewUsers;
-        case 'social':
-          return permissions.canEditSettings;
-        default:
-          return false;
-      }
-    });
-  }, [permissions]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -221,9 +155,9 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-2 lg:px-3 py-3 lg:py-4">
-        {filteredMainNav.length > 0 && <NavSection title="Main" items={filteredMainNav} />}
-        {filteredContentNav.length > 0 && <NavSection title="Content" items={filteredContentNav} />}
-        {filteredSettingsNav.length > 0 && <NavSection title="System" items={filteredSettingsNav} />}
+        <NavSection title="Main" items={mainNavItems} />
+        <NavSection title="Content" items={contentNavItems} />
+        <NavSection title="System" items={settingsNavItems} />
         
         {/* Logout Button */}
         <div className="mt-4 px-1">

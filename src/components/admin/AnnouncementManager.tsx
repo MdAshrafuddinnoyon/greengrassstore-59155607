@@ -31,7 +31,7 @@ export const AnnouncementManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const defaultSettings: AnnouncementBarSettings = {
+  const [settings, setSettings] = useState<AnnouncementBarSettings>({
     enabled: true,
     backgroundColor: "#3d3d35",
     textColor: "#ffffff",
@@ -41,8 +41,7 @@ export const AnnouncementManager = () => {
       { id: '1', text: 'Shop Now, Pay Later With Tabby', textAr: 'تسوق الآن وادفع لاحقاً مع تابي', link: '', isActive: true, order: 1 },
       { id: '2', text: 'Free Delivery on Orders Above AED 200', textAr: 'توصيل مجاني للطلبات فوق 200 درهم', link: '', isActive: true, order: 2 },
     ]
-  };
-  const [settings, setSettings] = useState<AnnouncementBarSettings>(defaultSettings);
+  });
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -54,11 +53,8 @@ export const AnnouncementManager = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      if (data && data.setting_value) {
-        // Defensive: fallback to default for missing keys
-        setSettings({ ...defaultSettings, ...data.setting_value });
-      } else {
-        setSettings(defaultSettings);
+      if (data) {
+        setSettings(data.setting_value as unknown as AnnouncementBarSettings);
       }
     } catch (error) {
       console.error('Error fetching settings:', error);

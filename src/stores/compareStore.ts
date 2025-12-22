@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ShopifyProduct } from '@/lib/shopify';
+import { LocalProduct } from '@/components/products/LocalProductCard';
 
 interface CompareStore {
-  items: ShopifyProduct[];
+  items: LocalProduct[];
   maxItems: number;
   isOpen: boolean;
   
   // Actions
-  addItem: (product: ShopifyProduct) => boolean;
+  addItem: (product: LocalProduct) => boolean;
   removeItem: (productId: string) => void;
   clearAll: () => void;
   isInCompare: (productId: string) => boolean;
@@ -26,7 +26,7 @@ export const useCompareStore = create<CompareStore>()(
         const { items, maxItems } = get();
         
         // Check if already in compare
-        if (items.some(item => item.node.id === product.node.id)) {
+        if (items.some(item => item.id === product.id)) {
           return false;
         }
         
@@ -41,7 +41,7 @@ export const useCompareStore = create<CompareStore>()(
 
       removeItem: (productId) => {
         set({
-          items: get().items.filter(item => item.node.id !== productId)
+          items: get().items.filter(item => item.id !== productId)
         });
       },
 
@@ -50,7 +50,7 @@ export const useCompareStore = create<CompareStore>()(
       },
 
       isInCompare: (productId) => {
-        return get().items.some(item => item.node.id === productId);
+        return get().items.some(item => item.id === productId);
       },
 
       toggleCompareDrawer: (open) => {

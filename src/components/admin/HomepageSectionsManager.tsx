@@ -10,31 +10,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Save, RefreshCw, Image as ImageIcon, Gift, Tag, Sparkles, Grid, Package, Instagram, X, Plus } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
-import { plantsProducts, potsProducts, plantersProducts, vasesProducts, homecareProducts } from "@/data/products";
-// Build a map of categoryId to products for use in the category config UI
-function getProductsByCategory(categories: {id: string, name: string}[]) {
-  // Combine all product arrays
-  const allProducts = [
-    ...plantsProducts,
-    ...potsProducts,
-    ...plantersProducts,
-    ...vasesProducts,
-    ...homecareProducts,
-  ];
-  // Only include products with featured: true
-  const map: { [catId: string]: { id: string, name: string }[] } = {};
-  categories.forEach(cat => {
-    map[cat.id] = allProducts.filter(p => {
-      const isFeatured = p.featured === true;
-      if (!isFeatured) return false;
-      if (cat.slug && p.category && typeof p.category === 'string') {
-        return p.category.toLowerCase().replace(/\s+/g, '-') === cat.slug;
-      }
-      return p.category === cat.name;
-    }).map(p => ({ id: p.id, name: p.name }));
-  });
-  return map;
-}
 
 interface HeroSettings {
   enabled: boolean;
@@ -62,33 +37,6 @@ interface GiftSectionSettings {
   buttonText: string;
   buttonTextAr: string;
   buttonLink: string;
-  itemsLimit: number;
-  categorySlug: string; // নতুন ক্যাটাগরি সিলেক্টর
-  backgroundImage: string; // ব্যাকগ্রাউন্ড ইমেজ
-}
-
-
-// Remove duplicate/conflicting interface above. Use the one below with categoryConfigs.
-interface CategoryConfig {
-  image: string;
-  buttonText: string;
-  buttonLink: string;
-  selectedProducts: string[];
-}
-
-interface FeaturedCategorySectionSettings {
-  enabled: boolean;
-  title: string;
-  titleAr: string;
-  categoriesLimit: number;
-  productsPerCategory: number;
-  showBadges: boolean;
-  selectedCategories: string[];
-  layout: 'grid' | 'carousel';
-  showCategoryBanner: boolean;
-  categoryConfigs: {
-    [categoryId: string]: CategoryConfig;
-  };
 }
 
 interface PromoSectionSettings {
@@ -117,8 +65,6 @@ interface FeaturedCategorySectionSettings {
   productsPerCategory: number;
   showBadges: boolean;
   selectedCategories: string[];
-  layout: 'grid' | 'carousel';
-  showCategoryBanner: boolean;
 }
 
 interface CollectionSectionSettings {
@@ -129,8 +75,6 @@ interface CollectionSectionSettings {
   subtitleAr: string;
   productsLimit: number;
   showFeaturedOnly: boolean;
-  layout: 'grid-3' | 'grid-4' | 'grid-5';
-  showQuickView: boolean;
 }
 
 interface InstagramSectionSettings {
@@ -145,9 +89,6 @@ export const HomepageSectionsManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
-
-  // Build productsByCategory for use in select dropdowns (after categories is defined)
-  const productsByCategory = getProductsByCategory(categories);
 
   const [heroSettings, setHeroSettings] = useState<HeroSettings>({
     enabled: true,
@@ -174,8 +115,7 @@ export const HomepageSectionsManager = () => {
     subtitleAr: "مجموعات هدايا منسقة بعناية لمحبي النباتات",
     buttonText: "View All Gifts",
     buttonTextAr: "عرض جميع الهدايا",
-    buttonLink: "/shop?category=gifts",
-    itemsLimit: 6
+    buttonLink: "/shop?category=gifts"
   });
 
   const [promoSettings, setPromoSettings] = useState<PromoSectionSettings>({
@@ -203,9 +143,7 @@ export const HomepageSectionsManager = () => {
     categoriesLimit: 4,
     productsPerCategory: 6,
     showBadges: true,
-    selectedCategories: [],
-    layout: 'carousel',
-    showCategoryBanner: true
+    selectedCategories: []
   });
 
   const [collectionSettings, setCollectionSettings] = useState<CollectionSectionSettings>({
@@ -215,9 +153,7 @@ export const HomepageSectionsManager = () => {
     subtitle: "Discover our curated selection of premium plants and home décor",
     subtitleAr: "اكتشف مجموعتنا المختارة من النباتات الفاخرة وديكور المنزل",
     productsLimit: 8,
-    showFeaturedOnly: false,
-    layout: 'grid-4',
-    showQuickView: true
+    showFeaturedOnly: false
   });
 
   const [instagramSettings, setInstagramSettings] = useState<InstagramSectionSettings>({
@@ -237,7 +173,8 @@ export const HomepageSectionsManager = () => {
         .select('id, name')
         .eq('is_active', true)
         .order('display_order');
-      if (Array.isArray(catData)) setCategories(catData);
+      
+      if (catData) setCategories(catData);
 
       const { data, error } = await supabase
         .from('site_settings')
@@ -246,36 +183,23 @@ export const HomepageSectionsManager = () => {
       if (error) throw error;
 
       data?.forEach((setting) => {
-        const value = setting?.setting_value || {};
-        if (setting?.setting_key === 'hero_section') {
-          setHeroSettings({ ...heroSettings, ...value });
-        } else if (setting?.setting_key === 'gift_section') {
-          setGiftSettings({ ...giftSettings, ...value });
-        } else if (setting?.setting_key === 'promo_section') {
-          setPromoSettings({ ...promoSettings, ...value });
-        } else if (setting?.setting_key === 'featured_category_section') {
-          // Migrate old settings if needed
-          if (!('categoryConfigs' in value)) {
-            setFeaturedCategorySettings({
-              ...featuredCategorySettings,
-              ...(value as any),
-              categoryConfigs: {},
-            });
-          } else {
-            setFeaturedCategorySettings({ ...featuredCategorySettings, ...value });
-          }
-        } else if (setting?.setting_key === 'collection_section') {
-          setCollectionSettings({ ...collectionSettings, ...value });
-        } else if (setting?.setting_key === 'instagram_section') {
-          setInstagramSettings({ ...instagramSettings, ...value });
+        const value = setting.setting_value as Record<string, unknown>;
+        if (setting.setting_key === 'hero_section') {
+          setHeroSettings(value as unknown as HeroSettings);
+        } else if (setting.setting_key === 'gift_section') {
+          setGiftSettings(value as unknown as GiftSectionSettings);
+        } else if (setting.setting_key === 'promo_section') {
+          setPromoSettings(value as unknown as PromoSectionSettings);
+        } else if (setting.setting_key === 'featured_category_section') {
+          setFeaturedCategorySettings(value as unknown as FeaturedCategorySectionSettings);
+        } else if (setting.setting_key === 'collection_section') {
+          setCollectionSettings(value as unknown as CollectionSectionSettings);
+        } else if (setting.setting_key === 'instagram_section') {
+          setInstagramSettings(value as unknown as InstagramSectionSettings);
         }
       });
     } catch (error) {
-      // Hide raw error from users, just log for dev
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching settings:', error);
-      }
+      console.error('Error fetching settings:', error);
     } finally {
       setLoading(false);
     }
@@ -288,21 +212,6 @@ export const HomepageSectionsManager = () => {
   const saveSettings = async (key: string, value: object) => {
     setSaving(true);
     try {
-      // For featured_category_section, clean up configs for only selected categories
-      let toSave = value;
-      if (key === 'featured_category_section') {
-        const v = value as FeaturedCategorySectionSettings;
-        const cleanedConfigs: { [categoryId: string]: CategoryConfig } = {};
-        v.selectedCategories.forEach(catId => {
-          cleanedConfigs[catId] = v.categoryConfigs?.[catId] || {
-            image: '',
-            buttonText: 'Shop Now',
-            buttonLink: '',
-            selectedProducts: [],
-          };
-        });
-        toSave = { ...v, categoryConfigs: cleanedConfigs };
-      }
       const { data: existing } = await supabase
         .from('site_settings')
         .select('id')
@@ -312,13 +221,13 @@ export const HomepageSectionsManager = () => {
       if (existing) {
         const { error } = await supabase
           .from('site_settings')
-          .update({ setting_value: JSON.parse(JSON.stringify(toSave)) })
+          .update({ setting_value: JSON.parse(JSON.stringify(value)) })
           .eq('setting_key', key);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('site_settings')
-          .insert({ setting_key: key, setting_value: JSON.parse(JSON.stringify(toSave)) });
+          .insert({ setting_key: key, setting_value: JSON.parse(JSON.stringify(value)) });
         if (error) throw error;
       }
       
@@ -537,31 +446,17 @@ export const HomepageSectionsManager = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                 <div>
                   <Label>Enable Featured Categories</Label>
                   <p className="text-sm text-muted-foreground">Show category banners with products</p>
                 </div>
-                <div className="flex flex-col md:flex-row gap-4 md:gap-8 items-center">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={featuredCategorySettings.enabled}
-                      onCheckedChange={(checked) => 
-                        setFeaturedCategorySettings(prev => ({ ...prev, enabled: checked }))
-                      }
-                    />
-                    <Label className="text-sm">Enabled</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={featuredCategorySettings.showFeaturedOnly}
-                      onCheckedChange={(checked) => 
-                        setFeaturedCategorySettings(prev => ({ ...prev, showFeaturedOnly: checked }))
-                      }
-                    />
-                    <Label className="text-sm">Show Only Featured Products</Label>
-                  </div>
-                </div>
+                <Switch
+                  checked={featuredCategorySettings.enabled}
+                  onCheckedChange={(checked) => 
+                    setFeaturedCategorySettings(prev => ({ ...prev, enabled: checked }))
+                  }
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -582,7 +477,7 @@ export const HomepageSectionsManager = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Categories to Show</Label>
                   <Input
@@ -592,7 +487,6 @@ export const HomepageSectionsManager = () => {
                     value={featuredCategorySettings.categoriesLimit}
                     onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, categoriesLimit: parseInt(e.target.value) || 4 }))}
                   />
-                  <p className="text-xs text-muted-foreground">Max categories to display</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Products per Category</Label>
@@ -603,157 +497,44 @@ export const HomepageSectionsManager = () => {
                     value={featuredCategorySettings.productsPerCategory}
                     onChange={(e) => setFeaturedCategorySettings(prev => ({ ...prev, productsPerCategory: parseInt(e.target.value) || 6 }))}
                   />
-                  <p className="text-xs text-muted-foreground">Products shown in each category</p>
                 </div>
-                <div className="space-y-2">
-                  <Label>Layout Style</Label>
-                  <select
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    title="Select layout style"
-                    value={featuredCategorySettings.layout}
-                    onChange={(e) =>
-                      setFeaturedCategorySettings(prev => ({ ...prev, layout: e.target.value as 'grid' | 'carousel' }))
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    checked={featuredCategorySettings.showBadges}
+                    onCheckedChange={(checked) => 
+                      setFeaturedCategorySettings(prev => ({ ...prev, showBadges: checked }))
                     }
-                  >
-                    <option value="carousel">Carousel (Scrollable)</option>
-                    <option value="grid">Grid Layout</option>
-                  </select>
-                  <p className="text-xs text-muted-foreground">Product display style</p>
-                </div>
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={featuredCategorySettings.showBadges}
-                      onCheckedChange={(checked) => 
-                        setFeaturedCategorySettings(prev => ({ ...prev, showBadges: checked }))
-                      }
-                    />
-                    <Label className="text-sm">Show Sale/New Badges</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={featuredCategorySettings.showCategoryBanner}
-                      onCheckedChange={(checked) => 
-                        setFeaturedCategorySettings(prev => ({ ...prev, showCategoryBanner: checked }))
-                      }
-                    />
-                    <Label className="text-sm">Show Category Banner</Label>
-                  </div>
+                  />
+                  <Label>Show Sale/New Badges</Label>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Configure Categories</Label>
-                <p className="text-sm text-muted-foreground mb-2">For each category, set banner image, button, and select products to feature.</p>
-                <div className="space-y-4">
-                  {featuredCategorySettings.selectedCategories.map(catId => {
-                    const cat = categories.find(c => c.id === catId);
-                    if (!cat) return null;
-                    // Find or create per-category config
-                    const catConfig = featuredCategorySettings.categoryConfigs?.[catId] || {
-                      image: '',
-                      buttonText: 'Shop Now',
-                      buttonLink: `/shop?category=${cat.slug}`,
-                      selectedProducts: []
-                    };
-                    return (
-                      <div key={catId} className="border rounded-lg p-4 space-y-2 bg-muted/30">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium">{cat.name}</span>
-                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setFeaturedCategorySettings(prev => ({ ...prev, selectedCategories: prev.selectedCategories.filter(id => id !== catId) }))}>Remove</Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="space-y-2">
-                            <Label>Banner Image</Label>
-                            <MediaPicker
-                              value={catConfig.image}
-                              onChange={url => setFeaturedCategorySettings(prev => ({
-                                ...prev,
-                                categoryConfigs: {
-                                  ...prev.categoryConfigs,
-                                  [catId]: { ...catConfig, image: url }
-                                }
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Button Text</Label>
-                            <Input
-                              value={catConfig.buttonText}
-                              onChange={e => setFeaturedCategorySettings(prev => ({
-                                ...prev,
-                                categoryConfigs: {
-                                  ...prev.categoryConfigs,
-                                  [catId]: { ...catConfig, buttonText: e.target.value }
-                                }
-                              }))}
-                            />
-                            <Label>Button Link</Label>
-                            <Input
-                              value={catConfig.buttonLink}
-                              onChange={e => setFeaturedCategorySettings(prev => ({
-                                ...prev,
-                                categoryConfigs: {
-                                  ...prev.categoryConfigs,
-                                  [catId]: { ...catConfig, buttonLink: e.target.value }
-                                }
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Select Products</Label>
-                            <select
-                              multiple
-                              className="w-full h-32 border rounded"
-                              title="Select products for this category"
-                              value={catConfig.selectedProducts}
-                              onChange={e => {
-                                const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                                setFeaturedCategorySettings(prev => ({
-                                  ...prev,
-                                  categoryConfigs: {
-                                    ...prev.categoryConfigs,
-                                    [catId]: { ...catConfig, selectedProducts: selected }
-                                  }
-                                }));
-                              }}
-                            >
-                              {(productsByCategory[catId] || []).map(prod => (
-                                <option key={prod.id} value={prod.id}>{prod.name}</option>
-                              ))}
-                            </select>
-                            <p className="text-xs text-muted-foreground">Hold Ctrl/Cmd to select multiple products</p>
-                              {/* Show selected product names */}
-                              {catConfig.selectedProducts.length > 0 && (
-                                <div className="mt-2 text-sm">
-                                  <span className="font-medium">Selected Products:</span>
-                                  <ul className="list-disc ml-5">
-                                    {catConfig.selectedProducts.map(pid => {
-                                      const prod = (productsByCategory[catId] || []).find(p => p.id === pid);
-                                      return prod ? <li key={pid}>{prod.name}</li> : null;
-                                    })}
-                                  </ul>
-                                  <Button size="sm" variant="outline" className="mt-2" onClick={() => {
-                                    setFeaturedCategorySettings(prev => ({
-                                      ...prev,
-                                      categoryConfigs: {
-                                        ...prev.categoryConfigs,
-                                        [catId]: { ...catConfig, selectedProducts: [] }
-                                      }
-                                    }));
-                                  }}>Clear Selection</Button>
-                                </div>
-                              )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-                    {categories.filter(cat => !featuredCategorySettings.selectedCategories.includes(cat.id)).map(cat => (
-                      <Button key={cat.id} variant="outline" onClick={() => setFeaturedCategorySettings(prev => ({ ...prev, selectedCategories: [...prev.selectedCategories, cat.id] }))}>{cat.name}</Button>
-                    ))}
-                  </div>
+                <Label>Select Categories to Display</Label>
+                <p className="text-sm text-muted-foreground mb-2">Leave empty to auto-select from active categories</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {categories.map(cat => (
+                    <label key={cat.id} className="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-muted/50">
+                      <input
+                        type="checkbox"
+                        checked={featuredCategorySettings.selectedCategories.includes(cat.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFeaturedCategorySettings(prev => ({
+                              ...prev,
+                              selectedCategories: [...prev.selectedCategories, cat.id]
+                            }));
+                          } else {
+                            setFeaturedCategorySettings(prev => ({
+                              ...prev,
+                              selectedCategories: prev.selectedCategories.filter(id => id !== cat.id)
+                            }));
+                          }
+                        }}
+                      />
+                      <span className="text-sm">{cat.name}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -833,54 +614,25 @@ export const HomepageSectionsManager = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Products to Display</Label>
                   <Input
                     type="number"
                     min={4}
                     max={24}
-                    step={4}
                     value={collectionSettings.productsLimit}
                     onChange={(e) => setCollectionSettings(prev => ({ ...prev, productsLimit: parseInt(e.target.value) || 8 }))}
                   />
-                  <p className="text-xs text-muted-foreground">Total products shown (multiples of 4)</p>
                 </div>
-                <div className="space-y-2">
-                  <Label>Grid Layout</Label>
-                  <select
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    title="Select collection grid layout"
-                    value={collectionSettings.layout}
-                    onChange={(e) =>
-                      setCollectionSettings(prev => ({ ...prev, layout: e.target.value as 'grid-3' | 'grid-4' | 'grid-5' }))
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    checked={collectionSettings.showFeaturedOnly}
+                    onCheckedChange={(checked) => 
+                      setCollectionSettings(prev => ({ ...prev, showFeaturedOnly: checked }))
                     }
-                  >
-                    <option value="grid-3">3 Columns (Large Cards)</option>
-                    <option value="grid-4">4 Columns (Default)</option>
-                    <option value="grid-5">5 Columns (Compact)</option>
-                  </select>
-                  <p className="text-xs text-muted-foreground">Desktop layout columns</p>
-                </div>
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={collectionSettings.showFeaturedOnly}
-                      onCheckedChange={(checked) => 
-                        setCollectionSettings(prev => ({ ...prev, showFeaturedOnly: checked }))
-                      }
-                    />
-                    <Label className="text-sm">Featured Products Only</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={collectionSettings.showQuickView}
-                      onCheckedChange={(checked) => 
-                        setCollectionSettings(prev => ({ ...prev, showQuickView: checked }))
-                      }
-                    />
-                    <Label className="text-sm">Enable Quick View</Label>
-                  </div>
+                  />
+                  <Label>Show Featured Products Only</Label>
                 </div>
               </div>
 
@@ -957,44 +709,6 @@ export const HomepageSectionsManager = () => {
                     rows={2}
                     dir="rtl"
                   />
-                </div>
-              </div>
-
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Products to Display</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={giftSettings.itemsLimit}
-                    onChange={(e) => setGiftSettings(prev => ({ ...prev, itemsLimit: Number(e.target.value) || 1 }))}
-                  />
-                  <p className="text-xs text-muted-foreground">Control how many gift products appear on the homepage.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Gift Category</Label>
-                  <select
-                    className="w-full border rounded px-2 py-2 text-sm"
-                    title="Select gift category"
-                    value={giftSettings.categorySlug || ''}
-                    onChange={e => setGiftSettings(prev => ({ ...prev, categorySlug: e.target.value }))}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground">Choose which category's products to display in Gift section.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Background Image</Label>
-                  <MediaPicker
-                    value={giftSettings.backgroundImage}
-                    onChange={url => setGiftSettings(prev => ({ ...prev, backgroundImage: url }))}
-                  />
-                  <p className="text-xs text-muted-foreground">Set a custom background image for the Gift section.</p>
                 </div>
               </div>
 

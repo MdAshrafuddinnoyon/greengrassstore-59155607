@@ -35,7 +35,7 @@ interface HeroSliderSettings {
 export const HeroSliderManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const defaultSettings: HeroSliderSettings = {
+  const [settings, setSettings] = useState<HeroSliderSettings>({
     enabled: true,
     autoPlay: true,
     autoPlayInterval: 5000,
@@ -53,8 +53,7 @@ export const HeroSliderManager = () => {
       backgroundImage: '',
       order: 1
     }]
-  };
-  const [settings, setSettings] = useState<HeroSliderSettings>(defaultSettings);
+  });
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -68,9 +67,7 @@ export const HeroSliderManager = () => {
       if (error) throw error;
       
       if (data?.setting_value) {
-        setSettings({ ...defaultSettings, ...data.setting_value });
-      } else {
-        setSettings(defaultSettings);
+        setSettings(data.setting_value as unknown as HeroSliderSettings);
       }
     } catch (error) {
       console.error('Error fetching settings:', error);

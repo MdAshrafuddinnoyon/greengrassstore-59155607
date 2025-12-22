@@ -53,8 +53,10 @@ switch ($method) {
 
     case 'POST':
         $data = getRequestBody();
+        
         // Generate order number
         $orderNumber = 'GG-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        
         $stmt = $pdo->prepare("
             INSERT INTO orders (
                 id, order_number, user_id, customer_name, customer_email, 
@@ -64,6 +66,7 @@ switch ($method) {
                 UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
             )
         ");
+        
         $stmt->execute([
             $orderNumber,
             $data['user_id'] ?? null,
@@ -80,17 +83,7 @@ switch ($method) {
             $data['payment_method'] ?? null,
             $data['notes'] ?? null,
         ]);
-
-        // Update stock for each product
-        if (!empty($data['items']) && is_array($data['items'])) {
-            foreach ($data['items'] as $item) {
-                if (!empty($item['product_id']) && !empty($item['quantity'])) {
-                    $updateStockStmt = $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?");
-                    $updateStockStmt->execute([$item['quantity'], $item['product_id'], $item['quantity']]);
-                }
-            }
-        }
-
+        
         jsonResponse([
             'id' => $pdo->lastInsertId(),
             'order_number' => $orderNumber,

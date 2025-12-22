@@ -1,4 +1,3 @@
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
@@ -714,7 +713,6 @@ export default function Shop() {
         </div>
       </main>
 
-      <MobileBottomNav />
       <Footer />
     </div>
   );

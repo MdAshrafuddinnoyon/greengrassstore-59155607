@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,7 +19,6 @@ import {
   AlertCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { buildInvoiceHtml, fetchInvoiceTemplate } from "@/lib/invoiceTemplate";
 import { toast } from "sonner";
 
 interface OrderData {
@@ -53,37 +52,6 @@ const OrderTracking = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [notFound, setNotFound] = useState(false);
-
-  const params = useMemo(() => new URLSearchParams(window.location.search), []);
-
-  useEffect(() => {
-    const qpOrder = params.get('order');
-    const qpEmail = params.get('email');
-    if (qpOrder) {
-      setOrderNumber(qpOrder.toUpperCase());
-      if (qpEmail) setEmail(qpEmail);
-      // Auto trigger search
-      const doFetch = async () => {
-        setIsLoading(true);
-        setNotFound(false);
-        setOrder(null);
-        try {
-          let query = supabase
-            .from('orders')
-            .select('*')
-            .eq('order_number', qpOrder.toUpperCase());
-          if (qpEmail) query = query.eq('customer_email', qpEmail.toLowerCase());
-          const { data } = await query.single();
-          if (data) setOrder(data as OrderData); else setNotFound(true);
-        } catch (e) {
-          setNotFound(true);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      void doFetch();
-    }
-  }, [params]);
 
   const handleTrackOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,20 +96,6 @@ const OrderTracking = () => {
   };
 
   const currentStatusIndex = order ? getStatusIndex(order.status) : -1;
-
-  const handlePrintInvoice = async () => {
-    if (!order) return;
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const template = await fetchInvoiceTemplate();
-    const html = buildInvoiceHtml(order, template);
-
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50" dir={isArabic ? "rtl" : "ltr"}>
@@ -372,9 +326,6 @@ const OrderTracking = () => {
                     <p className="text-xs text-gray-400">
                       {isArabic ? "تاريخ الطلب:" : "Order Date:"} {new Date(order.created_at).toLocaleDateString()}
                     </p>
-                    <Button onClick={handlePrintInvoice} className="mt-2 w-full sm:w-auto bg-[#2d5a3d] hover:bg-[#234830]">
-                      {isArabic ? "تحميل الفاتورة PDF" : "Download Invoice (PDF)"}
-                    </Button>
                   </CardContent>
                 </Card>
               </div>

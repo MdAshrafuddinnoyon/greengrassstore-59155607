@@ -7,23 +7,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MediaPicker } from "./MediaPicker";
 import { ExportButtons } from "./ExportButtons";
 import { RichTextEditor } from "./RichTextEditor";
 import { AIContentGenerator } from "./AIContentGenerator";
-import { WordPressImporter } from "./WordPressImporter";
 
 interface BlogPost {
   id: string;
@@ -47,13 +37,6 @@ export const BlogManager = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [categories, setCategories] = useState<string[]>([]);
-  const [newCategory, setNewCategory] = useState<string>("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkCategory, setBulkCategory] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -80,31 +63,8 @@ export const BlogManager = () => {
     setLoading(false);
   };
 
-  const fetchCategories = async (fallbackPosts?: BlogPost[]) => {
-    try {
-      const { data, error } = await supabase
-        .from("blog_categories")
-        .select("name")
-        .order("name", { ascending: true });
-
-      if (error) throw error;
-
-      const names = (data || []).map((c: { name: string }) => c.name).filter(Boolean);
-      setCategories(Array.from(new Set(names)));
-    } catch (err) {
-      // Fallback to categories derived from posts if dedicated table not available
-      const source = fallbackPosts || posts;
-      const derived = Array.from(new Set(source.map((p) => p.category).filter(Boolean))).sort();
-      setCategories(derived);
-    }
-  };
-
   useEffect(() => {
-    const load = async () => {
-      await fetchPosts();
-      await fetchCategories();
-    };
-    load();
+    fetchPosts();
 
     // Real-time subscription for blog posts
     const channel = supabase
@@ -122,10 +82,6 @@ export const BlogManager = () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [categoryFilter, posts.length, itemsPerPage]);
 
   const generateSlug = (title: string) => {
     return title
@@ -228,81 +184,6 @@ export const BlogManager = () => {
     setIsDialogOpen(true);
   };
 
-  const handleAddCategory = async () => {
-    const name = newCategory.trim();
-    if (!name) return;
-    try {
-      const exists = categories.includes(name);
-      if (exists) {
-        toast.info("Category already exists");
-        return;
-      }
-
-      // Try to persist to blog_categories; if table missing, ignore error but keep local
-      const { error } = await supabase
-        .from('blog_categories')
-        .insert({ name });
-
-      if (error) {
-        console.warn('blog_categories insert failed (table may not exist)', error);
-      }
-
-      setCategories((prev) => [...prev, name].sort());
-      setNewCategory("");
-      toast.success("Category added");
-    } catch (err) {
-      console.error('Category add error:', err);
-      toast.error('Failed to add category');
-    }
-  };
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(displayedPosts.map((p) => p.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const toggleRow = (id: string, checked: boolean) => {
-    setSelectedIds((prev) => checked ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id));
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedIds.length === 0) return;
-    if (!confirm(`Delete ${selectedIds.length} selected posts?`)) return;
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .in('id', selectedIds);
-
-    if (error) {
-      toast.error('Bulk delete failed');
-      console.error(error);
-    } else {
-      toast.success('Selected posts deleted');
-      setSelectedIds([]);
-      fetchPosts();
-      fetchCategories();
-    }
-  };
-
-  const handleSelectByCategory = () => {
-    if (bulkCategory === 'all') {
-      setSelectedIds(filteredPosts.map((p) => p.id));
-    } else {
-      setSelectedIds(filteredPosts.filter((p) => p.category === bulkCategory).map((p) => p.id));
-    }
-  };
-
-  const categoryOptions = categories;
-  const filteredPosts = categoryFilter === "all"
-    ? posts
-    : posts.filter((p) => p.category === categoryFilter);
-  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / itemsPerPage));
-  const pageStart = (currentPage - 1) * itemsPerPage;
-  const displayedPosts = filteredPosts.slice(pageStart, pageStart + itemsPerPage);
-
   return (
     <Card>
       <CardHeader>
@@ -311,20 +192,8 @@ export const BlogManager = () => {
             <CardTitle>Blog Posts</CardTitle>
             <CardDescription>Manage your blog content</CardDescription>
           </div>
-          <div className="flex gap-2 flex-wrap justify-end">
-            <WordPressImporter />
+          <div className="flex gap-2">
             <ExportButtons data={posts} filename="blog_posts" />
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categoryOptions.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={openNewPostDialog}>
@@ -386,17 +255,21 @@ export const BlogManager = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Category</Label>
-                    <Input
-                      list="blog-category-options"
-                      placeholder="e.g. Plant Care"
+                    <Select
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value || "General" })}
-                    />
-                    <datalist id="blog-category-options">
-                      {categoryOptions.map((cat) => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="General">General</SelectItem>
+                        <SelectItem value="Plant Care">Plant Care</SelectItem>
+                        <SelectItem value="Tips & Tricks">Tips & Tricks</SelectItem>
+                        <SelectItem value="Inspiration">Inspiration</SelectItem>
+                        <SelectItem value="News">News</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Status</Label>
@@ -451,70 +324,13 @@ export const BlogManager = () => {
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
-        ) : filteredPosts.length === 0 ? (
+        ) : posts.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">No blog posts yet</p>
         ) : (
           <div className="overflow-x-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={displayedPosts.length > 0 && displayedPosts.every((p) => selectedIds.includes(p.id))}
-                  onCheckedChange={(c) => toggleSelectAll(Boolean(c))}
-                  aria-label="Select all"
-                />
-                <span className="text-sm text-muted-foreground">Select all in view</span>
-              </div>
-              <div className="flex flex-wrap gap-2 items-center">
-                <Select value={bulkCategory} onValueChange={setBulkCategory}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categoryOptions.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm" onClick={handleSelectByCategory}>
-                  Select by Category
-                </Button>
-                <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={selectedIds.length === 0}>
-                  Delete Selected ({selectedIds.length})
-                </Button>
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="New category"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-36"
-                  />
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddCategory}>
-                    Add
-                  </Button>
-                </div>
-                <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Per page" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[5, 10, 20, 50].map((n) => (
-                      <SelectItem key={n} value={n.toString()}>{n} / page</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={displayedPosts.length > 0 && displayedPosts.every((p) => selectedIds.includes(p.id))}
-                      onCheckedChange={(c) => toggleSelectAll(Boolean(c))}
-                      aria-label="Select all"
-                    />
-                  </TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Status</TableHead>
@@ -523,15 +339,8 @@ export const BlogManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayedPosts.map((post) => (
+                {posts.map((post) => (
                   <TableRow key={post.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedIds.includes(post.id)}
-                        onCheckedChange={(c) => toggleRow(post.id, Boolean(c))}
-                        aria-label="Select row"
-                      />
-                    </TableCell>
                     <TableCell className="font-medium">{post.title}</TableCell>
                     <TableCell>{post.category}</TableCell>
                     <TableCell>
@@ -559,52 +368,6 @@ export const BlogManager = () => {
                 ))}
               </TableBody>
             </Table>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {displayedPosts.length} of {filteredPosts.length} posts
-              </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage((p) => Math.max(1, p - 1));
-                      }}
-                      aria-disabled={currentPage === 1}
-                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: totalPages }).slice(0, 5).map((_, idx) => {
-                    const pageNumber = idx + 1;
-                    if (pageNumber > totalPages) return null;
-                    return (
-                      <PaginationItem key={pageNumber}>
-                        <PaginationLink
-                          href="#"
-                          isActive={pageNumber === currentPage}
-                          onClick={(e) => { e.preventDefault(); setCurrentPage(pageNumber); }}
-                        >
-                          {pageNumber}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage((p) => Math.min(totalPages, p + 1));
-                      }}
-                      aria-disabled={currentPage === totalPages}
-                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
           </div>
         )}
       </CardContent>

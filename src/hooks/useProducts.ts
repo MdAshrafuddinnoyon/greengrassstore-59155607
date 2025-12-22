@@ -25,10 +25,12 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         .eq('is_active', true);
 
       if (options.category) {
-        query = query.eq('category', options.category);
+        // Case-insensitive category matching
+        query = query.ilike('category', options.category);
       }
       if (options.subcategory) {
-        query = query.eq('subcategory', options.subcategory);
+        // Case-insensitive subcategory matching
+        query = query.ilike('subcategory', options.subcategory);
       }
       if (options.featured) {
         query = query.eq('is_featured', true);

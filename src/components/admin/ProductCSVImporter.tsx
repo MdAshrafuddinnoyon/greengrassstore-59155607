@@ -447,11 +447,6 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
         const mainCategory = categoryParts[0] || 'general';
         const subCategory = categoryParts[1] || product.subcategory || null;
 
-        const isOnSale =
-          typeof product.is_on_sale !== 'undefined'
-            ? toBool(product.is_on_sale)
-            : !!(finalComparePrice && finalComparePrice > price);
-
         const productData = {
           name: product.name,
           name_ar: product.name_ar || null,
@@ -468,9 +463,9 @@ export const ProductCSVImporter = ({ onImportComplete }: ProductCSVImporterProps
           featured_image: product.featured_image || null,
           images: imagesArray,
           tags: tagsArray,
-          is_featured: toBool(product.is_featured),
-          is_on_sale: isOnSale,
-          is_new: toBool(product.is_new),
+          is_featured: Boolean(toBool(product.is_featured)),
+          is_on_sale: Boolean(toBool(product.is_on_sale) || (finalComparePrice && finalComparePrice > price)),
+          is_new: Boolean(toBool(product.is_new)),
           is_active: true,
           product_type: 'simple' as const,
         };

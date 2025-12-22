@@ -208,7 +208,7 @@ export const HeroSection = () => {
     const backgroundImage = slide.backgroundImage || heroBg;
 
     return (
-      <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden" dir={isArabic ? "rtl" : "ltr"}>
+      <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden">
         {/* Background Image with Animation */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -233,25 +233,17 @@ export const HeroSection = () => {
           <>
             <button
               onClick={prevSlide}
-              className={isArabic ? "absolute right-2 md:right-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors" : "absolute left-2 md:left-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors"}
-              aria-label={isArabic ? "السابق" : "Previous slide"}
+              className="absolute left-2 md:left-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors"
+              aria-label="Previous slide"
             >
-              {isArabic ? (
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              ) : (
-                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              )}
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </button>
             <button
               onClick={nextSlide}
-              className={isArabic ? "absolute left-2 md:left-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors" : "absolute right-2 md:right-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors"}
-              aria-label={isArabic ? "التالي" : "Next slide"}
+              className="absolute right-2 md:right-4 z-20 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 transition-colors"
+              aria-label="Next slide"
             >
-              {isArabic ? (
-                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              ) : (
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              )}
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </button>
           </>
         )}
@@ -335,7 +327,7 @@ export const HeroSection = () => {
     const backgroundImage = bannerSettings.backgroundImage || heroBg;
 
     return (
-      <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden" dir={isArabic ? "rtl" : "ltr"}>
+      <section className="relative min-h-[60vh] md:min-h-[85vh] flex items-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <img

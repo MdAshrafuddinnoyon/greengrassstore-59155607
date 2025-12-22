@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { FooterFeaturesBar } from "@/components/shared/FooterFeaturesBar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { useCartStore } from "@/stores/cartStore";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput, validatePhoneNumber } from "@/components/ui/phone-input";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   ShoppingCart, 
   Minus, 
@@ -20,10 +22,7 @@ import {
   ChevronRight,
   Loader2,
   ArrowLeft,
-  Package,
-  RefreshCw,
-  MapPin,
-  Percent
+  Package
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,20 +32,17 @@ const Checkout = () => {
   const { language } = useLanguage();
   const isArabic = language === "ar";
   const navigate = useNavigate();
-  const { shippingSettings, checkoutBanner, paymentGateways } = useSiteSettings();
-  const { items, updateQuantity, removeItem, clearCart, createCheckout, isLoading } = useCartStore();
+  const { shippingSettings } = useSiteSettings();
+  const { items, updateQuantity, removeItem, clearCart, isLoading } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<"online" | "whatsapp" | "home_delivery">("online");
   const [customerInfo, setCustomerInfo] = useState({
-    email: "",
     name: "",
+    email: "",
     phone: "",
     address: "",
     city: "",
     notes: "",
   });
-
-  // Create Account checkbox state
-  const [createAccount, setCreateAccount] = useState(false);
   
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -60,6 +56,44 @@ const Checkout = () => {
 
   // Privacy policy checkbox
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  
+  // Auto-fill customer info for logged-in users
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Fetch user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, phone, address, city')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (profile) {
+            setCustomerInfo(prev => ({
+              ...prev,
+              name: profile.full_name || prev.name,
+              phone: profile.phone || prev.phone,
+              address: profile.address || prev.address,
+              city: profile.city || prev.city,
+              email: user.email || prev.email,
+            }));
+          } else {
+            // Just set email from auth
+            setCustomerInfo(prev => ({
+              ...prev,
+              email: user.email || prev.email,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
@@ -154,23 +188,13 @@ const Checkout = () => {
     toast.success(isArabic ? "تم إزالة كود الخصم" : "Coupon removed");
   };
 
-  const handleShopifyCheckout = async () => {
-    try {
-      await createCheckout();
-      const checkoutUrl = useCartStore.getState().checkoutUrl;
-      if (checkoutUrl) {
-        window.open(checkoutUrl, '_blank');
-      }
-    } catch (error) {
-      toast.error(isArabic ? "فشل في إنشاء الطلب" : "Failed to create checkout");
-    }
-  };
+  // Online checkout removed - using home delivery only
 
   const generateOrderMessage = (paymentType: string) => {
     const itemsList = items.map((item, index) => 
-      `${index + 1}. ${(item.product?.node?.title || 'Unknown Product')}
-    ${item.selectedOptions.map(opt => `${opt.name}: ${opt.value}`).join(', ')}
-    Qty: ${item.quantity} × ${currency} ${parseFloat(item.price.amount).toFixed(2)} = ${currency} ${(parseFloat(item.price.amount) * item.quantity).toFixed(2)}`
+      `${index + 1}. ${item.product.name}
+   ${item.selectedOptions.map(opt => `${opt.name}: ${opt.value}`).join(', ')}
+   Qty: ${item.quantity} × ${currency} ${parseFloat(item.price.amount).toFixed(2)} = ${currency} ${(parseFloat(item.price.amount) * item.quantity).toFixed(2)}`
     ).join('\n\n');
 
     return `🛒 *New Order - Green Grass Store*
@@ -230,15 +254,15 @@ Please confirm my order. Thank you!`;
       // Create order in Supabase
       const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
       const orderItems = items.map(item => ({
-        name: item.product?.node?.title || 'Unknown Product',
+        name: item.product.name,
+        productId: item.product.id,
         options: item.selectedOptions.map(o => o.value).join(', '),
         quantity: item.quantity,
         price: parseFloat(item.price.amount),
-        total: parseFloat(item.price.amount) * item.quantity
+        total: parseFloat(item.price.amount) * item.quantity,
+        image: item.product.featured_image
       }));
 
-      const { supabase } = await import('@/integrations/supabase/client');
-      
       // Get current user for linking order
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -261,34 +285,37 @@ Please confirm my order. Thank you!`;
 
       if (error) throw error;
 
-      toast.success(isArabic ? "تم تأكيد طلبك! رقم الطلب: " + orderNumber : "Order confirmed! Order #: " + orderNumber);
-
-      // WhatsApp order confirmation notification (to admin/customer)
-      try {
-        // Send to admin WhatsApp (configurable)
-        const adminWhatsApp = "+971547751901"; // TODO: make dynamic from settings if needed
-        const adminMessage =
-          `🛒 *New Order Placed*\n\n` +
-          `Order #: ${orderNumber}\n` +
-          `Name: ${customerInfo.name}\n` +
-          `Phone: ${customerInfo.phone}\n` +
-          `Address: ${customerInfo.address}, ${customerInfo.city}\n` +
-          `Total: ${currency} ${total.toFixed(2)}\n` +
-          `---\n` +
-          `Please check the admin panel for full details.`;
-        window.open(`https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(adminMessage)}`, '_blank', 'noopener,noreferrer');
-
-        // Optionally, send to customer WhatsApp (if phone is WhatsApp-enabled)
-        // const customerMessage = isArabic
-        //   ? `شكرًا لطلبك! رقم الطلب: ${orderNumber}\nسنتواصل معك قريبًا.`
-        //   : `Thank you for your order! Order #: ${orderNumber}\nWe will contact you soon.`;
-        // window.open(`https://wa.me/${customerInfo.phone}?text=${encodeURIComponent(customerMessage)}`, '_blank', 'noopener,noreferrer');
-      } catch (err) {
-        // Ignore WhatsApp errors
+      // Reduce stock quantity for each product
+      for (const item of items) {
+        if (item.product.id) {
+          // Get current stock
+          const { data: productData } = await supabase
+            .from('products')
+            .select('stock_quantity')
+            .eq('id', item.product.id)
+            .single();
+          
+          if (productData) {
+            const newStock = Math.max(0, (productData.stock_quantity || 0) - item.quantity);
+            await supabase
+              .from('products')
+              .update({ stock_quantity: newStock })
+              .eq('id', item.product.id);
+          }
+        }
       }
 
+      // Update coupon used_count if coupon was applied
+      if (appliedCoupon) {
+        await supabase
+          .from('discount_coupons')
+          .update({ used_count: (await supabase.from('discount_coupons').select('used_count').eq('id', appliedCoupon.id).single()).data?.used_count + 1 || 1 })
+          .eq('id', appliedCoupon.id);
+      }
+
+      toast.success(isArabic ? "تم تأكيد طلبك! رقم الطلب: " + orderNumber : "Order confirmed! Order #: " + orderNumber);
       clearCart();
-      navigate('/track-order?order=' + orderNumber);
+      navigate('/thank-you?order=' + orderNumber);
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error(isArabic ? "حدث خطأ في إنشاء الطلب" : "Error creating order");
@@ -325,6 +352,7 @@ Please confirm my order. Thank you!`;
             </Link>
           </motion.div>
         </main>
+        <FooterFeaturesBar variant="light" />
         <Footer />
       </div>
     );
@@ -333,17 +361,7 @@ Please confirm my order. Thank you!`;
   return (
     <div className="min-h-screen flex flex-col bg-gray-50" dir={isArabic ? "rtl" : "ltr"}>
       <Header />
-
-      {/* Admin-configurable Checkout Banner */}
-      {checkoutBanner?.enabled && (
-        <div
-          className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-3 px-2 font-medium text-sm sm:text-base"
-          style={{ background: checkoutBanner.backgroundColor || undefined, color: checkoutBanner.textColor || undefined }}
-        >
-          {isArabic ? (checkoutBanner.textAr || checkoutBanner.text) : checkoutBanner.text}
-        </div>
-      )}
-
+      
       <main className="flex-1 pb-24 lg:pb-0">
         {/* Breadcrumb */}
         <div className="bg-white border-b">
@@ -397,28 +415,18 @@ Please confirm my order. Thank you!`;
                   {items.map((item) => (
                     <div key={item.variantId} className="py-3 sm:py-4 flex gap-3 sm:gap-4">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0">
-                        {(() => {
-                          // Try Shopify structure first
-                          const shopifyImg = item.product?.node?.images?.edges?.[0]?.node?.url;
-                          // Try local/Supabase structure
-                          const localImg = item.product?.image || item.product?.featured_image || (Array.isArray(item.product?.images) ? item.product.images[0] : undefined);
-                          const fallbackImg = item.image;
-                          const imgUrl = shopifyImg || localImg || fallbackImg;
-                          if (imgUrl) {
-                            return (
-                              <img
-                                src={imgUrl}
-                                alt={item.product?.node?.title || item.product?.name || item.title || 'Product Image'}
-                                className="w-full h-full object-cover"
-                              />
-                            );
-                          }
-                          return <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No Image</div>;
-                        })()}
+                        {item.product.featured_image && (
+                          <img
+                            src={item.product.featured_image}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                       </div>
+                      
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2">
-                          {item.product?.node?.title || item.product?.name || item.title || 'Unknown Product'}
+                          {item.product.name}
                         </h3>
                         {item.selectedOptions.length > 0 && (
                           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -434,7 +442,6 @@ Please confirm my order. Thank you!`;
                         <button
                           onClick={() => removeItem(item.variantId)}
                           className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                          title="Remove item"
                         >
                           <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
@@ -443,7 +450,6 @@ Please confirm my order. Thank you!`;
                           <button
                             onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
                             className="p-1 sm:p-1.5 hover:bg-gray-100 rounded-l-lg"
-                            title="Decrease quantity"
                           >
                             <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
@@ -453,7 +459,6 @@ Please confirm my order. Thank you!`;
                           <button
                             onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                             className="p-1 sm:p-1.5 hover:bg-gray-100 rounded-r-lg"
-                            title="Increase quantity"
                           >
                             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
@@ -464,113 +469,92 @@ Please confirm my order. Thank you!`;
                 </div>
               </motion.div>
 
-
-              {/* Customer Information - Redesigned */}
+              {/* Customer Information */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
+                className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm"
               >
-                <h2 className="text-xl font-bold mb-2 text-primary flex items-center gap-2">
-                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4">
                   {isArabic ? "معلومات العميل" : "Customer Information"}
                 </h2>
-                <p className="text-sm text-muted-foreground mb-5">
-                  {isArabic ? "يرجى تعبئة جميع الحقول المطلوبة بدقة لضمان توصيل الطلب بشكل صحيح." : "Please fill in all required fields accurately for smooth delivery."}
+                <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+                  {isArabic 
+                    ? "مطلوب للطلب عبر واتساب"
+                    : "Required for WhatsApp order"
+                  }
                 </p>
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Name */}
-                  <div className="col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {isArabic ? "الاسم الكامل" : "Full Name"} <span className="text-red-500">*</span>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-1.5 block">
+                      {isArabic ? "الاسم" : "Full Name"} *
                     </label>
                     <Input
                       value={customerInfo.name}
-                      onChange={e => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                      placeholder={isArabic ? "أدخل اسمك الكامل" : "Enter your full name"}
-                      className="h-12 text-base border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30"
-                      required
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                      placeholder={isArabic ? "أدخل اسمك" : "Enter your name"}
+                      className="text-sm"
                     />
                   </div>
-                  {/* Phone */}
-                  <div className="col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {isArabic ? "رقم الهاتف" : "Phone Number"} <span className="text-red-500">*</span>
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-1.5 block">
+                      {isArabic ? "رقم الهاتف" : "Phone"} *
                     </label>
                     <PhoneInput
                       value={customerInfo.phone}
-                      onChange={phone => setCustomerInfo({ ...customerInfo, phone })}
-                      placeholder={isArabic ? "05X XXX XXXX" : "05X XXX XXXX"}
+                      onChange={(phone) => setCustomerInfo({ ...customerInfo, phone })}
+                      placeholder="XX XXX XXXX"
                       defaultCountry="+971"
-                      className="h-12 text-base border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30"
-                      required
                     />
                   </div>
-                  {/* Email */}
-                  <div className="col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-1.5 block">
                       {isArabic ? "البريد الإلكتروني" : "Email"}
                     </label>
                     <Input
                       type="email"
                       value={customerInfo.email}
-                      onChange={e => setCustomerInfo({ ...customerInfo, email: e.target.value })}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                       placeholder={isArabic ? "بريدك الإلكتروني" : "your@email.com"}
-                      className="h-12 text-base border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                      className="text-sm"
                     />
                   </div>
-                  {/* City */}
-                  <div className="col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-1.5 block">
                       {isArabic ? "المدينة" : "City"}
                     </label>
                     <Input
                       value={customerInfo.city}
-                      onChange={e => setCustomerInfo({ ...customerInfo, city: e.target.value })}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, city: e.target.value })}
                       placeholder={isArabic ? "دبي، أبوظبي..." : "Dubai, Abu Dhabi..."}
-                      className="h-12 text-base border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                      className="text-sm"
                     />
                   </div>
-                  {/* Address */}
-                  <div className="col-span-1 md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {isArabic ? "العنوان الكامل" : "Full Address"} <span className="text-red-500">*</span>
+                  <div className="col-span-1 sm:col-span-2">
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-1.5 block">
+                      {isArabic ? "العنوان" : "Address"}
                     </label>
                     <Input
                       value={customerInfo.address}
-                      onChange={e => setCustomerInfo({ ...customerInfo, address: e.target.value })}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
                       placeholder={isArabic ? "عنوان التوصيل الكامل" : "Full delivery address"}
-                      className="h-12 text-base border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30"
-                      required
+                      className="text-sm"
                     />
                   </div>
-                  {/* Notes */}
-                  <div className="col-span-1 md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {isArabic ? "ملاحظات إضافية" : "Additional Notes"}
+                  <div className="col-span-1 sm:col-span-2">
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-1.5 block">
+                      {isArabic ? "ملاحظات" : "Notes"}
                     </label>
                     <Input
                       value={customerInfo.notes}
-                      onChange={e => setCustomerInfo({ ...customerInfo, notes: e.target.value })}
-                      placeholder={isArabic ? "أي تعليمات خاصة للتوصيل؟" : "Any special delivery instructions?"}
-                      className="h-12 text-base border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, notes: e.target.value })}
+                      placeholder={isArabic ? "ملاحظات إضافية للتوصيل" : "Additional delivery notes"}
+                      className="text-sm"
                     />
                   </div>
-                  {/* Create Account checkbox */}
-                  <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-2">
-                    <input
-                      type="checkbox"
-                      id="create-account"
-                      checked={createAccount}
-                      onChange={e => setCreateAccount(e.target.checked)}
-                      className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="create-account" className="text-sm text-gray-700 select-none">
-                      {isArabic ? "إنشاء حساب جديد (اختياري)" : "Create an account (optional)"}
-                    </label>
-                  </div>
-                </form>
+                </div>
               </motion.div>
             </div>
 
@@ -665,48 +649,46 @@ Please confirm my order. Thank you!`;
                   </div>
                 </div>
 
-
                 {/* Payment Method Selection */}
                 <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
                   <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                     {isArabic ? "طريقة الدفع" : "Payment Method"}
                   </h3>
-                  {/* Dynamically render enabled payment gateways */}
-                  {paymentGateways && paymentGateways.filter(gw => gw.enabled && (gw.type === 'card' || gw.type === 'paypal' || gw.type === 'payoneer' || gw.type === 'bank')).map(gw => (
-                    <label
-                      key={gw.type}
-                      className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                        paymentMethod === "online"
-                          ? "border-[#2d5a3d] bg-[#2d5a3d]/5"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "online"}
-                        onChange={() => setPaymentMethod("online")}
-                        className="w-4 h-4 text-[#2d5a3d] flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                          <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-                          <span className="font-medium text-sm sm:text-base">
-                            {gw.displayName || (isArabic ? "الدفع الإلكتروني" : "Pay Online")}
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 truncate">
-                          {isArabic ? "بطاقة ائتمان / Apple Pay" : "Credit Card / Apple Pay"}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
+                  
 
-                  {/* WhatsApp Order Option (always available) */}
-                  <label
+                  {/* Online Payment Option */}
+                  <label 
                     className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      paymentMethod === "whatsapp"
-                        ? "border-[#25D366] bg-[#25D366]/5"
+                      paymentMethod === "online" 
+                        ? "border-[#2d5a3d] bg-[#2d5a3d]/5" 
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === "online"}
+                      onChange={() => setPaymentMethod("online")}
+                      className="w-4 h-4 text-[#2d5a3d] flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium text-sm sm:text-base">
+                          {isArabic ? "الدفع الإلكتروني" : "Pay Online"}
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 truncate">
+                        {isArabic ? "بطاقة ائتمان / Apple Pay" : "Credit Card / Apple Pay"}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* WhatsApp Order Option */}
+                  <label 
+                    className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      paymentMethod === "whatsapp" 
+                        ? "border-[#25D366] bg-[#25D366]/5" 
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -732,35 +714,33 @@ Please confirm my order. Thank you!`;
                     </div>
                   </label>
 
-                  {/* Home Delivery Option (COD) - only if enabled in paymentGateways */}
-                  {paymentGateways && paymentGateways.some(gw => gw.enabled && gw.type === 'cod') && (
-                    <label
-                      className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                        paymentMethod === "home_delivery"
-                          ? "border-amber-500 bg-amber-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "home_delivery"}
-                        onChange={() => setPaymentMethod("home_delivery")}
-                        className="w-4 h-4 text-amber-500 flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                          <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 flex-shrink-0" />
-                          <span className="font-medium text-sm sm:text-base">
-                            {isArabic ? "الدفع عند الاستلام" : "Cash on Delivery"}
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 truncate">
-                          {isArabic ? "ادفع نقداً عند استلام الطلب" : "Pay when you receive"}
-                        </p>
+                  {/* Home Delivery Option */}
+                  <label 
+                    className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      paymentMethod === "home_delivery" 
+                        ? "border-amber-500 bg-amber-50" 
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === "home_delivery"}
+                      onChange={() => setPaymentMethod("home_delivery")}
+                      className="w-4 h-4 text-amber-500 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 flex-shrink-0" />
+                        <span className="font-medium text-sm sm:text-base">
+                          {isArabic ? "الدفع عند الاستلام" : "Cash on Delivery"}
+                        </span>
                       </div>
-                    </label>
-                  )}
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 truncate">
+                        {isArabic ? "ادفع نقداً عند استلام الطلب" : "Pay when you receive"}
+                      </p>
+                    </div>
+                  </label>
 
                   {/* Privacy Policy Checkbox */}
                   <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg">
@@ -801,7 +781,6 @@ Please confirm my order. Thank you!`;
                   {/* Place Order Button */}
                   <Button
                     onClick={
-                      paymentMethod === "online" ? handleShopifyCheckout : 
                       paymentMethod === "home_delivery" ? handleHomeDeliveryOrder :
                       handleWhatsAppOrder
                     }
@@ -843,93 +822,28 @@ Please confirm my order. Thank you!`;
                   )}
                 </div>
 
-                {/* Trust Badges removed: now only dynamic Footer Features bar is shown below */}
+                {/* Trust Badges */}
+                <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t space-y-2 sm:space-y-3">
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Truck className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+                    </div>
+                    <span>{isArabic ? "توصيل مجاني فوق 200 درهم" : "Free delivery above AED 200"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                    </div>
+                    <span>{isArabic ? "دفع آمن 100%" : "100% Secure Payment"}</span>
+                  </div>
+                </div>
               </motion.div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Dynamic Footer Features Bar (same as Footer) */}
-      <div className="border-b border-white/10 bg-white">
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {Array.isArray(useSiteSettings().footerFeatures) && useSiteSettings().footerFeatures.length > 0 ? (
-              useSiteSettings().footerFeatures.filter(f => f.enabled).map((feature) => {
-                // Use same icon logic as Footer
-                const getFeatureIcon = (iconName: string) => {
-                  switch (iconName) {
-                    case 'truck': return Truck;
-                    case 'rotate': return RefreshCw;
-                    case 'credit-card': return CreditCard;
-                    case 'map-pin': return MapPin;
-                    case 'percent': return Percent;
-                    default: return Truck;
-                  }
-                };
-                const getFeatureIconColor = (iconName: string) => {
-                  switch (iconName) {
-                    case 'truck': return 'text-amber-500';
-                    case 'rotate': return 'text-blue-400';
-                    case 'credit-card': return 'text-yellow-400';
-                    case 'map-pin': return 'text-pink-400';
-                    case 'percent': return 'text-green-400';
-                    default: return 'text-amber-500';
-                  }
-                };
-                const IconComponent = getFeatureIcon(feature.icon);
-                const iconColor = getFeatureIconColor(feature.icon);
-                return (
-                  <div key={feature.id} className="flex items-start gap-3">
-                    <IconComponent className={`w-5 h-5 ${iconColor} flex-shrink-0 mt-0.5`} />
-                    <div>
-                      <h4 className="font-semibold text-sm">
-                        {isArabic ? feature.titleAr : feature.title}
-                      </h4>
-                      <p className="text-gray-400 text-xs mt-0.5">
-                        {isArabic ? feature.descriptionAr : feature.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              // Fallback static features
-              <>
-                <div className="flex items-start gap-3">
-                  <Truck className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-sm">{isArabic ? "توصيل مجاني" : "Free Delivery"}</h4>
-                    <p className="text-gray-400 text-xs mt-0.5">{isArabic ? "توصيل مجاني للطلبات فوق 300 درهم" : "Free Delivery On Orders Over 300 AED"}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <RefreshCw className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-sm">{isArabic ? "إرجاع سهل" : "Hassle-Free Returns"}</h4>
-                    <p className="text-gray-400 text-xs mt-0.5">{isArabic ? "خلال 7 أيام من التسليم" : "Within 7 days of delivery."}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CreditCard className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-sm">{isArabic ? "أقساط سهلة" : "Easy Installments"}</h4>
-                    <p className="text-gray-400 text-xs mt-0.5">{isArabic ? "ادفع لاحقاً مع تابي" : "Pay Later with tabby."}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-pink-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-sm">{isArabic ? "زورنا في المتجر" : "Visit Us In-Store"}</h4>
-                    <p className="text-gray-400 text-xs mt-0.5">{isArabic ? "في أبوظبي ودبي" : "In Abu Dhabi and Dubai."}</p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
+      <FooterFeaturesBar variant="light" />
       <Footer />
     </div>
   );
