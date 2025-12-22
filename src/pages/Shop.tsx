@@ -418,67 +418,69 @@ export default function Shop() {
             <div className="flex-1 min-w-0">
               {/* Top Bar */}
               <div className="bg-background rounded-xl shadow-sm p-4 mb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  {/* Search */}
-                  <form onSubmit={handleSearch} className="flex-1 max-w-md">
-                    <div className="relative">
-                      <input
-                        id="shop-search-input"
-                        type="text"
-                        placeholder={isArabic ? "البحث حسب الاسم، الفئة..." : "Search by name, category..."}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-4 pr-12 py-3 bg-muted border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      />
-                      <button 
-                        type="submit"
-                        disabled={isSearching}
-                        className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                      >
-                        {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {/* Mobile-optimized layout */}
+              <div className="flex flex-col gap-3">
+                {/* Search - Full width on mobile */}
+                <form onSubmit={handleSearch} className="w-full">
+                  <div className="relative">
+                    <input
+                      id="shop-search-input"
+                      type="text"
+                      placeholder={isArabic ? "البحث حسب الاسم، الفئة..." : "Search by name, category..."}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-4 pr-12 py-2.5 sm:py-3 bg-muted border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={isSearching}
+                      className="absolute right-1.5 top-1.5 bottom-1.5 px-3 sm:px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Filter & Sort Row - Compact on mobile */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Mobile Filter Button */}
+                  <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                    <SheetTrigger asChild>
+                      <button className="lg:hidden flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-muted rounded-xl text-xs sm:text-sm font-medium hover:bg-muted/80 transition-colors">
+                        <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden xs:inline">{isArabic ? "فلترة" : "Filters"}</span>
+                        {activeFiltersCount > 0 && (
+                          <span className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-[10px] sm:text-xs min-w-[18px] text-center">
+                            {activeFiltersCount}
+                          </span>
+                        )}
                       </button>
-                    </div>
-                  </form>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[280px] sm:w-[320px] p-0">
+                      <SheetHeader className="p-3 sm:p-4 border-b">
+                        <SheetTitle className="text-base sm:text-lg">{isArabic ? "فلترة" : "Filters"}</SheetTitle>
+                      </SheetHeader>
+                      <div className="p-3 sm:p-4 overflow-y-auto max-h-[calc(100vh-80px)]">
+                        <FilterSidebar />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
 
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {/* Mobile Filter Button */}
-                    <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                      <SheetTrigger asChild>
-                        <button className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-muted rounded-xl text-sm font-medium hover:bg-muted/80 transition-colors">
-                          <SlidersHorizontal className="w-4 h-4" />
-                          {isArabic ? "فلترة" : "Filters"}
-                          {activeFiltersCount > 0 && (
-                            <span className="ml-1 px-2 py-0.5 bg-primary text-primary-foreground rounded-full text-xs">
-                              {activeFiltersCount}
-                            </span>
-                          )}
-                        </button>
-                      </SheetTrigger>
-                      <SheetContent side="left" className="w-[320px] p-0">
-                        <SheetHeader className="p-4 border-b">
-                          <SheetTitle>{isArabic ? "فلترة" : "Filters"}</SheetTitle>
-                        </SheetHeader>
-                        <div className="p-4 overflow-y-auto max-h-[calc(100vh-80px)]">
-                          <FilterSidebar />
-                        </div>
-                      </SheetContent>
-                    </Sheet>
-
-                    {/* Sort */}
-                    <div className="relative">
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="appearance-none bg-muted px-4 py-2.5 pr-10 rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      >
-                        {sortOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    </div>
+                  {/* Sort - Compact on mobile */}
+                  <div className="relative flex-1 sm:flex-none">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full sm:w-auto appearance-none bg-muted px-3 sm:px-4 py-2 sm:py-2.5 pr-8 sm:pr-10 rounded-xl text-xs sm:text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {sortOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground pointer-events-none" />
+                  </div>
 
                     {/* Grid View Toggle - Desktop only */}
                     <div className="hidden md:flex items-center border border-border rounded-xl p-1 bg-muted/50">
@@ -504,29 +506,29 @@ export default function Shop() {
                   </div>
                 </div>
 
-                {/* Active Filters Pills */}
+                {/* Active Filters Pills - More compact on mobile */}
                 {activeFiltersCount > 0 && (
-                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border flex-wrap">
-                    <span className="text-sm text-muted-foreground">{isArabic ? "فلاتر نشطة:" : "Active filters:"}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border flex-wrap">
+                    <span className="text-xs sm:text-sm text-muted-foreground w-full sm:w-auto mb-1 sm:mb-0">{isArabic ? "فلاتر نشطة:" : "Active filters:"}</span>
                     {selectedCategory !== "all" && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                        {categoryOptions.find(c => c.key === selectedCategory)?.label}
-                        <button onClick={() => handleCategoryChange("all")}>
+                      <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-primary/10 text-primary rounded-full text-xs sm:text-sm">
+                        <span className="max-w-[80px] sm:max-w-none truncate">{categoryOptions.find(c => c.key === selectedCategory)?.label}</span>
+                        <button onClick={() => handleCategoryChange("all")} className="shrink-0">
                           <X className="w-3 h-3" />
                         </button>
                       </span>
                     )}
                     {(priceRange[0] > 0 || priceRange[1] < maxPrice) && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                      <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-primary/10 text-primary rounded-full text-xs sm:text-sm">
                         AED {priceRange[0]} - {priceRange[1]}
-                        <button onClick={() => setPriceRange([0, maxPrice])}>
+                        <button onClick={() => setPriceRange([0, maxPrice])} className="shrink-0">
                           <X className="w-3 h-3" />
                         </button>
                       </span>
                     )}
                     <button
                       onClick={handleClearAll}
-                      className="text-sm text-muted-foreground hover:text-foreground underline"
+                      className="text-xs sm:text-sm text-muted-foreground hover:text-foreground underline"
                     >
                       {isArabic ? "مسح الكل" : "Clear all"}
                     </button>
