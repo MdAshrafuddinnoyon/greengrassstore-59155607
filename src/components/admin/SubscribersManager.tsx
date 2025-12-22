@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ExportButtons } from "./ExportButtons";
-import { Loader2, Mail, Search, Download, Trash2, RefreshCw, Users } from "lucide-react";
+import { Loader2, Mail, Search, Trash2, RefreshCw, Users } from "lucide-react";
 
 interface Subscriber {
   id: string;
@@ -22,6 +23,7 @@ export const SubscribersManager = () => {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const fetchSubscribers = async () => {
     setLoading(true);
@@ -44,21 +46,12 @@ export const SubscribersManager = () => {
   useEffect(() => {
     fetchSubscribers();
 
-    // Real-time subscription for newsletter subscribers
     const channel = supabase
       .channel('admin-subscribers-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'newsletter_subscribers' },
-        () => {
-          fetchSubscribers();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'newsletter_subscribers' }, () => fetchSubscribers())
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
@@ -69,10 +62,7 @@ export const SubscribersManager = () => {
         .eq('id', id);
 
       if (error) throw error;
-      
-      setSubscribers(prev => 
-        prev.map(sub => sub.id === id ? { ...sub, is_active: !currentStatus } : sub)
-      );
+      setSubscribers(prev => prev.map(sub => sub.id === id ? { ...sub, is_active: !currentStatus } : sub));
       toast.success('Subscriber status updated');
     } catch (error) {
       console.error('Error updating subscriber:', error);
@@ -84,13 +74,8 @@ export const SubscribersManager = () => {
     if (!confirm('Are you sure you want to delete this subscriber?')) return;
     
     try {
-      const { error } = await supabase
-        .from('newsletter_subscribers')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('newsletter_subscribers').delete().eq('id', id);
       if (error) throw error;
-      
       setSubscribers(prev => prev.filter(sub => sub.id !== id));
       toast.success('Subscriber deleted');
     } catch (error) {
@@ -99,28 +84,71 @@ export const SubscribersManager = () => {
     }
   };
 
-  const exportCSV = () => {
-    const activeSubscribers = subscribers.filter(s => s.is_active);
-    const csv = [
-      ['Email', 'Subscribed At', 'Source'],
-      ...activeSubscribers.map(s => [s.email, s.subscribed_at, s.source])
-    ].map(row => row.join(',')).join('\n');
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Delete ${selectedIds.length} subscribers?`)) return;
+    
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').delete().in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} subscribers deleted`);
+      setSelectedIds([]);
+      fetchSubscribers();
+    } catch (error) {
+      toast.error('Failed to delete subscribers');
+    }
+  };
 
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `subscribers-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    toast.success('Subscribers exported');
+  const handleBulkToggleActive = async (active: boolean) => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').update({ is_active: active }).in('id', selectedIds);
+      if (error) throw error;
+      toast.success(`${selectedIds.length} subscribers ${active ? 'activated' : 'deactivated'}`);
+      setSelectedIds([]);
+      fetchSubscribers();
+    } catch (error) {
+      toast.error('Failed to update subscribers');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredSubscribers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredSubscribers.map(s => s.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
   };
 
   const filteredSubscribers = subscribers.filter(sub =>
     sub.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const activeCount = subscribers.filter(s => s.is_active).length;
+  // Keyboard shortcuts for bulk selection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'a' && (e.ctrlKey || e.metaKey) && filteredSubscribers.length > 0) {
+        e.preventDefault();
+        setSelectedIds(filteredSubscribers.map(s => s.id));
+      }
+      if (e.key === 'Escape') {
+        setSelectedIds([]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filteredSubscribers]);
 
+  const activeCount = subscribers.filter(s => s.is_active).length;
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -132,7 +160,7 @@ export const SubscribersManager = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -140,7 +168,7 @@ export const SubscribersManager = () => {
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Subscribers</p>
+                <p className="text-sm text-muted-foreground">Total</p>
                 <p className="text-2xl font-bold text-blue-700">{subscribers.length}</p>
               </div>
             </div>
@@ -181,28 +209,35 @@ export const SubscribersManager = () => {
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                 <Mail className="w-5 h-5 text-primary" />
                 Newsletter Subscribers
               </CardTitle>
-              <CardDescription>
-                Manage newsletter subscriber emails
-              </CardDescription>
+              <CardDescription>Manage newsletter subscriber emails</CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={fetchSubscribers}>
                 <RefreshCw className="w-4 h-4 mr-1" />
-                Refresh
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
-              <ExportButtons 
-                data={subscribers} 
-                filename={`subscribers-${new Date().toISOString().split('T')[0]}`}
-                label="Export"
-              />
+              <ExportButtons data={subscribers} filename={`subscribers-${new Date().toISOString().split('T')[0]}`} label="Export" />
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Bulk Actions */}
+          {selectedIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg mb-4">
+              <span className="text-sm font-medium">{selectedIds.length} selected</span>
+              <Button size="sm" variant="outline" onClick={() => handleBulkToggleActive(true)}>Activate</Button>
+              <Button size="sm" variant="outline" onClick={() => handleBulkToggleActive(false)}>Deactivate</Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                <Trash2 className="w-4 h-4 mr-1" />Delete
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>Clear</Button>
+            </div>
+          )}
+
           {/* Search */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -215,13 +250,19 @@ export const SubscribersManager = () => {
           </div>
 
           {/* Table */}
-          <div className="rounded-lg border overflow-hidden">
+          <div className="rounded-lg border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedIds.length === filteredSubscribers.length && filteredSubscribers.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Subscribed</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead className="hidden sm:table-cell">Subscribed</TableHead>
+                  <TableHead className="hidden md:table-cell">Source</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -229,21 +270,25 @@ export const SubscribersManager = () => {
               <TableBody>
                 {filteredSubscribers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No subscribers found
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredSubscribers.map((subscriber) => (
                     <TableRow key={subscriber.id}>
-                      <TableCell className="font-medium">{subscriber.email}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedIds.includes(subscriber.id)}
+                          onCheckedChange={() => toggleSelectOne(subscriber.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">{subscriber.email}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground hidden sm:table-cell">
                         {new Date(subscriber.subscribed_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {subscriber.source}
-                        </Badge>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline" className="text-xs">{subscriber.source}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -251,7 +296,7 @@ export const SubscribersManager = () => {
                             checked={subscriber.is_active}
                             onCheckedChange={() => toggleActive(subscriber.id, subscriber.is_active)}
                           />
-                          <Badge variant={subscriber.is_active ? "default" : "secondary"}>
+                          <Badge variant={subscriber.is_active ? "default" : "secondary"} className="hidden sm:inline-flex">
                             {subscriber.is_active ? "Active" : "Inactive"}
                           </Badge>
                         </div>
@@ -272,6 +317,7 @@ export const SubscribersManager = () => {
               </TableBody>
             </Table>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">Tip: Use Ctrl+A to select all, Escape to clear selection</p>
         </CardContent>
       </Card>
     </div>

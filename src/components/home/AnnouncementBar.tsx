@@ -1,17 +1,63 @@
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+
+interface AnnouncementSettings {
+  enabled: boolean;
+  text: string;
+  textAr: string;
+  backgroundColor: string;
+  textColor: string;
+}
 
 export const AnnouncementBar = () => {
-  const [isVisible, setIsVisible] = useState(true);
-  const { t } = useLanguage();
+  const [isVisible, setIsVisible] = useState(false);
+  const [settings, setSettings] = useState<AnnouncementSettings | null>(null);
+  const { language, t } = useLanguage();
+  const isArabic = language === "ar";
 
-  if (!isVisible) return null;
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('setting_value')
+          .eq('setting_key', 'announcement_bar')
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching announcement:', error);
+          return;
+        }
+
+        if (data?.setting_value) {
+          const announcementSettings = data.setting_value as unknown as AnnouncementSettings;
+          setSettings(announcementSettings);
+          setIsVisible(announcementSettings.enabled);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  if (!isVisible || !settings?.enabled) return null;
+
+  const displayText = isArabic ? (settings.textAr || settings.text) : settings.text;
 
   return (
-    <div className="bg-primary text-primary-foreground text-xs py-2 relative">
+    <div 
+      className="text-xs py-2 relative"
+      style={{ 
+        backgroundColor: settings.backgroundColor || 'hsl(var(--primary))',
+        color: settings.textColor || 'hsl(var(--primary-foreground))'
+      }}
+    >
       <div className="container mx-auto px-4 text-center">
-        <span>{t("announcement.freeDelivery")}</span>
+        <span>{displayText || t("announcement.freeDelivery")}</span>
       </div>
       <button
         onClick={() => setIsVisible(false)}

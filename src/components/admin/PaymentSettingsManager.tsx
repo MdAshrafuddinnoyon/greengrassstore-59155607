@@ -17,7 +17,9 @@ import {
   Globe, 
   ExternalLink,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Truck,
+  MessageCircle
 } from "lucide-react";
 
 interface PayPalSettings {
@@ -49,6 +51,20 @@ interface StripeSettings {
   publishableKey: string;
   secretKey: string;
   webhookSecret: string;
+}
+
+interface CODSettings {
+  enabled: boolean;
+  label: string;
+  labelAr: string;
+  instructions: string;
+}
+
+interface WhatsAppSettings {
+  enabled: boolean;
+  phoneNumber: string;
+  label: string;
+  labelAr: string;
 }
 
 export const PaymentSettingsManager = () => {
@@ -86,6 +102,20 @@ export const PaymentSettingsManager = () => {
     webhookSecret: ""
   });
 
+  const [codSettings, setCodSettings] = useState<CODSettings>({
+    enabled: true,
+    label: "Cash on Delivery",
+    labelAr: "الدفع عند الاستلام",
+    instructions: "Pay in cash when your order is delivered to your doorstep."
+  });
+
+  const [whatsappSettings, setWhatsappSettings] = useState<WhatsAppSettings>({
+    enabled: true,
+    phoneNumber: "+971547751901",
+    label: "Order via WhatsApp",
+    labelAr: "اطلب عبر واتساب"
+  });
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -105,6 +135,10 @@ export const PaymentSettingsManager = () => {
           setBankSettings(value as unknown as BankTransferSettings);
         } else if (setting.setting_key === 'stripe_settings') {
           setStripeSettings(value as unknown as StripeSettings);
+        } else if (setting.setting_key === 'cod_settings') {
+          setCodSettings(value as unknown as CODSettings);
+        } else if (setting.setting_key === 'whatsapp_settings') {
+          setWhatsappSettings(value as unknown as WhatsAppSettings);
         }
       });
     } catch (error) {
@@ -170,25 +204,180 @@ export const PaymentSettingsManager = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="paypal" className="space-y-4">
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="paypal" className="gap-2">
-                <Globe className="w-4 h-4" />
-                PayPal
+          <Tabs defaultValue="cod" className="space-y-4">
+            <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full h-auto gap-1">
+              <TabsTrigger value="cod" className="gap-1 text-xs sm:text-sm py-2">
+                <Truck className="w-4 h-4" />
+                <span className="hidden sm:inline">COD</span>
               </TabsTrigger>
-              <TabsTrigger value="stripe" className="gap-2">
+              <TabsTrigger value="whatsapp" className="gap-1 text-xs sm:text-sm py-2">
+                <MessageCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">WhatsApp</span>
+              </TabsTrigger>
+              <TabsTrigger value="paypal" className="gap-1 text-xs sm:text-sm py-2">
+                <Globe className="w-4 h-4" />
+                <span className="hidden sm:inline">PayPal</span>
+              </TabsTrigger>
+              <TabsTrigger value="stripe" className="gap-1 text-xs sm:text-sm py-2">
                 <CreditCard className="w-4 h-4" />
-                Stripe
+                <span className="hidden sm:inline">Stripe</span>
               </TabsTrigger>
-              <TabsTrigger value="payoneer" className="gap-2">
+              <TabsTrigger value="payoneer" className="gap-1 text-xs sm:text-sm py-2">
                 <Globe className="w-4 h-4" />
-                Payoneer
+                <span className="hidden sm:inline">Payoneer</span>
               </TabsTrigger>
-              <TabsTrigger value="bank" className="gap-2">
+              <TabsTrigger value="bank" className="gap-1 text-xs sm:text-sm py-2">
                 <Building2 className="w-4 h-4" />
-                Bank Transfer
+                <span className="hidden sm:inline">Bank</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Cash on Delivery Settings */}
+            <TabsContent value="cod">
+              <Card className="border-green-200">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Truck className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Cash on Delivery</CardTitle>
+                        <CardDescription>Accept payment upon delivery</CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {codSettings.enabled ? (
+                        <Badge className="bg-green-100 text-green-700">
+                          <CheckCircle className="w-3 h-3 mr-1" /> Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <AlertCircle className="w-3 h-3 mr-1" /> Inactive
+                        </Badge>
+                      )}
+                      <Switch
+                        checked={codSettings.enabled}
+                        onCheckedChange={(checked) => 
+                          setCodSettings(prev => ({ ...prev, enabled: checked }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Label (EN)</Label>
+                      <Input
+                        value={codSettings.label}
+                        onChange={(e) => setCodSettings(prev => ({ ...prev, label: e.target.value }))}
+                        placeholder="Cash on Delivery"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Label (AR)</Label>
+                      <Input
+                        value={codSettings.labelAr}
+                        onChange={(e) => setCodSettings(prev => ({ ...prev, labelAr: e.target.value }))}
+                        dir="rtl"
+                        placeholder="الدفع عند الاستلام"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Instructions</Label>
+                    <Textarea
+                      value={codSettings.instructions}
+                      onChange={(e) => setCodSettings(prev => ({ ...prev, instructions: e.target.value }))}
+                      placeholder="Instructions for customers..."
+                      rows={2}
+                    />
+                  </div>
+                  <Button 
+                    onClick={() => saveSettings('cod_settings', codSettings)}
+                    disabled={saving}
+                    className="w-full"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save COD Settings
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* WhatsApp Settings */}
+            <TabsContent value="whatsapp">
+              <Card className="border-green-200">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <MessageCircle className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">WhatsApp Orders</CardTitle>
+                        <CardDescription>Accept orders via WhatsApp</CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {whatsappSettings.enabled ? (
+                        <Badge className="bg-green-100 text-green-700">
+                          <CheckCircle className="w-3 h-3 mr-1" /> Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <AlertCircle className="w-3 h-3 mr-1" /> Inactive
+                        </Badge>
+                      )}
+                      <Switch
+                        checked={whatsappSettings.enabled}
+                        onCheckedChange={(checked) => 
+                          setWhatsappSettings(prev => ({ ...prev, enabled: checked }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>WhatsApp Number</Label>
+                    <Input
+                      value={whatsappSettings.phoneNumber}
+                      onChange={(e) => setWhatsappSettings(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                      placeholder="+971547751901"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Label (EN)</Label>
+                      <Input
+                        value={whatsappSettings.label}
+                        onChange={(e) => setWhatsappSettings(prev => ({ ...prev, label: e.target.value }))}
+                        placeholder="Order via WhatsApp"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Label (AR)</Label>
+                      <Input
+                        value={whatsappSettings.labelAr}
+                        onChange={(e) => setWhatsappSettings(prev => ({ ...prev, labelAr: e.target.value }))}
+                        dir="rtl"
+                        placeholder="اطلب عبر واتساب"
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => saveSettings('whatsapp_settings', whatsappSettings)}
+                    disabled={saving}
+                    className="w-full"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save WhatsApp Settings
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* PayPal Settings */}
             <TabsContent value="paypal">

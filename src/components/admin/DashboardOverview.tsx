@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Users, TrendingUp, ShoppingBag, Package, Receipt, Plus, Eye, BarChart3, MessageSquare, FolderOpen, Megaphone } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Users, TrendingUp, ShoppingBag, Package, Receipt, Plus, Eye, BarChart3, MessageSquare, FolderOpen, Megaphone, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 interface Stats {
   totalPosts: number;
@@ -14,6 +16,23 @@ interface Stats {
   totalOrders: number;
   pendingOrders: number;
   totalCategories: number;
+}
+
+interface RecentOrder {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  total: number;
+  status: string;
+  created_at: string;
+}
+
+interface RecentRequest {
+  id: string;
+  title: string;
+  name: string;
+  status: string;
+  created_at: string;
 }
 
 interface DashboardOverviewProps {
@@ -33,6 +52,8 @@ export const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     pendingOrders: 0,
     totalCategories: 0,
   });
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [recentRequests, setRecentRequests] = useState<RecentRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -90,6 +111,20 @@ export const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
           .from("categories")
           .select("*", { count: "exact", head: true });
 
+        // Fetch recent orders
+        const { data: ordersData } = await supabase
+          .from("orders")
+          .select("id, order_number, customer_name, total, status, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        // Fetch recent requests
+        const { data: requestsData } = await supabase
+          .from("custom_requirements")
+          .select("id, title, name, status, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
         setStats({
           totalPosts: totalPosts || 0,
           publishedPosts: publishedPosts || 0,
@@ -102,6 +137,9 @@ export const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
           pendingOrders: pendingOrders || 0,
           totalCategories: totalCategories || 0,
         });
+
+        setRecentOrders(ordersData || []);
+        setRecentRequests(requestsData || []);
       } catch (error) {
         console.error("Error fetching stats:", error);
       } finally {
@@ -214,23 +252,33 @@ export const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-700';
+      case 'processing': return 'bg-blue-100 text-blue-700';
+      case 'completed': case 'delivered': return 'bg-green-100 text-green-700';
+      case 'cancelled': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         {statCards.map((stat, index) => (
           <Card key={index} className={`bg-gradient-to-br ${stat.bgGradient} border-0 shadow-sm hover:shadow-md transition-shadow`}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 p-3 md:p-4">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground truncate">
                 {stat.title}
               </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.color}`}>
-                <stat.icon className="w-4 h-4 text-white" />
+              <div className={`p-1.5 md:p-2 rounded-lg ${stat.color}`}>
+                <stat.icon className="w-3 h-3 md:w-4 md:h-4 text-white" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{loading ? "..." : stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">{stat.subtext}</p>
+            <CardContent className="p-3 md:p-4 pt-0">
+              <div className="text-xl md:text-2xl font-bold">{loading ? "..." : stat.value}</div>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1 truncate">{stat.subtext}</p>
             </CardContent>
           </Card>
         ))}
@@ -238,24 +286,24 @@ export const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
 
       {/* Quick Actions */}
       <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <TrendingUp className="w-5 h-5 text-primary" />
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-primary" />
             Quick Actions
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <CardContent className="p-4 md:p-6 pt-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
             {quickActions.map((action, index) => (
               <button
                 key={index}
                 onClick={() => handleQuickAction(action.tab)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl ${action.color} text-white transition-all hover:scale-105 shadow-lg`}
+                className={`flex flex-col items-center gap-1 md:gap-2 p-3 md:p-4 rounded-xl ${action.color} text-white transition-all hover:scale-105 shadow-lg`}
               >
-                <action.icon className="w-6 h-6" />
+                <action.icon className="w-5 h-5 md:w-6 md:h-6" />
                 <div className="text-center">
-                  <span className="text-sm font-semibold block">{action.title}</span>
-                  <span className="text-xs text-white/80">{action.description}</span>
+                  <span className="text-xs md:text-sm font-semibold block">{action.title}</span>
+                  <span className="text-[10px] md:text-xs text-white/80 hidden sm:block">{action.description}</span>
                 </div>
               </button>
             ))}
@@ -263,47 +311,90 @@ export const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         </CardContent>
       </Card>
 
-      {/* Recent Activity Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Recent Orders */}
         <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Receipt className="w-5 h-5 text-blue-500" />
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <Receipt className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
               Recent Orders
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>View orders tab for detailed order management</p>
-              <button
-                onClick={() => handleQuickAction("orders")}
-                className="mt-3 text-sm text-primary hover:underline"
-              >
-                Go to Orders →
-              </button>
-            </div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            {recentOrders.length === 0 ? (
+              <div className="text-center py-6 md:py-8 text-muted-foreground">
+                <Receipt className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No orders yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-2 md:p-3 bg-muted/30 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{order.order_number}</p>
+                      <p className="text-xs text-muted-foreground truncate">{order.customer_name}</p>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      <Badge className={`text-[10px] ${getStatusColor(order.status)}`}>
+                        {order.status}
+                      </Badge>
+                      <span className="text-xs font-semibold">AED {Number(order.total).toFixed(0)}</span>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => handleQuickAction("orders")}
+                  className="w-full mt-2 text-sm text-primary hover:underline flex items-center justify-center gap-1"
+                >
+                  View All Orders →
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Recent Requests */}
         <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <MessageSquare className="w-5 h-5 text-pink-500" />
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-pink-500" />
               Custom Requests
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>{stats.pendingRequests} pending requests need attention</p>
-              <button
-                onClick={() => handleQuickAction("requests")}
-                className="mt-3 text-sm text-primary hover:underline"
-              >
-                View Requests →
-              </button>
-            </div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            {recentRequests.length === 0 ? (
+              <div className="text-center py-6 md:py-8 text-muted-foreground">
+                <MessageSquare className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No requests yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentRequests.map((request) => (
+                  <div key={request.id} className="flex items-center justify-between p-2 md:p-3 bg-muted/30 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{request.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="truncate">{request.name}</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {format(new Date(request.created_at), 'MMM d')}
+                        </span>
+                      </div>
+                    </div>
+                    <Badge className={`text-[10px] ${getStatusColor(request.status)}`}>
+                      {request.status}
+                    </Badge>
+                  </div>
+                ))}
+                <button
+                  onClick={() => handleQuickAction("requests")}
+                  className="w-full mt-2 text-sm text-primary hover:underline flex items-center justify-center gap-1"
+                >
+                  View All Requests →
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
