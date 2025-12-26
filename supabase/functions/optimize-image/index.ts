@@ -13,6 +13,16 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authorization header is present (JWT verification is enabled in config.toml)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("Missing authorization header for image optimization");
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Authentication required to upload images' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const folder = formData.get('folder') as string || 'uploads';
@@ -100,15 +110,19 @@ serve(async (req) => {
       .from('media')
       .getPublicUrl(filePath);
 
-    // Get authorization header to find user
-    const authHeader = req.headers.get('Authorization');
-    let userId = null;
+    // Get user from authorization header (already verified by JWT verification)
+    const token = authHeader!.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user } } = await supabase.auth.getUser(token);
-      userId = user?.id;
+    if (authError || !user) {
+      console.error("Invalid user token:", authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+    
+    const userId = user.id;
 
     // Save to media_files table
     const { data: mediaRecord, error: dbError } = await supabase

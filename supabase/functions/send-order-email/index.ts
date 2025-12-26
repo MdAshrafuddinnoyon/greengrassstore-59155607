@@ -290,6 +290,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Verify authorization header is present (JWT verification is enabled in config.toml)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { type, order, previous_status }: OrderEmailRequest = await req.json();
     
     console.log(`Processing ${type} email for order ${order.order_number}`);

@@ -30,6 +30,9 @@ export type Database = {
           meta_title: string | null
           published_at: string | null
           reading_time: number
+          sidebar_banner_enabled: boolean | null
+          sidebar_banner_image: string | null
+          sidebar_banner_link: string | null
           slug: string
           status: string
           tags: string[] | null
@@ -53,6 +56,9 @@ export type Database = {
           meta_title?: string | null
           published_at?: string | null
           reading_time?: number
+          sidebar_banner_enabled?: boolean | null
+          sidebar_banner_image?: string | null
+          sidebar_banner_link?: string | null
           slug: string
           status?: string
           tags?: string[] | null
@@ -76,6 +82,9 @@ export type Database = {
           meta_title?: string | null
           published_at?: string | null
           reading_time?: number
+          sidebar_banner_enabled?: boolean | null
+          sidebar_banner_image?: string | null
+          sidebar_banner_link?: string | null
           slug?: string
           status?: string
           tags?: string[] | null
@@ -620,6 +629,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      return_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string | null
+          order_number: string
+          product_image: string | null
+          product_name: string
+          quantity: number
+          reason: string
+          refund_amount: number | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          order_number: string
+          product_image?: string | null
+          product_name: string
+          quantity?: number
+          reason: string
+          refund_amount?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          order_number?: string
+          product_image?: string | null
+          product_name?: string
+          quantity?: number
+          reason?: string
+          refund_amount?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_settings: {
         Row: {
